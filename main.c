@@ -1,4 +1,10 @@
+/*
+ * This file is released into the public domain under the CC0 1.0 Universal License.
+ * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+*/
+
 #define GLAD_GL_IMPLEMENTATION
+#define GLFW_INCLUDE_NONE
 #include "glad.h"
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
@@ -6,13 +12,30 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "game.h"
 #include "util.h"
+
+/* Function declarations */
+static void errorcallback(int err, const char *desc);
+static void init(void);
+static void keycallback(GLFWwindow *window, int key, int scancode, int action,
+	int mods);
+static void resizecallback(GLFWwindow* window, int width, int height);
+#ifndef NDEBUG
+static int ismember(const unsigned int array[], size_t size,
+	unsigned int value);
+static void APIENTRY gldebugoutput(GLenum source, GLenum type,
+	unsigned int id, GLenum severity, GLsizei length, const char *message,
+	const void *userparam);
+#endif /* !NDEBUG */
+static void createwindow(void);
 
 /* Variables */
 static const unsigned int ignorelog[] = {
     131185 /* Buffer info */
 };
 static GLFWwindow *window;
+static int minimised;
 
 /* Function implementations */
 
@@ -36,6 +59,8 @@ term(int status, const char *fmt, ...)
 {
     va_list ap;
 
+    game_unload();
+
     if (window)
         glfwDestroyWindow(window);
 
@@ -58,6 +83,11 @@ keycallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    if (action == GLFW_PRESS)
+	game_keydown(key);
+    else if (action == GLFW_RELEASE)
+	game_keyup(key);
 }
 
 void
@@ -65,7 +95,12 @@ resizecallback(GLFWwindow* window, int width, int height)
 {
     UNUSED(window);
 
-    glViewport(0, 0, width, height);
+    if (!width || !height) {
+	minimised = 1;
+    } else {
+	minimised = 0;
+	glViewport(0, 0, width, height);
+    }
 }
 
 #ifndef NDEBUG
@@ -82,7 +117,8 @@ ismember(const unsigned int array[], size_t size, unsigned int value)
     return 0;
 }
 
-void APIENTRY gldebugoutput(GLenum source, GLenum type, unsigned int id,
+void APIENTRY
+gldebugoutput(GLenum source, GLenum type, unsigned int id,
         GLenum severity, GLsizei length, const char *message,
         const void *userparam)
 {
@@ -108,8 +144,9 @@ createwindow(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openglmajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openglminor);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 #endif
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
@@ -136,16 +173,34 @@ createwindow(void)
                 GL_TRUE);
     }
 #endif /* !NDEBUG */
+
+    resizecallback(window, scrwidth, scrheight);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 int
 main(void)
 {
+    float lasttime, curtime, deltatime;
+
     init();
     createwindow();
+    game_load();
 
     while (!glfwWindowShouldClose(window)) {
+	curtime = glfwGetTime();
+	deltatime = curtime - lasttime;
+	lasttime = curtime;
         glfwPollEvents();
+
+	if (!minimised) {
+	    game_input(deltatime);
+	    game_update(deltatime);
+	    game_render();
+
+	    glfwSwapBuffers(window);
+	}
     }
 
     term(EXIT_SUCCESS, NULL);

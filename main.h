@@ -3,4 +3,4 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#define UNUSED(x) (void) (x)
+void term(int status, const char *fmt, ...);

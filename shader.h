@@ -3,4 +3,5 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#define UNUSED(x) (void) (x)
+int shader_load(const char *vertex, const char *fragment);
+void shader_unload();
