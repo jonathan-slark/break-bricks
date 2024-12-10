@@ -5,7 +5,7 @@
 
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
-#include "glad.h"
+#include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -13,6 +13,7 @@
 
 #include "config.h"
 #include "game.h"
+#include "main.h"
 #include "util.h"
 
 /* Function declarations */

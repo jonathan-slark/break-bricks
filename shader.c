@@ -3,7 +3,7 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#include "glad.h"
+#include <glad.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,13 +11,11 @@
 #include "shader.h"
 
 /* Function declarations */
-static char *load(const char *filename, size_t *size);
-static void unload(char **code);
 static GLuint create(GLenum type, const char *code, size_t size);
 
 /* Variables */
-static const char readonlybinary[] = "rb";
-static const char shaderentry[] = "main";
+static const char readonlybin[] = "rb";
+static const GLchar shaderentry[] = "main";
 static GLuint program;
 
 /* Function implementations */
@@ -28,7 +26,7 @@ load(const char *filename, size_t *size)
     FILE *fp;
     char *code;
 
-    if ((fp = fopen(filename, readonlybinary)) == NULL)
+    if ((fp = fopen(filename, readonlybin)) == NULL)
         term(EXIT_FAILURE, "Could not open file %s.\n", filename);
 
     if (fseek(fp, 0L, SEEK_END) != 0)
@@ -62,8 +60,7 @@ create(GLenum type, const char *code, size_t size)
     /* Requires OpenGL 4.6 */
     glShaderBinary(1, &s, GL_SHADER_BINARY_FORMAT_SPIR_V,
 	    (const void *) code, size);
-    glSpecializeShader(s, (const GLchar*) shaderentry, 0, NULL,
-	    NULL);
+    glSpecializeShader(s, shaderentry, 0, NULL, NULL);
     glGetShaderiv(s, GL_COMPILE_STATUS, &iscompiled);
     if (!iscompiled) {
 	glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
@@ -106,7 +103,7 @@ shader_load(const char *vertex, const char *fragment)
     glDeleteShader(v);
     glDeleteShader(f);
 
-    glGetProgramiv(program, GL_LINK_STATUS, (int *) &islinked);
+    glGetProgramiv(program, GL_LINK_STATUS, &islinked);
     if (!islinked) {
 	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
 	if (len) {

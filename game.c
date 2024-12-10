@@ -4,12 +4,14 @@
 */
 
 #define GLFW_INCLUDE_NONE
-#include "glad.h"
+#include <glad.h>
 #include <GLFW/glfw3.h>
 
 #include "config.h"
 #include "game.h"
 #include "shader.h"
+#include "sprite.h"
+#include "tex.h"
 #include "util.h"
 
 /* Types */
@@ -26,12 +28,14 @@ void
 game_load(void)
 {
     shader_load(shader_vertex, shader_fragment);
+    //tex_load(...);
 }
 
 void
 game_unload(void)
 {
     shader_unload();
+    //tex_unload();
 }
 
 void

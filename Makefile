@@ -4,14 +4,14 @@
 CC         = gcc
 CPPFLAGS   = -D_POSIX_C_SOURCE=200809L
 #CPPFLAGS  = -D_POSIX_C_SOURCE=200809L -DNDEBUG
-CFLAGS     = -std=c99 -pedantic -Wall -Wextra -g -O0
-#CFLAGS    = -std=c99 -pedantic -Wall -Wextra -O2
+CFLAGS     = -Iglad -std=c99 -pedantic -Wall -Wextra -g -O0
+#CFLAGS    = -Iglad std=c99 -pedantic -Wall -Wextra -O2
 LDFLAGS    = -mwindows -lopengl32 -lglfw3
 GLSLC      = glslc
 GLSLCFLAGS = --target-env=opengl
 
 BIN = breakbricks.exe
-SRC = game.c main.c shader.c
+SRC = game.c main.c shader.c sprite.c tex.c
 OBJ = $(SRC:.c=.o)
 
 GLSL = shader/vertex.glsl shader/fragment.glsl
@@ -28,8 +28,10 @@ $(BIN): $(OBJ)
 %.spv: %.glsl
 	$(GLSLC) $(GLSLCFLAGS) $< -o $@
 
-game.o: game.c game.h
-main.o: main.c glad.h config.h game.h util.h
+game.o: game.c config.h game.h shader.h tex.h util.h
+main.o: main.c config.h game.h main.h util.h
+shader.o: shader.c main.h shader.h
+tex.o: tex.c main.h
 
 clean:
 	@rm -f $(BIN) $(OBJ) $(SPV)

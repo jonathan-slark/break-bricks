@@ -1,0 +1,8 @@
+MSYS2
+-----
+
+Packages:
+mingw-w64-ucrt-x86_64-gcc
+mingw-w64-ucrt-x86_64-glfw
+mingw-w64-ucrt-x86_64-stb
+mingw-w64-ucrt-x86_64-cglm
