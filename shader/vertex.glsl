@@ -1,14 +1,15 @@
 #version 460 core
 #pragma shader_stage(vertex)
 
-layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texcoords>
-layout (location = 0) out vec2 texcoords;
+/* vert: <vec2 pos, vec2 texvert> */
+layout (location = 0) in vec4 vert;
+layout (location = 0) out vec2 texvert;
 
 layout (location = 0) uniform mat4 model;
-layout (location = 1) uniform mat4 projection;
+layout (location = 1) uniform mat4 proj;
 
 void main()
 {
-    texcoords = vertex.zw;
-    gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0);
+    texvert = vert.zw;
+    gl_Position = proj * model * vec4(vert.xy, 0.0, 1.0);
 }

@@ -5,6 +5,7 @@
 
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
+#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
@@ -33,7 +34,9 @@ static void createwindow(void);
 
 /* Variables */
 static const unsigned int ignorelog[] = {
-    131185 /* Buffer info */
+    131185, /* Buffer info */
+    131204, /* Texture mapping warning */
+    131218  /* Recompilation warning */
 };
 static GLFWwindow *window;
 static int minimised;
@@ -156,7 +159,6 @@ createwindow(void)
         term(EXIT_FAILURE, NULL);
 
     glfwMakeContextCurrent(window);
-
     if (!(version = gladLoadGL(glfwGetProcAddress)))
         term(EXIT_FAILURE, "Failed to load OpenGL.\n");
 

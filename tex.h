@@ -5,4 +5,4 @@
 
 GLuint tex_load(const char *name, int isalpha);
 void tex_unload(GLuint id);
-void tex_bind(GLuint id);
+void tex_use(GLuint id);

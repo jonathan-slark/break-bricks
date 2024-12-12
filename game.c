@@ -4,6 +4,7 @@
 */
 
 #define GLFW_INCLUDE_NONE
+#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 
@@ -21,21 +22,34 @@ typedef enum GameState GameState;
 /* Variables */
 GameState state;
 int keys[GLFW_KEY_LAST + 1];
+GLuint texid;
 
 /* Function implementations */
 
 void
 game_load(void)
 {
+    mat4s proj;
+
+    proj = glms_ortho(0.0f, (float) scrwidth, (float) scrheight, 0.0f, -1.0f,
+	    1.0f);
+    texid = tex_load(sprite_tex, 1);
     shader_load(shader_vertex, shader_fragment);
-    //tex_load(...);
+
+    shader_use();
+    tex_use(texid);
+    shader_setmat4s(shader_projloc, proj);
+    //shader_setuint(shader_texloc, texid);
+
+    sprite_init();
 }
 
 void
 game_unload(void)
 {
+    sprite_term();
+    tex_unload(texid);
     shader_unload();
-    //tex_unload();
 }
 
 void
@@ -65,6 +79,15 @@ game_update(float deltatime)
 void
 game_render(void)
 {
+    vec2s pos = {{ 200.0f, 200.0f }};
+    vec2s size = {{ 300.0f, 400.0f }};
+    float rot = 45.0f;
+    vec3s col = {{ 0.0f, 1.0f, 0.0f }};
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    shader_use();
+    tex_use(texid);
+    sprite_draw(pos, size, rot, col);
 }

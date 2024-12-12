@@ -3,6 +3,7 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
+#include <cglm/struct.h>
 #include <glad.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,7 @@
 #include "shader.h"
 
 /* Function declarations */
-static GLuint create(GLenum type, const char *code, size_t size);
+static GLint create(GLenum type, const char *code, size_t size);
 
 /* Variables */
 static const char readonlybin[] = "rb";
@@ -49,7 +50,7 @@ unload(char **code)
     free(*code);
 }
 
-GLuint
+GLint
 create(GLenum type, const char *code, size_t size)
 {
     GLuint s;
@@ -71,13 +72,12 @@ create(GLenum type, const char *code, size_t size)
 	    free(log);
 	    glDeleteShader(s);
 	}
-	return 0;
+	term(EXIT_FAILURE, "Could not load shader.\n");
     }
-
     return s;
 }
 
-int
+void
 shader_load(const char *vertex, const char *fragment)
 {
     size_t vsize, fsize;
@@ -92,9 +92,6 @@ shader_load(const char *vertex, const char *fragment)
     f = create(GL_FRAGMENT_SHADER, fcode, fsize);
     unload(&vcode);
     unload(&fcode);
-
-    if (!v || !f)
-	return 0;
 
     program = glCreateProgram();
     glAttachShader(program, v);
@@ -113,14 +110,36 @@ shader_load(const char *vertex, const char *fragment)
 	    free(log);
 	}
 	glDeleteProgram(program);
-	return 0;
+	term(EXIT_FAILURE, "Could not link shaders.\n");
     }
-
-    return 1;
 }
 
 void
 shader_unload(void)
 {
     glDeleteProgram(program);
+}
+
+void
+shader_use(void)
+{
+    glUseProgram(program);
+}
+
+void
+shader_setuint(GLint loc, GLuint val)
+{
+    glUniform1ui(loc, val);
+}
+
+void
+shader_setmat4s(GLint loc, mat4s val)
+{
+    glUniformMatrix4fv(loc, 1, GL_FALSE, (float *) val.raw);
+}
+
+void
+shader_setvec3s(GLint loc, vec3s val)
+{
+    glUniform3fv(loc, 1, val.raw);
 }

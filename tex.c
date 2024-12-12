@@ -7,6 +7,7 @@
 #include <glad.h>
 #include <stb/stb_image.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "main.h"
@@ -59,7 +60,7 @@ tex_unload(GLuint id)
 }
 
 void
-tex_bind(GLuint id)
+tex_use(GLuint id)
 {
     glBindTexture(GL_TEXTURE_2D, id);
 }

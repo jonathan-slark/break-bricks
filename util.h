@@ -4,3 +4,5 @@
 */
 
 #define UNUSED(x) (void) (x)
+
+void printmat4(mat4s m);
