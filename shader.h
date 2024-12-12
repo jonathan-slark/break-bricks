@@ -3,9 +3,9 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-void shader_load(const char *vertex, const char *fragment);
-void shader_unload();
-void shader_use();
-void shader_setuint(GLint loc, GLuint val);
+GLuint shader_load(const char *vertex, const char *fragment);
+void shader_unload(GLuint prog);
+void shader_use(GLuint prog);
+void shader_setint(GLint loc, GLint val);
 void shader_setmat4s(GLint loc, mat4s val);
 void shader_setvec3s(GLint loc, vec3s val);

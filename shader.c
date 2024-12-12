@@ -17,7 +17,6 @@ static GLint create(GLenum type, const char *code, size_t size);
 /* Variables */
 static const char readonlybin[] = "rb";
 static const GLchar shaderentry[] = "main";
-static GLuint program;
 
 /* Function implementations */
 
@@ -77,12 +76,12 @@ create(GLenum type, const char *code, size_t size)
     return s;
 }
 
-void
+GLuint
 shader_load(const char *vertex, const char *fragment)
 {
     size_t vsize, fsize;
     char *vcode, *fcode;
-    GLuint v, f;
+    GLuint v, f, prog;
     GLint islinked, len;
     GLchar *log;
     
@@ -93,43 +92,45 @@ shader_load(const char *vertex, const char *fragment)
     unload(&vcode);
     unload(&fcode);
 
-    program = glCreateProgram();
-    glAttachShader(program, v);
-    glAttachShader(program, f);
-    glLinkProgram(program);
+    prog = glCreateProgram();
+    glAttachShader(prog, v);
+    glAttachShader(prog, f);
+    glLinkProgram(prog);
     glDeleteShader(v);
     glDeleteShader(f);
 
-    glGetProgramiv(program, GL_LINK_STATUS, &islinked);
+    glGetProgramiv(prog, GL_LINK_STATUS, &islinked);
     if (!islinked) {
-	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
+	glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
 	if (len) {
 	    log = (GLchar *) malloc(len * sizeof(GLchar));
-	    glGetProgramInfoLog(program, len, &len, &log[0]);
+	    glGetProgramInfoLog(prog, len, &len, &log[0]);
 	    fprintf(stderr, (char *) log);
 	    free(log);
 	}
-	glDeleteProgram(program);
+	glDeleteProgram(prog);
 	term(EXIT_FAILURE, "Could not link shaders.\n");
     }
+
+    return prog;
 }
 
 void
-shader_unload(void)
+shader_unload(GLuint prog)
 {
-    glDeleteProgram(program);
+    glDeleteProgram(prog);
 }
 
 void
-shader_use(void)
+shader_use(GLuint prog)
 {
-    glUseProgram(program);
+    glUseProgram(prog);
 }
 
 void
-shader_setuint(GLint loc, GLuint val)
+shader_setint(GLint loc, GLint val)
 {
-    glUniform1ui(loc, val);
+    glUniform1i(loc, val);
 }
 
 void

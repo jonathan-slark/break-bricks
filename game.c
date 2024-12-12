@@ -23,6 +23,7 @@ typedef enum GameState GameState;
 GameState state;
 int keys[GLFW_KEY_LAST + 1];
 GLuint texid;
+GLuint progid;
 
 /* Function implementations */
 
@@ -34,12 +35,11 @@ game_load(void)
     proj = glms_ortho(0.0f, (float) scrwidth, (float) scrheight, 0.0f, -1.0f,
 	    1.0f);
     texid = tex_load(sprite_tex, 1);
-    shader_load(shader_vertex, shader_fragment);
+    progid = shader_load(shader_vertex, shader_fragment);
 
-    shader_use();
-    tex_use(texid);
+    shader_use(progid);
     shader_setmat4s(shader_projloc, proj);
-    //shader_setuint(shader_texloc, texid);
+    shader_setint(shader_texloc, 0);
 
     sprite_init();
 }
@@ -48,8 +48,8 @@ void
 game_unload(void)
 {
     sprite_term();
+    shader_unload(progid);
     tex_unload(texid);
-    shader_unload();
 }
 
 void
@@ -87,7 +87,7 @@ game_render(void)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    shader_use();
+    shader_use(progid);
     tex_use(texid);
     sprite_draw(pos, size, rot, col);
 }

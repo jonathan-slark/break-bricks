@@ -31,9 +31,9 @@ $(BIN): $(OBJ)
 game.o: game.c config.h game.h shader.h sprite.h tex.h util.h
 main.o: main.c config.h game.h main.h util.h
 shader.o: shader.c main.h shader.h
-sprite.o: sprite.c config.h shader.h sprite.h
+sprite.o: sprite.c config.h shader.h sprite.h util.h
 tex.o: tex.c main.h
-util.o: util.h
+util.o: util.c util.h
 
 clean:
 	@rm -f $(BIN) $(OBJ) $(SPV)

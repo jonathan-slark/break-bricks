@@ -5,4 +5,6 @@
 
 #define UNUSED(x) (void) (x)
 
+#ifndef NDEBUG
 void printmat4(mat4s m);
+#endif /* !NDEBUG */
