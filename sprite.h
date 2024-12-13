@@ -3,6 +3,6 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-void sprite_init(void);
+void sprite_init(mat4s proj);
 void sprite_term(void);
-void sprite_draw(vec2s pos, vec2s size, float rot, vec3s col);
+void sprite_draw(vec2s pos, vec2s size);

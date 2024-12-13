@@ -3,4 +3,5 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#define UNUSED(x) (void) (x)
+void load(const char *level, unsigned int width, unsigned height);
+int iscompleted(void);

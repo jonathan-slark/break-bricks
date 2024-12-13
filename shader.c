@@ -13,6 +13,8 @@
 
 /* Function declarations */
 static GLint create(GLenum type, const char *code, size_t size);
+static char * load(const char *filename, size_t *size);
+static void unload(char **code);
 
 /* Variables */
 static const char readonlybin[] = "rb";

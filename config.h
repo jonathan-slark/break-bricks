@@ -9,11 +9,11 @@ static const unsigned int scrheight   = 600;
 static const unsigned int openglmajor = 4;
 static const unsigned int openglminor = 6;
 
-static const char shader_vertex[]   = "shader/vertex.spv";
-static const char shader_fragment[] = "shader/fragment.spv";
+static const char shader_vertex[]   = "shader/sprite_vert.spv";
+static const char shader_fragment[] = "shader/sprite_frag.spv";
 static const GLint shader_modelloc  = 0;
 static const GLint shader_projloc   = 1;
 static const GLint shader_texloc    = 2;
-static const GLint shader_colloc    = 3;
 
-static const char sprite_tex[]      = "tex/awesomeface.png";
+static const char sprite_brick[]    = "tex/brick.png";
+static const char sprite_solid[]    = "tex/solid.png";

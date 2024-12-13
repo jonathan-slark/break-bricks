@@ -11,10 +11,10 @@ GLSLC      = glslc
 GLSLCFLAGS = --target-env=opengl
 
 BIN = breakbricks.exe
-SRC = game.c main.c shader.c sprite.c tex.c util.c
+SRC = game.c level.c main.c shader.c sprite.c tex.c
 OBJ = $(SRC:.c=.o)
 
-GLSL = shader/vertex.glsl shader/fragment.glsl
+GLSL = shader/sprite_vert.glsl shader/sprite_frag.glsl
 SPV  = $(GLSL:.glsl=.spv)
 
 all: $(BIN) $(SPV)
@@ -33,7 +33,6 @@ main.o: main.c config.h game.h main.h util.h
 shader.o: shader.c main.h shader.h
 sprite.o: sprite.c config.h shader.h sprite.h util.h
 tex.o: tex.c main.h
-util.o: util.c util.h
 
 clean:
 	@rm -f $(BIN) $(OBJ) $(SPV)
