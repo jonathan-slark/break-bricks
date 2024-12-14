@@ -1,6 +1,7 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+ * TODO: Scale up pixel art.
 */
 
 #define GLFW_INCLUDE_NONE
@@ -44,7 +45,9 @@ static Sprite brick = {
         31, 0
     },
     .width = 32,
-    .height = 10
+    .height = 10,
+    .xpos = 0,
+    .ypos = 0
 };
 
 /* Function implementations */
@@ -56,7 +59,6 @@ game_load(void)
 
     proj = glms_ortho(0.0f, (float) scrwidth, (float) scrheight, 0.0f, -1.0f,
 	    1.0f);
-
     spriteshader = shader_load(vertshader, fragshader);
     shader_use(spriteshader);
     shader_setmat4s(projloc, proj);
@@ -103,11 +105,8 @@ game_update(float deltatime)
 void
 game_render(void)
 {
-    vec2s pos = {{ 0.0f, 0.0f }};
-    vec2s size = {{ (float) brick.width, (float) brick.height }};
-
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    sprite_draw(&brick, pos, size);
+    sprite_draw(&brick);
 }

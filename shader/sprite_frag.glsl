@@ -9,5 +9,4 @@ layout (location = 2) uniform sampler2D tex;
 void main()
 {
     outcol = texture(tex, texcoords);
-    /* outcol = vec4(1.0f, 0.0f, 0.0f, 1.0f); */
 }

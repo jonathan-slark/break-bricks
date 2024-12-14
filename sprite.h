@@ -4,15 +4,18 @@
 */
 
 #define VERTCOUNT  2
-#define INDEXCOUNT 6
-#define ARRAYCOUNT (VERTCOUNT * INDEXCOUNT)
+#define INDCOUNT   6
+#define ARRAYCOUNT (VERTCOUNT * INDCOUNT)
+#define VBOCOUNT   2
+
+enum { Verts, TexVerts };
 typedef struct {
     const float verts[ARRAYCOUNT];
     const int texverts[ARRAYCOUNT];
-    GLuint vao;
-    int width, height;
+    GLuint vao, vbo[VBOCOUNT];
+    int width, height, xpos, ypos;
 } Sprite;
 
 void sprite_init(Sprite *s);
 void sprite_term(const Sprite *s);
-void sprite_draw(const Sprite *s, vec2s pos, vec2s size);
+void sprite_draw(const Sprite *s);
