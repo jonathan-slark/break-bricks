@@ -3,6 +3,16 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-void sprite_init(mat4s proj);
-void sprite_term(void);
-void sprite_draw(vec2s pos, vec2s size);
+#define VERTCOUNT  2
+#define INDEXCOUNT 6
+#define ARRAYCOUNT (VERTCOUNT * INDEXCOUNT)
+typedef struct {
+    const float verts[ARRAYCOUNT];
+    const int texverts[ARRAYCOUNT];
+    GLuint vao;
+    int width, height;
+} Sprite;
+
+void sprite_init(Sprite *s);
+void sprite_term(const Sprite *s);
+void sprite_draw(const Sprite *s, vec2s pos, vec2s size);

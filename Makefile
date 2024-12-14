@@ -29,9 +29,10 @@ $(BIN): $(OBJ)
 	$(GLSLC) $(GLSLCFLAGS) $< -o $@
 
 game.o: game.c config.h game.h shader.h sprite.h tex.h util.h
+level.o: level.c util.h
 main.o: main.c config.h game.h main.h util.h
 shader.o: shader.c main.h shader.h
-sprite.o: sprite.c config.h shader.h sprite.h util.h
+sprite.o: sprite.c config.h shader.h sprite.h
 tex.o: tex.c main.h
 
 clean:

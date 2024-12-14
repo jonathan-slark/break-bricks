@@ -5,7 +5,6 @@
 
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
-#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>

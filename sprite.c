@@ -5,71 +5,67 @@
 
 #include <cglm/struct.h>
 #include <glad.h>
+#include <stdio.h>
 
 #include "config.h"
 #include "shader.h"
 #include "sprite.h"
-#include "util.h"
 
-/* Types */
-typedef struct {
-    const float verts[24];
-    GLuint vao;
-    GLuint shader;
-} Sprite;
-
-/* Variables */
-static Sprite sprite = {
-    .verts = {
-	/* pos      tex */
-	0.0f, 1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 0.0f,
-	0.0f, 0.0f, 0.0f, 0.0f,
-
-	0.0f, 1.0f, 0.0f, 1.0f,
-	1.0f, 1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 0.0f
-    }
-};
-static const GLint vertcount = 4;
-static const GLint indexcount = 6;
+/* Function prototypes */
+static void screentonormal(const int *vin, int count, int width, int height,
+	float *vout);
 
 /* Function declarations */
 
+/* https://stackoverflow.com/q/40574677 */
 void
-sprite_init(mat4s proj)
+screentonormal(const int *vin, int count, int width, int height, float *vout)
 {
-    GLuint vbo;
+    int i;
 
-    glGenVertexArrays(1, &sprite.vao);
-    glGenBuffers(1, &vbo);
+    for (i = 0; i < count; i += 2) {
+	vout[i]   = ((float) vin[i]   + 0.5f) / (float) width;
+	vout[i+1] = ((float) vin[i+1] + 0.5f) / (float) height;
+    }
+}
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sprite.verts), sprite.verts,
-	    GL_STATIC_DRAW);
+void
+sprite_init(Sprite *s)
+{
+    GLuint vertsvbo, texvertsvbo;
+    float texverts[ARRAYCOUNT];
 
-    glBindVertexArray(sprite.vao);
+    screentonormal(s->texverts, ARRAYCOUNT, scrwidth, scrheight, texverts);
+
+    glGenVertexArrays(1, &s->vao);
+    glBindVertexArray(s->vao);
+
+    glGenBuffers(1, &vertsvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vertsvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(s->verts), s->verts, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, VERTCOUNT, GL_FLOAT, GL_FALSE, 
+	    VERTCOUNT * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, vertcount, GL_FLOAT, GL_FALSE, 
-	    vertcount * sizeof(float), (void *) 0);
+
+    glGenBuffers(1, &texvertsvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, texvertsvbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, VERTCOUNT, GL_FLOAT, GL_FALSE, 
+	    VERTCOUNT * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(1);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    sprite.shader = shader_load(shader_vertex, shader_fragment);
-    shader_use(sprite.shader);
-    shader_setmat4s(shader_projloc, proj);
-    shader_setint(shader_texloc, 0);
 }
 
 void
-sprite_term(void)
+sprite_term(const Sprite *s)
 {
-    glDeleteVertexArrays(1, &sprite.vao);
-    shader_unload(sprite.shader);
+    glDeleteVertexArrays(1, &s->vao);
 }
 
 void
-sprite_draw(vec2s pos, vec2s size)
+sprite_draw(const Sprite *s, vec2s pos, vec2s size)
 {
     mat4s model;
     vec3s pos3 = {{ pos.x, pos.y, 0.0f }};
@@ -77,13 +73,9 @@ sprite_draw(vec2s pos, vec2s size)
 
     model = glms_translate_make(pos3);
     model = glms_scale(model, size3);
+    shader_setmat4s(modelloc, model);
 
-    shader_use(sprite.shader);
-    shader_setmat4s(shader_modelloc, model);
-
-    glActiveTexture(GL_TEXTURE0);
-
-    glBindVertexArray(sprite.vao);
-    glDrawArrays(GL_TRIANGLES, 0, indexcount);
+    glBindVertexArray(s->vao);
+    glDrawArrays(GL_TRIANGLES, 0, INDEXCOUNT);
     glBindVertexArray(0);
 }

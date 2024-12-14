@@ -20,9 +20,32 @@ enum GameState { GameActive, GameMenu, GameWin };
 typedef enum GameState GameState;
 
 /* Variables */
-GameState state;
-int keys[GLFW_KEY_LAST + 1];
-GLuint texid;
+//static GameState state;
+static int keys[GLFW_KEY_LAST + 1];
+static GLuint spritesheet;
+static GLuint spriteshader;
+static Sprite brick = {
+    .verts = {
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        0.0f, 0.0f,
+
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        1.0f, 0.0f
+    },
+    .texverts = {
+        0,  9,
+        31, 0,
+        0,  0,
+
+        0,  9,
+        31, 9,
+        31, 0
+    },
+    .width = 32,
+    .height = 10
+};
 
 /* Function implementations */
 
@@ -33,16 +56,24 @@ game_load(void)
 
     proj = glms_ortho(0.0f, (float) scrwidth, (float) scrheight, 0.0f, -1.0f,
 	    1.0f);
-    sprite_init(proj);
 
-    texid = tex_load(sprite_brick, 1);
+    spriteshader = shader_load(vertshader, fragshader);
+    shader_use(spriteshader);
+    shader_setmat4s(projloc, proj);
+    shader_setint(texloc, 0);
+    sprite_init(&brick);
+
+    spritesheet = tex_load(spritefile, 1);
+    tex_use(spritesheet);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void
 game_unload(void)
 {
-    sprite_term();
-    tex_unload(texid);
+    shader_unload(spriteshader);
+    sprite_term(&brick);
+    tex_unload(spritesheet);
 }
 
 void
@@ -72,12 +103,11 @@ game_update(float deltatime)
 void
 game_render(void)
 {
-    vec2s pos = {{ 200.0f, 200.0f }};
-    vec2s size = {{ 128.0f, 128.0f }};
+    vec2s pos = {{ 0.0f, 0.0f }};
+    vec2s size = {{ (float) brick.width, (float) brick.height }};
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    tex_use(texid);
-    sprite_draw(pos, size);
+    sprite_draw(&brick, pos, size);
 }
