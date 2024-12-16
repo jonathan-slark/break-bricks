@@ -1,12 +1,12 @@
-#version 460 core
+#version 330 core
 #pragma shader_stage(fragment)
 
-layout (location = 0) in vec2 texcoords;
-layout (location = 0) out vec4 outcol;
+in vec2 fragcoords;
+out vec4 outcol;
 
-layout (location = 2) uniform sampler2D tex;
+uniform sampler2D tex;
 
 void main()
 {
-    outcol = texture(tex, texcoords);
+    outcol = texture(tex, fragcoords);
 }

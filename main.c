@@ -1,9 +1,11 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO: move away from glad?
 */
 
+/* ChatGPT suggested this define, it works as it's the same value as 
+ * GL_CONTEXT_FLAG_DEBUG_BIT */
+#define GL_CONTEXT_FLAG_DEBUG_BIT_ARB 0x00000002
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
 #include <glad.h>
@@ -26,9 +28,9 @@ static void resizecallback(GLFWwindow* window, int width, int height);
 #ifndef NDEBUG
 static int ismember(const unsigned int array[], size_t size,
 	unsigned int value);
-static void APIENTRY gldebugoutput(GLenum source, GLenum type,
-	unsigned int id, GLenum severity, GLsizei length, const char *message,
-	const void *userparam);
+static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
+        GLenum severity, GLsizei length, const GLchar *message,
+        const void *userparam);
 #endif /* !NDEBUG */
 static void createwindow(void);
 
@@ -121,9 +123,9 @@ ismember(const unsigned int array[], size_t size, unsigned int value)
     return 0;
 }
 
-void APIENTRY
-gldebugoutput(GLenum source, GLenum type, unsigned int id,
-        GLenum severity, GLsizei length, const char *message,
+void GLAPIENTRY
+gldebugoutput(GLenum source, GLenum type, GLuint id,
+        GLenum severity, GLsizei length, const GLchar *message,
         const void *userparam)
 {
     UNUSED(source);
@@ -135,7 +137,7 @@ gldebugoutput(GLenum source, GLenum type, unsigned int id,
     if (ismember(ignorelog, sizeof(ignorelog), id))
         return;
 
-    fprintf(stderr, "%u: %s\n", id, message);
+    fprintf(stderr, "%u: %s\n", id, (const char *) message);
 }
 
 #endif /* !NDEBUG */
@@ -143,7 +145,7 @@ gldebugoutput(GLenum source, GLenum type, unsigned int id,
 void
 createwindow(void)
 {
-    int version, flags;
+    int ver, flags;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openglmajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openglminor);
@@ -151,7 +153,7 @@ createwindow(void)
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-#endif
+#endif /* __APPLE__ */
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif /* !NDEBUG */
@@ -159,21 +161,26 @@ createwindow(void)
         term(EXIT_FAILURE, NULL);
 
     glfwMakeContextCurrent(window);
-    if (!(version = gladLoadGL(glfwGetProcAddress)))
+    if (!(ver = gladLoadGL(glfwGetProcAddress)))
         term(EXIT_FAILURE, "Failed to load OpenGL.\n");
+#ifndef NDEBUG
+    fprintf(stderr, "OpenGL %d.%d\n", GLAD_VERSION_MAJOR(ver), 
+	    GLAD_VERSION_MINOR(ver));
+#endif /* !NDEBUG */
 
     glfwSetKeyCallback(window, keycallback);
     glfwSetFramebufferSizeCallback(window, resizecallback);
     glfwSwapInterval(1);
 
 #ifndef NDEBUG
-    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(gldebugoutput, NULL);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
-                GL_TRUE);
+    if (GLAD_GL_ARB_debug_output) {
+	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT_ARB) {
+	    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+	    glDebugMessageCallbackARB(gldebugoutput, NULL);
+	    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
+		    GL_TRUE);
+	}
     }
 #endif /* !NDEBUG */
 

@@ -4,8 +4,8 @@
 */
 
 GLuint shader_load(const char *vertex, const char *fragment);
-void shader_unload(GLuint prog);
-void shader_use(GLuint prog);
-void shader_setint(GLint loc, GLint val);
-void shader_setmat4s(GLint loc, mat4s val);
-void shader_setvec3s(GLint loc, vec3s val);
+void shader_unload(GLuint shader);
+void shader_use(GLuint shader);
+void shader_setint(GLuint shader, const char *name, GLint val);
+void shader_setmat4s(GLuint shader, const char *name, mat4s val);
+void shader_setvec3s(GLuint shader, const char *name, vec3s val);

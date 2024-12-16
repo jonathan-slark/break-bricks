@@ -6,12 +6,12 @@
 static const char title[]             = "Break Bricks";
 static const unsigned int scrwidth    = 320;
 static const unsigned int scrheight   = 200;
-static const unsigned int openglmajor = 4;
-static const unsigned int openglminor = 6;
+static const unsigned int openglmajor = 3;
+static const unsigned int openglminor = 3;
 
-static const char vertshader[] = "shader/sprite_vert.spv";
-static const char fragshader[] = "shader/sprite_frag.spv";
-static const GLint modelloc    = 0;
-static const GLint projloc     = 1;
-static const GLint texloc      = 2;
-static const char spritefile[] = "tex/spritesheet.png";
+static const char vertshader[]     = "shader/sprite_vert.glsl";
+static const char fragshader[]     = "shader/sprite_frag.glsl";
+static const GLchar modeluniform[] = "model";
+static const GLchar projuniform[]  = "proj";
+static const GLchar texuniform[]   = "tex";
+static const char spritefile[]     = "tex/spritesheet.png";

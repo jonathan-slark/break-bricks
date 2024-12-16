@@ -1,7 +1,6 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO: move to loading GLSL from file so we can drop to OpenGL 3.3.
 */
 
 #include <cglm/struct.h>
@@ -13,47 +12,47 @@
 #include "shader.h"
 
 /* Function declarations */
-static GLint create(GLenum type, const char *code, size_t size);
-static char * load(const char *filename, size_t *size);
-static void unload(char **code);
+static GLint create(GLenum type, const GLchar *src);
+static GLchar *load(const GLchar *filename);
+static void unload(GLchar **src);
 
 /* Variables */
-static const char readonlybin[] = "rb";
-static const GLchar shaderentry[] = "main";
+static const GLchar readonly[] = "r";
 
 /* Function implementations */
 
-char *
-load(const char *filename, size_t *size)
+GLchar *
+load(const GLchar *filename)
 {
     FILE *fp;
-    char *code;
+    GLchar *src;
+    size_t size;
 
-    if ((fp = fopen(filename, readonlybin)) == NULL)
+    if ((fp = fopen(filename, readonly)) == NULL)
         term(EXIT_FAILURE, "Could not open file %s.\n", filename);
 
     if (fseek(fp, 0L, SEEK_END) != 0)
         term(EXIT_FAILURE, "Error on seeking file %s.\n", filename);
-    *size = ftell(fp);
+    size = ftell(fp);
     rewind(fp);
-    code = (char *) malloc(*size * sizeof(char));
-    if (fread(code, sizeof(char), *size, fp) < *size)
+    src = (GLchar *) malloc(size * sizeof(char));
+    if (fread(src, sizeof(GLchar), size, fp) < size)
         term(EXIT_FAILURE, "Error reading file %s.\n", filename);
 
     if (fclose(fp) == EOF)
         term(EXIT_FAILURE, "Error on closing file %s.\n", filename);
 
-    return code;
+    return src;
 }
 
 void
-unload(char **code)
+unload(GLchar **src)
 {
-    free(*code);
+    free(*src);
 }
 
 GLint
-create(GLenum type, const char *code, size_t size)
+create(GLenum type, const GLchar *src)
 {
     GLuint s;
     GLint iscompiled, len;
@@ -61,9 +60,8 @@ create(GLenum type, const char *code, size_t size)
 
     s = glCreateShader(type);
     /* Requires OpenGL 4.6 */
-    glShaderBinary(1, &s, GL_SHADER_BINARY_FORMAT_SPIR_V,
-	    (const void *) code, size);
-    glSpecializeShader(s, shaderentry, 0, NULL, NULL);
+    glShaderSource(s, 1, &src, NULL);
+    glCompileShader(s);
     glGetShaderiv(s, GL_COMPILE_STATUS, &iscompiled);
     if (!iscompiled) {
 	glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
@@ -82,68 +80,79 @@ create(GLenum type, const char *code, size_t size)
 GLuint
 shader_load(const char *vertex, const char *fragment)
 {
-    size_t vsize, fsize;
-    char *vcode, *fcode;
-    GLuint v, f, prog;
+    GLchar *vsrc, *fsrc;
+    GLuint v, f, shader;
     GLint islinked, len;
     GLchar *log;
     
-    vcode = load(vertex, &vsize);
-    fcode = load(fragment, &fsize);
-    v = create(GL_VERTEX_SHADER, vcode, vsize);
-    f = create(GL_FRAGMENT_SHADER, fcode, fsize);
-    unload(&vcode);
-    unload(&fcode);
+    vsrc = load(vertex);
+    fsrc = load(fragment);
+    v = create(GL_VERTEX_SHADER, vsrc);
+    f = create(GL_FRAGMENT_SHADER, fsrc);
+    unload(&vsrc);
+    unload(&fsrc);
 
-    prog = glCreateProgram();
-    glAttachShader(prog, v);
-    glAttachShader(prog, f);
-    glLinkProgram(prog);
+    shader = glCreateProgram();
+    glAttachShader(shader, v);
+    glAttachShader(shader, f);
+    glLinkProgram(shader);
     glDeleteShader(v);
     glDeleteShader(f);
 
-    glGetProgramiv(prog, GL_LINK_STATUS, &islinked);
+    glGetProgramiv(shader, GL_LINK_STATUS, &islinked);
     if (!islinked) {
-	glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
+	glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &len);
 	if (len) {
 	    log = (GLchar *) malloc(len * sizeof(GLchar));
-	    glGetProgramInfoLog(prog, len, &len, &log[0]);
+	    glGetProgramInfoLog(shader, len, &len, &log[0]);
 	    fprintf(stderr, (char *) log);
 	    free(log);
 	}
-	glDeleteProgram(prog);
+	glDeleteProgram(shader);
 	term(EXIT_FAILURE, "Could not link shaders.\n");
     }
 
-    return prog;
+    return shader;
 }
 
 void
-shader_unload(GLuint prog)
+shader_unload(GLuint shader)
 {
-    glDeleteProgram(prog);
+    glDeleteProgram(shader);
 }
 
 void
-shader_use(GLuint prog)
+shader_use(GLuint shader)
 {
-    glUseProgram(prog);
+    glUseProgram(shader);
 }
 
 void
-shader_setint(GLint loc, GLint val)
+shader_setint(GLuint shader, const char *name, GLint val)
 {
+    GLint loc;
+
+    if((loc = glGetUniformLocation(shader, name)) == -1)
+	term(EXIT_FAILURE, "Could not get uniform location.\n");
     glUniform1i(loc, val);
 }
 
 void
-shader_setmat4s(GLint loc, mat4s val)
+shader_setmat4s(GLuint shader, const char *name, mat4s val)
 {
+    GLint loc;
+
+    if ((loc = glGetUniformLocation(shader, name)) == -1)
+	term(EXIT_FAILURE, "Could not get uniform location.\n");
     glUniformMatrix4fv(loc, 1, GL_FALSE, (float *) val.raw);
 }
 
 void
-shader_setvec3s(GLint loc, vec3s val)
+shader_setvec3s(GLuint shader, const char *name, vec3s val)
 {
+    GLint loc;
+
+    if ((loc = glGetUniformLocation(shader, name)) == -1)
+	term(EXIT_FAILURE, "Could not get uniform location.\n");
     glUniform3fv(loc, 1, val.raw);
 }

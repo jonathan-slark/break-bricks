@@ -18,4 +18,4 @@ typedef struct {
 
 void sprite_init(Sprite *s);
 void sprite_term(const Sprite *s);
-void sprite_draw(const Sprite *s);
+void sprite_draw(GLuint shader, const Sprite *s);

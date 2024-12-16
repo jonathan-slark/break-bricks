@@ -61,13 +61,13 @@ game_load(void)
 	    1.0f);
     spriteshader = shader_load(vertshader, fragshader);
     shader_use(spriteshader);
-    shader_setmat4s(projloc, proj);
-    shader_setint(texloc, 0);
+    shader_setmat4s(spriteshader, projuniform, proj);
     sprite_init(&brick);
 
     spritesheet = tex_load(spritefile, 1);
-    tex_use(spritesheet);
     glActiveTexture(GL_TEXTURE0);
+    tex_use(spritesheet);
+    shader_setint(spriteshader, texuniform, 0);
 }
 
 void
@@ -108,5 +108,5 @@ game_render(void)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    sprite_draw(&brick);
+    sprite_draw(spriteshader, &brick);
 }

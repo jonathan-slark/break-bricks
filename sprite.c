@@ -65,7 +65,7 @@ sprite_term(const Sprite *s)
 }
 
 void
-sprite_draw(const Sprite *s)
+sprite_draw(GLuint shader, const Sprite *s)
 {
     mat4s model;
     vec3s pos3 = {{ (float) s->xpos, (float) s->ypos, 0.0f }};
@@ -73,7 +73,7 @@ sprite_draw(const Sprite *s)
 
     model = glms_translate_make(pos3);
     model = glms_scale(model, size3);
-    shader_setmat4s(modelloc, model);
+    shader_setmat4s(shader, modeluniform, model);
 
     glBindVertexArray(s->vao);
     glDrawArrays(GL_TRIANGLES, 0, INDCOUNT);
