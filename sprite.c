@@ -1,6 +1,7 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+ * TODO: Only store quad verts once, not per sprite.
 */
 
 #include <cglm/struct.h>
@@ -14,6 +15,14 @@
 /* Function prototypes */
 static void screentonormal(const int *vin, int count, int width, int height,
 	float *vout);
+
+/* Variables */
+static const float quad[] = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f
+};
 
 /* Function declarations */
 
@@ -41,7 +50,7 @@ sprite_init(Sprite *s)
     glGenBuffers(VBOCOUNT, s->vbo);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(s->verts), s->verts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
     glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, 
 	    INDCOUNT * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
@@ -67,12 +76,13 @@ void
 sprite_draw(GLuint shader, const Sprite *s)
 {
     mat4s model;
-    vec3s pos3 = {{ (float) s->xpos, (float) s->ypos, 0.0f }};
-    vec3s size3 = {{ (float) s->width, (float) s->height, 1.0f }};
+    vec3s pos3 = {{ s->pos.x, s->pos.y, 0.0f }};
+    vec3s size3 = {{ s->size.x, s->size.y, 1.0f }};
 
     model = glms_translate_make(pos3);
     model = glms_scale(model, size3);
     shader_setmat4s(shader, modeluniform, model);
+    shader_setvec3s(shader, colouruniform, s->colour);
 
     glBindVertexArray(s->vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, VERTCOUNT);

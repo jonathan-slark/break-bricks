@@ -20,8 +20,9 @@ $(BIN): $(OBJ)
 %.o: %.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
-game.o: game.c config.h game.h shader.h sprite.h tex.h util.h
-level.o: level.c util.h
+game.o: game.c config.h game.h sprite.h level.h main.h shader.h tex.h \
+	util.h
+level.o: level.c config.h sprite.h level.h main.h util.h
 main.o: main.c config.h game.h main.h util.h
 shader.o: shader.c main.h shader.h util.h
 sprite.o: sprite.c config.h shader.h sprite.h

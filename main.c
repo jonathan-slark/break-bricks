@@ -8,6 +8,7 @@
 #define GL_CONTEXT_FLAG_DEBUG_BIT_ARB 0x00000002
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
+#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
@@ -157,8 +158,8 @@ createwindow(void)
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif /* !NDEBUG */
-    if (!(window = glfwCreateWindow(scrwidth * scrscale, scrheight * scrscale,
-		    title, NULL, NULL)))
+    if (!(window = glfwCreateWindow(scrwidth, scrheight, title,
+		    glfwGetPrimaryMonitor(), NULL)))
         term(EXIT_FAILURE, NULL);
 
     glfwMakeContextCurrent(window);
@@ -186,7 +187,7 @@ createwindow(void)
     /* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
 #endif /* !NDEBUG */
 
-    resizecallback(window, scrwidth * scrscale, scrheight * scrscale);
+    resizecallback(window, scrwidth, scrheight);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

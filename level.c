@@ -3,86 +3,71 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
+#include <cglm/struct.h>
 #include <ctype.h>
 #include <glad.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "sprite.h"
 #include "level.h"
 #include "main.h"
 #include "util.h"
 
 /* Function prototypes */
-void initbrick(Brick *brick, unsigned int width, unsigned int height,
-	unsigned int id);
-unsigned int readbricks(const char *l, Brick *bricks, unsigned int width,
-	unsigned int height);
+void initbrick(Brick *brick, unsigned int id, unsigned int row,
+	unsigned int col);
+unsigned int readbricks(const char *l, Brick *bricks);
 
 /* Variables */
 static Brick *bricks;
 static unsigned int brickcount;
-static float verts[] = {
-    0.0f, 0.0f,
-    1.0f, 0.0f,
-    0.0f, 1.0f,
-    1.0f, 1.0f
-};
-#if 0
-static Sprite brick = {
-    .verts = {
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        0.0f, 1.0f,
-        1.0f, 1.0f
-    },
+Sprite sprite = {
     .texverts = {
-        0,  0,
-        31, 0,
-        0,  9,
-        31, 9
+	0,              0,
+	brickwidth - 1, 0,
+	0,              brickheight - 1,
+	brickwidth - 1, brickheight - 1
     },
-    .width = 32,
-    .height = 10,
-    .xpos = 0,
-    .ypos = 0
+    .size = {{ (float) brickwidth, (float) brickheight }}
 };
-#endif
 
 /* Function implementations */
 
 void
-initbrick(Brick *brick, unsigned int width, unsigned int height,
-	unsigned int id)
+initbrick(Brick *brick, unsigned int id, unsigned int row, unsigned int col)
 {
-    UNUSED(id);
-
-    memcpy(brick->sprite.verts, verts, ARRAYCOUNT * sizeof(float));
-    brick->sprite.width = width;
-    brick->sprite.height = height;
-    brick->sprite.xpos = 0;
-    brick->sprite.ypos = 0;
+    brick->row = row;
+    brick->col = col;
+    brick->colour = brickcolours[id];
+    brick->isdestroyed = 0;
 }
 
 unsigned int
-readbricks(const char *l, Brick *bricks, unsigned int width,
-	unsigned int height)
+readbricks(const char *l, Brick *bricks)
 {
     char c;
-    unsigned count = 0;
+    unsigned count = 0, row = 0, col = 0;
 
     while ((c = *l++) != '\0') {
 	if (c == '#') {
 	    while ((c = *l++) != '\n') {
 		/* Comment */
 	    }
+	} else if (c == 'x') {
+	    /* No brick */
+	    row++;
 	} else if (isdigit(c)) {
 	    if (bricks)
-		initbrick(&bricks[count], width, height,
-			(unsigned int) (c - '0'));
+		initbrick(&bricks[count], (unsigned int) (c - '0'), row, col);
 	    count++;
-	} else if (c != '\n' && c != ' ' && c != '\t') {
+	    row++;
+	} else if (c == '\n') {
+	    col++;
+	    row = 0;
+	} else if (c != ' ' && c != '\t') {
 	    term(EXIT_FAILURE, "Syntax error in level file.\n");
 	}
     }
@@ -91,15 +76,15 @@ readbricks(const char *l, Brick *bricks, unsigned int width,
 }
 
 void
-level_load(const char *name, unsigned int width, unsigned int height)
+level_load(const char *name)
 {
     char *l;
 
     l = load(name);
-    brickcount = readbricks(l, NULL, 0, 0);
+    brickcount = readbricks(l, NULL);
     fprintf(stderr, "brickcount = %u\n", brickcount);
     bricks = (Brick *) malloc(brickcount * sizeof(Brick));
-    readbricks(l, bricks, width, height);
+    readbricks(l, bricks);
     unload(l);
 }
 
@@ -113,8 +98,18 @@ level_unload(void)
 void
 level_draw(GLuint shader)
 {
-    UNUSED(shader);
-    //sprite_draw(shader, &brick);
+    unsigned int i;
+    Brick *b;
+
+    for (i = 0; i < brickcount; i++) {
+	b = &bricks[i];
+	if (!b->isdestroyed) {
+	    sprite.pos.x = b->row * brickwidth;
+	    sprite.pos.y = b->col * brickheight;
+	    sprite.colour = b->colour;
+	    sprite_draw(shader, &sprite);
+	}
+    }
 }
 
 int
@@ -123,7 +118,7 @@ level_iscompleted(void)
     unsigned int i;
 
     for (i = 0; i < brickcount; i++)
-	if (!bricks[i].issolid && !bricks[i].isdestroyed)
+	if (!bricks[i].isdestroyed)
 	    return 0;
 
     return 1;

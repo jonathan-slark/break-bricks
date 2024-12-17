@@ -45,8 +45,7 @@ game_load(void)
     tex_use(spritesheet);
     shader_setint(spriteshader, texuniform, 0);
 
-    level_load(levels[0], lvlwidth, lvlheight);
-    term(EXIT_SUCCESS, NULL);
+    level_load(lvls[0]);
 }
 
 void

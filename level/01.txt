@@ -1,8 +1,7 @@
-# 0  = no brick
-# 1  = solid brick
-# 2+ = destroyable brick in varying colours
+# x   = no brick
+# 0-? = coloured brick id
 # White space, new lines and comments are ignored
 
+0 0 0 0 0 0 0 0 0 0
+1 1 1 1 1 1 1 1 1 1
 2 2 2 2 2 2 2 2 2 2
-3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4
