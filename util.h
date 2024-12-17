@@ -4,3 +4,8 @@
 */
 
 #define UNUSED(x) (void) (x)
+
+static const char readonly[] = "r";
+
+char *load(const char *filename);
+void unload(char *src);

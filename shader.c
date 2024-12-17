@@ -10,46 +10,12 @@
 
 #include "main.h"
 #include "shader.h"
+#include "util.h"
 
 /* Function declarations */
 static GLint create(GLenum type, const GLchar *src);
-static GLchar *load(const GLchar *filename);
-static void unload(GLchar **src);
-
-/* Variables */
-static const GLchar readonly[] = "r";
 
 /* Function implementations */
-
-GLchar *
-load(const GLchar *filename)
-{
-    FILE *fp;
-    GLchar *src;
-    size_t size;
-
-    if ((fp = fopen(filename, readonly)) == NULL)
-        term(EXIT_FAILURE, "Could not open file %s.\n", filename);
-
-    if (fseek(fp, 0L, SEEK_END) != 0)
-        term(EXIT_FAILURE, "Error on seeking file %s.\n", filename);
-    size = ftell(fp);
-    rewind(fp);
-    src = (GLchar *) malloc(size * sizeof(char));
-    if (fread(src, sizeof(GLchar), size, fp) < size)
-        term(EXIT_FAILURE, "Error reading file %s.\n", filename);
-
-    if (fclose(fp) == EOF)
-        term(EXIT_FAILURE, "Error on closing file %s.\n", filename);
-
-    return src;
-}
-
-void
-unload(GLchar **src)
-{
-    free(*src);
-}
 
 GLint
 create(GLenum type, const GLchar *src)
@@ -85,12 +51,12 @@ shader_load(const char *vertex, const char *fragment)
     GLint islinked, len;
     GLchar *log;
     
-    vsrc = load(vertex);
-    fsrc = load(fragment);
+    vsrc = (GLchar *) load(vertex);
+    fsrc = (GLchar *) load(fragment);
     v = create(GL_VERTEX_SHADER, vsrc);
     f = create(GL_FRAGMENT_SHADER, fsrc);
-    unload(&vsrc);
-    unload(&fsrc);
+    unload(vsrc);
+    unload(fsrc);
 
     shader = glCreateProgram();
     glAttachShader(shader, v);

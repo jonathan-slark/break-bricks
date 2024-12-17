@@ -13,7 +13,7 @@ typedef struct {
     const float verts[ARRAYCOUNT];
     const int texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
-    int width, height, xpos, ypos;
+    unsigned int width, height, xpos, ypos;
 } Sprite;
 
 void sprite_init(Sprite *s);

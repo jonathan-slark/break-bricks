@@ -16,3 +16,10 @@ static const GLchar modeluniform[] = "model";
 static const GLchar projuniform[]  = "proj";
 static const GLchar texuniform[]   = "tex";
 static const char spritefile[]     = "tex/spritesheet.png";
+
+static const unsigned int lvlwidth  = 10;
+static const unsigned int lvlheight = 3;
+static const unsigned int lvlcount  = 1;
+static const char * const levels[] = {
+    "level/01.txt"
+};

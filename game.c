@@ -10,8 +10,10 @@
 
 #include "config.h"
 #include "game.h"
-#include "shader.h"
 #include "sprite.h"
+#include "level.h"
+#include "main.h"
+#include "shader.h"
 #include "tex.h"
 #include "util.h"
 
@@ -24,24 +26,6 @@ typedef enum GameState GameState;
 static int keys[GLFW_KEY_LAST + 1];
 static GLuint spritesheet;
 static GLuint spriteshader;
-static Sprite brick = {
-    .verts = {
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        0.0f, 1.0f,
-        1.0f, 1.0f
-    },
-    .texverts = {
-        0,  0,
-        31, 0,
-        0,  9,
-        31, 9
-    },
-    .width = 32,
-    .height = 10,
-    .xpos = 0,
-    .ypos = 0
-};
 
 /* Function implementations */
 
@@ -55,20 +39,22 @@ game_load(void)
     spriteshader = shader_load(vertshader, fragshader);
     shader_use(spriteshader);
     shader_setmat4s(spriteshader, projuniform, proj);
-    sprite_init(&brick);
 
     spritesheet = tex_load(spritefile, 1);
     glActiveTexture(GL_TEXTURE0);
     tex_use(spritesheet);
     shader_setint(spriteshader, texuniform, 0);
+
+    level_load(levels[0], lvlwidth, lvlheight);
+    term(EXIT_SUCCESS, NULL);
 }
 
 void
 game_unload(void)
 {
-    shader_unload(spriteshader);
-    sprite_term(&brick);
+    level_unload();
     tex_unload(spritesheet);
+    shader_unload(spriteshader);
 }
 
 void
@@ -101,5 +87,5 @@ game_render(void)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    sprite_draw(spriteshader, &brick);
+    level_draw(spriteshader);
 }
