@@ -1,7 +1,6 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO: Use an opengl strip.
 */
 
 #include <cglm/struct.h>
@@ -24,7 +23,7 @@ screentonormal(const int *vin, int count, int width, int height, float *vout)
 {
     int i;
 
-    for (i = 0; i < count; i += VERTCOUNT) {
+    for (i = 0; i < count; i += INDCOUNT) {
 	vout[i]   = ((float) vin[i]   + 0.5f) / (float) width;
 	vout[i+1] = ((float) vin[i+1] + 0.5f) / (float) height;
     }
@@ -43,14 +42,14 @@ sprite_init(Sprite *s)
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(s->verts), s->verts, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, VERTCOUNT, GL_FLOAT, GL_FALSE, 
-	    VERTCOUNT * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, 
+	    INDCOUNT * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, VERTCOUNT, GL_FLOAT, GL_FALSE, 
-	    VERTCOUNT * sizeof(float), (void *) 0);
+    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, 
+	    INDCOUNT * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -76,6 +75,6 @@ sprite_draw(GLuint shader, const Sprite *s)
     shader_setmat4s(shader, modeluniform, model);
 
     glBindVertexArray(s->vao);
-    glDrawArrays(GL_TRIANGLES, 0, INDCOUNT);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, VERTCOUNT);
     glBindVertexArray(0);
 }

@@ -183,6 +183,7 @@ createwindow(void)
 		    GL_TRUE);
 	}
     }
+    /* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
 #endif /* !NDEBUG */
 
     resizecallback(window, scrwidth * scrscale, scrheight * scrscale);

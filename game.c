@@ -26,22 +26,16 @@ static GLuint spritesheet;
 static GLuint spriteshader;
 static Sprite brick = {
     .verts = {
-        0.0f, 1.0f,
-        1.0f, 0.0f,
         0.0f, 0.0f,
-
+        1.0f, 0.0f,
         0.0f, 1.0f,
-        1.0f, 1.0f,
-        1.0f, 0.0f
+        1.0f, 1.0f
     },
     .texverts = {
-        0,  9,
-        31, 0,
         0,  0,
-
+        31, 0,
         0,  9,
-        31, 9,
-        31, 0
+        31, 9
     },
     .width = 32,
     .height = 10,

@@ -3,9 +3,9 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#define VERTCOUNT  2
-#define INDCOUNT   6
-#define ARRAYCOUNT (VERTCOUNT * INDCOUNT)
+#define INDCOUNT   2
+#define VERTCOUNT  4
+#define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
 #define VBOCOUNT   2
 
 enum { Verts, TexVerts };

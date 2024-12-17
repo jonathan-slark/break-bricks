@@ -133,7 +133,7 @@ shader_setint(GLuint shader, const char *name, GLint val)
     GLint loc;
 
     if((loc = glGetUniformLocation(shader, name)) == -1)
-	term(EXIT_FAILURE, "Could not get uniform location.\n");
+	fprintf(stderr, "Could not get uniform location.\n");
     glUniform1i(loc, val);
 }
 
@@ -143,7 +143,7 @@ shader_setmat4s(GLuint shader, const char *name, mat4s val)
     GLint loc;
 
     if ((loc = glGetUniformLocation(shader, name)) == -1)
-	term(EXIT_FAILURE, "Could not get uniform location.\n");
+	fprintf(stderr, "Could not get uniform location.\n");
     glUniformMatrix4fv(loc, 1, GL_FALSE, (float *) val.raw);
 }
 
@@ -153,6 +153,6 @@ shader_setvec3s(GLuint shader, const char *name, vec3s val)
     GLint loc;
 
     if ((loc = glGetUniformLocation(shader, name)) == -1)
-	term(EXIT_FAILURE, "Could not get uniform location.\n");
+	fprintf(stderr, "Could not get uniform location.\n");
     glUniform3fv(loc, 1, val.raw);
 }
