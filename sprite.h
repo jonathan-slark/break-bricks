@@ -10,8 +10,8 @@
 
 enum { Verts, TexVerts };
 typedef struct {
-    const float verts[ARRAYCOUNT];
-    const int texverts[ARRAYCOUNT];
+    float verts[ARRAYCOUNT];
+    int texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
     unsigned int width, height, xpos, ypos;
 } Sprite;

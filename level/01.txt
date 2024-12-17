@@ -1,3 +1,8 @@
-2222222222
-3333333333
-4444444444
+# 0  = no brick
+# 1  = solid brick
+# 2+ = destroyable brick in varying colours
+# White space, new lines and comments are ignored
+
+2 2 2 2 2 2 2 2 2 2
+3 3 3 3 3 3 3 3 3 3
+4 4 4 4 4 4 4 4 4 4

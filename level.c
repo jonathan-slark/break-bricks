@@ -7,14 +7,29 @@
 #include <glad.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sprite.h"
 #include "level.h"
 #include "main.h"
 #include "util.h"
 
+/* Function prototypes */
+void initbrick(Brick *brick, unsigned int width, unsigned int height,
+	unsigned int id);
+unsigned int readbricks(const char *l, Brick *bricks, unsigned int width,
+	unsigned int height);
+
+/* Variables */
 static Brick *bricks;
 static unsigned int brickcount;
+static float verts[] = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f
+};
+#if 0
 static Sprite brick = {
     .verts = {
         0.0f, 0.0f,
@@ -33,70 +48,83 @@ static Sprite brick = {
     .xpos = 0,
     .ypos = 0
 };
+#endif
+
+/* Function implementations */
+
+void
+initbrick(Brick *brick, unsigned int width, unsigned int height,
+	unsigned int id)
+{
+    UNUSED(id);
+
+    memcpy(brick->sprite.verts, verts, ARRAYCOUNT * sizeof(float));
+    brick->sprite.width = width;
+    brick->sprite.height = height;
+    brick->sprite.xpos = 0;
+    brick->sprite.ypos = 0;
+}
 
 unsigned int
-countbricks(const char *f)
+readbricks(const char *l, Brick *bricks, unsigned int width,
+	unsigned int height)
 {
     char c;
     unsigned count = 0;
 
-    while ((c = *f++) != '\0')
-	if (isdigit(c))
+    while ((c = *l++) != '\0') {
+	if (c == '#') {
+	    while ((c = *l++) != '\n') {
+		/* Comment */
+	    }
+	} else if (isdigit(c)) {
+	    if (bricks)
+		initbrick(&bricks[count], width, height,
+			(unsigned int) (c - '0'));
 	    count++;
+	} else if (c != '\n' && c != ' ' && c != '\t') {
+	    term(EXIT_FAILURE, "Syntax error in level file.\n");
+	}
+    }
 
     return count;
 }
 
 void
-readbricks(const char *f)
+level_load(const char *name, unsigned int width, unsigned int height)
 {
-    char c;
+    char *l;
 
-    while ((c = *f++) != '\0') {
-	if (c == '#') {
-	    while ((c = *f++) != '\n') {
-		/* Comment */
-	    }
-	} else if (c == '\n') {
-	    /* New line */
-	} else if (isdigit(c)) {
-	    // TODO
-	} else {
-	    term(EXIT_FAILURE, "Syntax error in level file.\n");
-	}
-    }
-}
-
-void
-level_load(const char *lvl, unsigned int width, unsigned int height)
-{
-    char *f;
-
-    f = load(lvl);
-    brickcount = countbricks(f);
+    l = load(name);
+    brickcount = readbricks(l, NULL, 0, 0);
     fprintf(stderr, "brickcount = %u\n", brickcount);
     bricks = (Brick *) malloc(brickcount * sizeof(Brick));
-    readbricks(f);
-    unload(f);
-
-    sprite_init(&brick);
+    readbricks(l, bricks, width, height);
+    unload(l);
 }
 
 void
 level_unload(void)
 {
-    sprite_term(&brick);
     free(bricks);
+    brickcount = 0;
 }
 
 void
 level_draw(GLuint shader)
 {
-    sprite_draw(shader, &brick);
+    UNUSED(shader);
+    //sprite_draw(shader, &brick);
 }
 
 int
 level_iscompleted(void)
 {
-    return 0;
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	if (!bricks[i].issolid && !bricks[i].isdestroyed)
+	    return 0;
+
+    return 1;
 }
