@@ -157,7 +157,8 @@ createwindow(void)
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif /* !NDEBUG */
-    if (!(window = glfwCreateWindow(scrwidth, scrheight, title, NULL, NULL)))
+    if (!(window = glfwCreateWindow(scrwidth * scrscale, scrheight * scrscale,
+		    title, NULL, NULL)))
         term(EXIT_FAILURE, NULL);
 
     glfwMakeContextCurrent(window);
@@ -184,7 +185,7 @@ createwindow(void)
     }
 #endif /* !NDEBUG */
 
-    resizecallback(window, scrwidth, scrheight);
+    resizecallback(window, scrwidth * scrscale, scrheight * scrscale);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

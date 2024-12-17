@@ -6,6 +6,7 @@
 static const char title[]             = "Break Bricks";
 static const unsigned int scrwidth    = 320;
 static const unsigned int scrheight   = 200;
+static const unsigned int scrscale    = 2;
 static const unsigned int openglmajor = 3;
 static const unsigned int openglminor = 3;
 
