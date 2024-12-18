@@ -6,7 +6,6 @@
 #include <cglm/struct.h>
 #include <ctype.h>
 #include <glad.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,7 +18,7 @@
 /* Function prototypes */
 void initbrick(Brick *brick, unsigned int id, unsigned int row,
 	unsigned int col);
-unsigned int readbricks(const char *l, Brick *bricks);
+unsigned int readbricks(const char *lvl, Brick *bricks);
 
 /* Variables */
 static Brick *bricks;
@@ -45,15 +44,17 @@ initbrick(Brick *brick, unsigned int id, unsigned int row, unsigned int col)
     brick->isdestroyed = 0;
 }
 
+/* Run once with bricks = NULL to get the brick count, a second time with
+ * bricks pointing to an array of bricks to be initialised. */
 unsigned int
-readbricks(const char *l, Brick *bricks)
+readbricks(const char *lvl, Brick *bricks)
 {
     char c;
     unsigned count = 0, row = 0, col = 0;
 
-    while ((c = *l++) != '\0') {
+    while ((c = *lvl++) != '\0') {
 	if (c == '#') {
-	    while ((c = *l++) != '\n') {
+	    while ((c = *lvl++) != '\n') {
 		/* Comment */
 	    }
 	} else if (c == 'x') {
@@ -65,7 +66,8 @@ readbricks(const char *l, Brick *bricks)
 	    count++;
 	    row++;
 	} else if (c == '\n') {
-	    col++;
+	    if (row > 0)
+		col++;
 	    row = 0;
 	} else if (c != ' ' && c != '\t') {
 	    term(EXIT_FAILURE, "Syntax error in level file.\n");
@@ -78,14 +80,15 @@ readbricks(const char *l, Brick *bricks)
 void
 level_load(const char *name)
 {
-    char *l;
+    char *lvl;
 
-    l = load(name);
-    brickcount = readbricks(l, NULL);
-    fprintf(stderr, "brickcount = %u\n", brickcount);
+    lvl = load(name);
+    brickcount = readbricks(lvl, NULL);
     bricks = (Brick *) malloc(brickcount * sizeof(Brick));
-    readbricks(l, bricks);
-    unload(l);
+    readbricks(lvl, bricks);
+    unload(lvl);
+
+    sprite_init(&sprite);
 }
 
 void

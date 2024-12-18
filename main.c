@@ -147,6 +147,8 @@ void
 createwindow(void)
 {
     int ver, flags;
+    GLFWmonitor *mon = glfwGetPrimaryMonitor();
+    const GLFWvidmode *mode = glfwGetVideoMode(mon);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openglmajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openglminor);
@@ -158,9 +160,16 @@ createwindow(void)
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif /* !NDEBUG */
-    if (!(window = glfwCreateWindow(scrwidth, scrheight, title,
-		    glfwGetPrimaryMonitor(), NULL)))
-        term(EXIT_FAILURE, NULL);
+
+    /* Request 8-bit full screen but keep the refresh rate the same. If this
+     * matches the current mode then it will use borderless window. */
+    glfwWindowHint(GLFW_RED_BITS, scrredbits);
+    glfwWindowHint(GLFW_GREEN_BITS, scrgreenbits);
+    glfwWindowHint(GLFW_BLUE_BITS, scrbluebits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+    if (!(window = glfwCreateWindow(scrwidth, scrheight, title, mon, NULL)))
+	    term(EXIT_FAILURE, NULL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwMakeContextCurrent(window);
     if (!(ver = gladLoadGL(glfwGetProcAddress)))

@@ -3,11 +3,14 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-static const char title[]             = "Break Bricks";
-static const unsigned int scrwidth    = 1920;
-static const unsigned int scrheight   = 1080;
-static const unsigned int openglmajor = 3;
-static const unsigned int openglminor = 3;
+static const char title[]     = "Break Bricks";
+static const int scrwidth     = 1920;
+static const int scrheight    = 1080;
+static const int scrredbits   = 8;
+static const int scrgreenbits = 8;
+static const int scrbluebits  = 8;
+static const int openglmajor  = 3;
+static const int openglminor  = 3;
 
 static const char vertshader[]      = "shader/sprite_vert.glsl";
 static const char fragshader[]      = "shader/sprite_frag.glsl";
