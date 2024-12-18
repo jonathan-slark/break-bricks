@@ -4,9 +4,9 @@
 */
 
 typedef struct {
-    unsigned int row, col;
-    vec3s colour;
+    int issolid;
     int isdestroyed;
+    Sprite sprite;
 } Brick;
 
 void level_load(const char *lvl);

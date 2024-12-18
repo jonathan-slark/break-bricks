@@ -10,10 +10,9 @@
 
 enum { Verts, TexVerts };
 typedef struct {
-    int texverts[ARRAYCOUNT];
+    unsigned int texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
     vec2s size, pos;
-    vec3s colour;
 } Sprite;
 
 void sprite_init(Sprite *s);

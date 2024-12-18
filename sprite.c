@@ -13,8 +13,8 @@
 #include "sprite.h"
 
 /* Function prototypes */
-static void screentonormal(const int *vin, int count, int width, int height,
-	float *vout);
+static void screentonormal(const unsigned int *vin, int count, int width,
+	int height, float *vout);
 
 /* Variables */
 static const float quad[] = {
@@ -28,7 +28,7 @@ static const float quad[] = {
 
 /* https://stackoverflow.com/q/40574677 */
 void
-screentonormal(const int *vin, int count, int width, int height, float *vout)
+screentonormal(const unsigned int *vin, int count, int width, int height, float *vout)
 {
     int i;
 
@@ -82,7 +82,6 @@ sprite_draw(GLuint shader, const Sprite *s)
     model = glms_translate_make(pos3);
     model = glms_scale(model, size3);
     shader_setmat4s(shader, modeluniform, model);
-    shader_setvec3s(shader, colouruniform, s->colour);
 
     glBindVertexArray(s->vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, VERTCOUNT);

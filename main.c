@@ -8,7 +8,6 @@
 #define GL_CONTEXT_FLAG_DEBUG_BIT_ARB 0x00000002
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
-#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>

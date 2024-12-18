@@ -17,17 +17,9 @@ static const char fragshader[]      = "shader/sprite_frag.glsl";
 static const GLchar modeluniform[]  = "model";
 static const GLchar projuniform[]   = "proj";
 static const GLchar texuniform[]    = "tex";
-static const GLchar colouruniform[] = "colour";
 static const char spritefile[]      = "tex/spritesheet.png";
 
-static const unsigned int brickwidth  = 128;
+static const unsigned int brickwidth  = 64;
 static const unsigned int brickheight = 32;
 static const unsigned int lvlcount    = 1;
-static const char * const lvls[]      = {
-    "level/01.txt"
-};
-static const vec3s brickcolours[] = {
-    {{ 1.0f, 0.0f, 0.0f }},
-    {{ 0.0f, 1.0f, 0.0f }},
-    {{ 0.0f, 0.0f, 1.0f }}
-};
+static const char lvlfolder[]         = "level/01.txt";

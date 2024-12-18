@@ -16,32 +16,53 @@
 #include "util.h"
 
 /* Function prototypes */
-void initbrick(Brick *brick, unsigned int id, unsigned int row,
-	unsigned int col);
+void initbrick(Brick *brick, char c, unsigned int row, unsigned int col);
 unsigned int readbricks(const char *lvl, Brick *bricks);
 
 /* Variables */
 static Brick *bricks;
 static unsigned int brickcount;
-Sprite sprite = {
-    .texverts = {
-	0,              0,
-	brickwidth - 1, 0,
-	0,              brickheight - 1,
-	brickwidth - 1, brickheight - 1
-    },
-    .size = {{ (float) brickwidth, (float) brickheight }}
-};
 
 /* Function implementations */
 
 void
-initbrick(Brick *brick, unsigned int id, unsigned int row, unsigned int col)
+initbrick(Brick *brick, char c, unsigned int row, unsigned int col)
 {
-    brick->row = row;
-    brick->col = col;
-    brick->colour = brickcolours[id];
+    Sprite *s = &brick->sprite;
+    int solid;
+    unsigned int id, yoff;
+
+    solid = (!isdigit(c));
+    brick->issolid = solid;
     brick->isdestroyed = 0;
+    /* Solid bricks are on row below breakable version of same colour */
+    if (solid) {
+	id = (unsigned int) (c - 'a');
+	yoff = brickheight;
+    } else {
+	id = (unsigned int) (c - '0');
+	yoff = 0;
+    }
+
+    /* Top left */
+    s->texverts[0] = id * brickwidth;
+    s->texverts[1] = yoff;
+    /* Top right */
+    s->texverts[2] = ((id + 1) * brickwidth) - 1;
+    s->texverts[3] = yoff;
+    /* Bottom left */
+    s->texverts[4] = id * brickwidth;
+    s->texverts[5] = yoff + brickheight - 1;
+    /* Bottom right */
+    s->texverts[6] = ((id + 1) * brickwidth) - 1;
+    s->texverts[7] = yoff + brickheight - 1;
+
+    s->size.x = (float) brickwidth;
+    s->size.y = (float) brickheight;
+    s->pos.x  = (float) (row * brickwidth);
+    s->pos.y  = (float) (col * brickheight);
+
+    sprite_init(s);
 }
 
 /* Run once with bricks = NULL to get the brick count, a second time with
@@ -60,12 +81,13 @@ readbricks(const char *lvl, Brick *bricks)
 	} else if (c == 'x') {
 	    /* No brick */
 	    row++;
-	} else if (isdigit(c)) {
+	} else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
 	    if (bricks)
-		initbrick(&bricks[count], (unsigned int) (c - '0'), row, col);
+		initbrick(&bricks[count], c, row, col);
 	    count++;
 	    row++;
 	} else if (c == '\n') {
+	    /* Ignore blank line */
 	    if (row > 0)
 		col++;
 	    row = 0;
@@ -87,13 +109,16 @@ level_load(const char *name)
     bricks = (Brick *) malloc(brickcount * sizeof(Brick));
     readbricks(lvl, bricks);
     unload(lvl);
-
-    sprite_init(&sprite);
 }
 
 void
 level_unload(void)
 {
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	sprite_term(&bricks[i].sprite);
+
     free(bricks);
     brickcount = 0;
 }
@@ -102,17 +127,10 @@ void
 level_draw(GLuint shader)
 {
     unsigned int i;
-    Brick *b;
 
-    for (i = 0; i < brickcount; i++) {
-	b = &bricks[i];
-	if (!b->isdestroyed) {
-	    sprite.pos.x = b->row * brickwidth;
-	    sprite.pos.y = b->col * brickheight;
-	    sprite.colour = b->colour;
-	    sprite_draw(shader, &sprite);
-	}
-    }
+    for (i = 0; i < brickcount; i++)
+	if (!bricks[i].isdestroyed)
+	    sprite_draw(shader, &bricks[i].sprite);
 }
 
 int
@@ -121,7 +139,7 @@ level_iscompleted(void)
     unsigned int i;
 
     for (i = 0; i < brickcount; i++)
-	if (!bricks[i].isdestroyed)
+	if (!bricks[i].issolid && !bricks[i].isdestroyed)
 	    return 0;
 
     return 1;
