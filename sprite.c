@@ -12,6 +12,9 @@
 #include "shader.h"
 #include "sprite.h"
 
+/* Macros */
+#define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))
+
 /* Function prototypes */
 static void screentonormal(const unsigned int *vin, int count, int width,
 	int height, float *vout);
@@ -33,8 +36,8 @@ screentonormal(const unsigned int *vin, int count, int width, int height, float 
     int i;
 
     for (i = 0; i < count; i += INDCOUNT) {
-	vout[i]   = ((float) vin[i]   + 0.5f) / (float) width;
-	vout[i+1] = ((float) vin[i+1] + 0.5f) / (float) height;
+	vout[i]   = SCR2NORM(vin[i],   width);
+	vout[i+1] = SCR2NORM(vin[i+1], height);
     }
 }
 

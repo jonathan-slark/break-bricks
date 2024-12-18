@@ -3,11 +3,10 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-/* ChatGPT suggested this define, it works as it's the same value as 
- * GL_CONTEXT_FLAG_DEBUG_BIT */
-#define GL_CONTEXT_FLAG_DEBUG_BIT_ARB 0x00000002
+#define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
+#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
@@ -35,11 +34,13 @@ static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
 static void createwindow(void);
 
 /* Variables */
+#ifndef NDEBUG
 static const unsigned int ignorelog[] = {
     131185, /* Buffer info */
     131204, /* Texture mapping warning */
     131218  /* Recompilation warning */
 };
+#endif /* !NDEBUG */
 static GLFWwindow *window;
 static int minimised;
 
@@ -185,14 +186,13 @@ createwindow(void)
 #ifndef NDEBUG
     if (GLAD_GL_ARB_debug_output) {
 	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT_ARB) {
+	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
 	    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 	    glDebugMessageCallbackARB(gldebugoutput, NULL);
 	    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
 		    GL_TRUE);
 	}
     }
-    /* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
 #endif /* !NDEBUG */
 
     resizecallback(window, scrwidth, scrheight);
@@ -203,7 +203,7 @@ createwindow(void)
 int
 main(void)
 {
-    float lasttime, curtime, deltatime;
+    float lasttime, curtime, dt;
 
     init();
     createwindow();
@@ -211,13 +211,13 @@ main(void)
 
     while (!glfwWindowShouldClose(window)) {
 	curtime = glfwGetTime();
-	deltatime = curtime - lasttime;
+	dt = curtime - lasttime;
 	lasttime = curtime;
         glfwPollEvents();
 
 	if (!minimised) {
-	    game_input(deltatime);
-	    game_update(deltatime);
+	    game_input(dt);
+	    game_update(dt);
 	    game_render();
 
 	    glfwSwapBuffers(window);

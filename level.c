@@ -32,10 +32,8 @@ initbrick(Brick *brick, char c, unsigned int row, unsigned int col)
     int solid;
     unsigned int id, yoff;
 
-    solid = (!isdigit(c));
-    brick->issolid = solid;
-    brick->isdestroyed = 0;
     /* Solid bricks are on row below breakable version of same colour */
+    solid = (!isdigit(c));
     if (solid) {
 	id = (unsigned int) (c - 'a');
 	yoff = brickheight;
@@ -43,6 +41,9 @@ initbrick(Brick *brick, char c, unsigned int row, unsigned int col)
 	id = (unsigned int) (c - '0');
 	yoff = 0;
     }
+
+    brick->issolid = solid;
+    brick->isdestroyed = 0;
 
     /* Top left */
     s->texverts[0] = id * brickwidth;

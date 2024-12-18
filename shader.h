@@ -8,4 +8,3 @@ void shader_unload(GLuint shader);
 void shader_use(GLuint shader);
 void shader_setint(GLuint shader, const char *name, GLint val);
 void shader_setmat4s(GLuint shader, const char *name, mat4s val);
-void shader_setvec3s(GLuint shader, const char *name, vec3s val);

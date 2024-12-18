@@ -3,6 +3,9 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define CLAMP(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 #define UNUSED(x) (void) (x)
 
 static const char readonly[] = "r";

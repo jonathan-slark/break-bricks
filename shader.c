@@ -110,15 +110,5 @@ shader_setmat4s(GLuint shader, const char *name, mat4s val)
 
     if ((loc = glGetUniformLocation(shader, name)) == -1)
 	fprintf(stderr, "Could not get uniform location.\n");
-    glUniformMatrix4fv(loc, 1, GL_FALSE, (float *) val.raw);
-}
-
-void
-shader_setvec3s(GLuint shader, const char *name, vec3s val)
-{
-    GLint loc;
-
-    if ((loc = glGetUniformLocation(shader, name)) == -1)
-	fprintf(stderr, "Could not get uniform location.\n");
-    glUniform3fv(loc, 1, val.raw);
+    glUniformMatrix4fv(loc, 1, GL_FALSE, val.raw[0]);
 }
