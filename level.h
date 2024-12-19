@@ -12,4 +12,5 @@ typedef struct {
 void level_load(const char *lvl);
 void level_unload(void);
 void level_draw(GLuint shader);
+void level_breakbricks(Sprite *ball);
 int level_iscompleted(void);

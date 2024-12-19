@@ -20,8 +20,11 @@
 #include "config.h"
 
 /* Function prototypes */
-void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
-unsigned int readbricks(const char *lvl, Brick *bricks);
+static void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
+static unsigned int readbricks(const char *lvl, Brick *bricks);
+static inline void createaabb(vec2 aabb[2], Sprite *s);
+/* static int checkaabb(Sprite *a, Sprite *b); */
+static int checkball(Sprite *b, Sprite *s);
 
 /* Variables */
 static Brick *bricks;
@@ -120,6 +123,54 @@ level_draw(GLuint shader)
     for (i = 0; i < brickcount; i++)
 	if (!bricks[i].isdestroyed)
 	    sprite_draw(shader, &bricks[i].sprite);
+}
+
+inline void
+createaabb(vec2 aabb[2], Sprite *s)
+{
+    aabb[0][0] = s->pos.x;
+    aabb[0][1] = s->pos.y;
+    aabb[1][0] = s->pos.x + s->size.x;
+    aabb[1][1] = s->pos.y + s->size.y;
+}
+
+/* Check collision between two sprites using cglm's AABB functions */
+#if 0
+int
+checkaabb(Sprite *a, Sprite *b)
+{
+    vec2 aabba[2], aabbb[2];
+
+    createaabb(aabba, a);
+    createaabb(aabbb, b);
+
+    return glm_aabb2d_aabb(aabba, aabbb);
+}
+#endif
+
+/* Check collision between the ball and a sprite using cglm */
+int
+checkball(Sprite *b, Sprite *s)
+{
+    vec2s centre = glms_vec2_adds(b->pos, ballradius);
+    vec3 circle = { centre.x, centre.y, ballradius };
+    vec2 aabb[2];
+
+    createaabb(aabb, s);
+
+    return glm_aabb2d_circle(aabb, circle);
+}
+
+void
+level_breakbricks(Sprite *ball)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	if (!bricks[i].isdestroyed)
+	    if (checkball(ball, &bricks[i].sprite))
+		if (!bricks[i].issolid)
+		    bricks[i].isdestroyed = 1;
 }
 
 int

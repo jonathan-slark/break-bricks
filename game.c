@@ -28,10 +28,10 @@ typedef struct {
 } Ball;
 
 /* Function prototypes */
-void initball(void);
-void moveball(float dt);
-void initpaddle(void);
-void movepaddle(float vel);
+static void initball(void);
+static void initpaddle(void);
+static void movepaddle(float vel);
+static void moveball(float dt);
 
 /* Variables */
 static int keypressed[GLFW_KEY_LAST + 1];
@@ -57,30 +57,6 @@ initball(void)
     s->pos = glms_vec2_add(paddle.pos, offset);
 
     sprite_init(s);
-}
-
-void
-moveball(float dt)
-{
-    Sprite *s = &ball.sprite;
-
-    if (ball.isstuck)
-	return;
-
-    s->pos = glms_vec2_add(s->pos, glms_vec2_scale(ball.vel, dt));
-
-    if (s->pos.x <= 0.0f) {
-	ball.vel.x = -ball.vel.x;
-	s->pos.x = 0.0f;
-    } else if (s->pos.x + ballwidth >= scrwidth) {
-	ball.vel.x = -ball.vel.x;
-	s->pos.x = scrwidth - ballwidth;
-    }
-
-    if (s->pos.y <= 0.0f) {
-	ball.vel.y = -ball.vel.y;
-	s->pos.y = 0.0f;
-    }
 }
 
 void
@@ -183,9 +159,34 @@ game_input(float dt)
 }
 
 void
+moveball(float dt)
+{
+    Sprite *s = &ball.sprite;
+
+    if (ball.isstuck)
+	return;
+
+    s->pos = glms_vec2_add(s->pos, glms_vec2_scale(ball.vel, dt));
+
+    if (s->pos.x <= 0.0f) {
+	ball.vel.x = -ball.vel.x;
+	s->pos.x = 0.0f;
+    } else if (s->pos.x + ballwidth >= scrwidth) {
+	ball.vel.x = -ball.vel.x;
+	s->pos.x = scrwidth - ballwidth;
+    }
+
+    if (s->pos.y <= 0.0f) {
+	ball.vel.y = -ball.vel.y;
+	s->pos.y = 0.0f;
+    }
+}
+
+void
 game_update(float dt)
 {
     moveball(dt);
+    level_breakbricks(&ball.sprite); 
 }
 
 void
