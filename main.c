@@ -13,10 +13,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "config.h"
 #include "game.h"
+#include "sprite.h"
 #include "main.h"
 #include "util.h"
+
+#include "config.h"
 
 /* Function declarations */
 static void errorcallback(int err, const char *desc);

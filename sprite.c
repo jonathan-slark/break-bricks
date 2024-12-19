@@ -4,13 +4,17 @@
  * TODO: Only store quad verts once, not per sprite.
 */
 
+#define GLFW_INCLUDE_NONE
 #include <cglm/struct.h>
 #include <glad.h>
+#include <GLFW/glfw3.h>
 #include <stdio.h>
 
-#include "config.h"
+#include "game.h"
 #include "shader.h"
 #include "sprite.h"
+
+#include "config.h"
 
 /* Macros */
 #define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))

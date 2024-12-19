@@ -3,10 +3,10 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#define INDCOUNT   2
-#define VERTCOUNT  4
+#define INDCOUNT   2	/* Number of indices per vertex */
+#define VERTCOUNT  4	/* Number of vertices per sprite */
 #define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
-#define VBOCOUNT   2
+#define VBOCOUNT 2	/* One for Verts, one for TexVerts */
 
 enum { Verts, TexVerts };
 typedef struct {

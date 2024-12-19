@@ -3,20 +3,24 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#include <cglm/struct.h>
+#define GLFW_INCLUDE_NONE
 #include <ctype.h>
+#include <cglm/struct.h>
 #include <glad.h>
+#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "game.h"
 #include "sprite.h"
 #include "level.h"
 #include "main.h"
 #include "util.h"
 
+#include "config.h"
+
 /* Function prototypes */
-void initbrick(Brick *brick, char c, unsigned int row, unsigned int col);
+void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
 unsigned int readbricks(const char *lvl, Brick *bricks);
 
 /* Variables */
@@ -26,42 +30,26 @@ static unsigned int brickcount;
 /* Function implementations */
 
 void
-initbrick(Brick *brick, char c, unsigned int row, unsigned int col)
+initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
 {
     Sprite *s = &brick->sprite;
     int solid;
-    unsigned int id, yoff;
+    unsigned int i;
 
-    /* Solid bricks are on row below breakable version of same colour */
-    solid = (!isdigit(c));
-    if (solid) {
-	id = (unsigned int) (c - 'a');
-	yoff = brickheight;
-    } else {
-	id = (unsigned int) (c - '0');
-	yoff = 0;
-    }
+    solid = (!isdigit(id));
+    if (solid)
+	i = id - 'a' + bricktypes;
+    else
+	i = id - '0';
 
     brick->issolid = solid;
     brick->isdestroyed = 0;
+    memcpy(s->texverts, brickverts[i], sizeof(brickverts[i]));
 
-    /* Top left */
-    s->texverts[0] = id * brickwidth;
-    s->texverts[1] = yoff;
-    /* Top right */
-    s->texverts[2] = ((id + 1) * brickwidth) - 1;
-    s->texverts[3] = yoff;
-    /* Bottom left */
-    s->texverts[4] = id * brickwidth;
-    s->texverts[5] = yoff + brickheight - 1;
-    /* Bottom right */
-    s->texverts[6] = ((id + 1) * brickwidth) - 1;
-    s->texverts[7] = yoff + brickheight - 1;
-
-    s->size.x = (float) brickwidth;
-    s->size.y = (float) brickheight;
-    s->pos.x  = (float) (row * brickwidth);
-    s->pos.y  = (float) (col * brickheight);
+    s->size.x = brickwidth;
+    s->size.y = brickheight;
+    s->pos.x  = row * brickwidth;
+    s->pos.y  = col * brickheight;
 
     sprite_init(s);
 }

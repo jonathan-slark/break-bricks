@@ -7,8 +7,8 @@
 #include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
+#include <string.h>
 
-#include "config.h"
 #include "game.h"
 #include "sprite.h"
 #include "level.h"
@@ -17,9 +17,9 @@
 #include "tex.h"
 #include "util.h"
 
+#include "config.h"
+
 /* Types */
-enum GameState { GameActive, GameMenu, GameWin };
-typedef enum GameState GameState;
 
 typedef struct {
     vec2s vel;
@@ -31,10 +31,10 @@ typedef struct {
 void initball(void);
 void moveball(float dt);
 void initpaddle(void);
+void movepaddle(float vel);
 
 /* Variables */
-//static GameState state;
-static int keys[GLFW_KEY_LAST + 1];
+static int keypressed[GLFW_KEY_LAST + 1];
 static GLuint spritesheet;
 static GLuint spriteshader;
 static Sprite paddle;
@@ -46,29 +46,14 @@ void
 initball(void)
 {
     Sprite *s = &ball.sprite;
-    vec2s offset = {{
-	(float) paddlewidth / 2.0f - ballradius,
-	-ballradius * 2.0f
-    }};;
+    vec2s offset = {{ paddlewidth / 2.0f - ballradius, -ballradius * 2.0f }};;
 
     ball.vel = ballvelocity;
     ball.isstuck = 1;
 
-    /* Top left */
-    s->texverts[0] = bricktypes * brickwidth + paddlewidth;
-    s->texverts[1] = 0;
-    /* Top right */
-    s->texverts[2] = bricktypes * brickwidth + paddlewidth + ballwidth - 1;
-    s->texverts[3] = 0;
-    /* Bottom left */
-    s->texverts[4] = bricktypes * brickwidth + paddlewidth;
-    s->texverts[5] = ballheight - 1;
-    /* Bottom right */
-    s->texverts[6] = bricktypes * brickwidth + paddlewidth + ballwidth - 1;
-    s->texverts[7] = ballheight - 1;
-
-    s->size.x = (float) ballwidth;
-    s->size.y = (float) ballheight;
+    memcpy(s->texverts, ballverts, sizeof(ballverts));
+    s->size.x = ballwidth;
+    s->size.y = ballheight;
     s->pos = glms_vec2_add(paddle.pos, offset);
 
     sprite_init(s);
@@ -87,9 +72,9 @@ moveball(float dt)
     if (s->pos.x <= 0.0f) {
 	ball.vel.x = -ball.vel.x;
 	s->pos.x = 0.0f;
-    } else if ((int) s->pos.x + ballwidth >= scrwidth) {
+    } else if (s->pos.x + ballwidth >= scrwidth) {
 	ball.vel.x = -ball.vel.x;
-	s->pos.x = (float) (scrwidth - ballwidth);
+	s->pos.x = scrwidth - ballwidth;
     }
 
     if (s->pos.y <= 0.0f) {
@@ -103,23 +88,11 @@ initpaddle(void)
 {
     Sprite *s = &paddle;
 
-    /* Top left */
-    s->texverts[0] = bricktypes * brickwidth;
-    s->texverts[1] = 0;
-    /* Top right */
-    s->texverts[2] = bricktypes * brickwidth + paddlewidth - 1;
-    s->texverts[3] = 0;
-    /* Bottom left */
-    s->texverts[4] = bricktypes * brickwidth;
-    s->texverts[5] = paddleheight - 1;
-    /* Bottom right */
-    s->texverts[6] = bricktypes * brickwidth + paddlewidth - 1;
-    s->texverts[7] = paddleheight - 1;
-
-    s->size.x = (float) paddlewidth;
-    s->size.y = (float) paddleheight;
-    s->pos.x = ((float) scrwidth) / 2.0f - s->size.x / 2.0f;
-    s->pos.y = ((float) scrheight) - s->size.y;
+    memcpy(s->texverts, paddleverts, sizeof(paddleverts));
+    s->size.x = paddlewidth;
+    s->size.y = paddleheight;
+    s->pos.x = scrwidth / 2.0f - s->size.x / 2.0f;
+    s->pos.y = scrheight - s->size.y;
 
     sprite_init(s);
 }
@@ -128,9 +101,10 @@ void
 game_load(void)
 {
     mat4s proj;
+    char lvl[] = LVLFOLDER "/00.txt";
+    char fmt[] = LVLFOLDER "/%02i.txt";
 
-    proj = glms_ortho(0.0f, (float) scrwidth, (float) scrheight, 0.0f, -1.0f,
-	    1.0f);
+    proj = glms_ortho(0.0f, scrwidth, scrheight, 0.0f, -1.0f, 1.0f);
     spriteshader = shader_load(vertshader, fragshader);
     shader_use(spriteshader);
     shader_setmat4s(spriteshader, projuniform, proj);
@@ -140,7 +114,8 @@ game_load(void)
     tex_use(spritesheet);
     shader_setint(spriteshader, texuniform, 0);
 
-    level_load(lvlfolder);
+    sprintf(lvl, fmt, 1);
+    level_load(lvl);
     initpaddle();
     initball();
 }
@@ -158,36 +133,53 @@ game_unload(void)
 void
 game_keydown(int key)
 {
-    keys[key] = 1;
+    keypressed[key] = 1;
 }
 
 void
 game_keyup(int key)
 {
-    keys[key] = 0;
+    keypressed[key] = 0;
+}
+
+void
+movepaddle(float vel)
+{
+    paddle.pos.x += vel;
+    paddle.pos.x = CLAMP(paddle.pos.x, 0.0f, scrwidth - paddlewidth);
+
+    if (ball.isstuck)
+	ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2.0f - ballradius;
+}
+
+void
+game_movepaddleleft(float dt)
+{
+    movepaddle(-paddlevelocity * dt);
+}
+
+void
+game_movepaddleright(float dt)
+{
+    movepaddle(paddlevelocity * dt);
+}
+
+void
+game_releaseball(float dt)
+{
+    UNUSED(dt);
+
+    ball.isstuck = 0;
 }
 
 void
 game_input(float dt)
 {
-    float vel = paddlevelocity * dt;
+    size_t i;
 
-    if (keys[GLFW_KEY_A]) {
-	paddle.pos.x -= vel;
-	paddle.pos.x = MAX(0.0f, paddle.pos.x);
-    }
-
-    if (keys[GLFW_KEY_D]) {
-	paddle.pos.x += vel;
-	paddle.pos.x = MIN((float) (scrwidth - paddlewidth), paddle.pos.x);
-    }
-
-    if (ball.isstuck)
-	ball.sprite.pos.x = paddle.pos.x + (float) paddlewidth / 2.0f -
-	    ballradius;
-
-    if (keys[GLFW_KEY_SPACE])
-	ball.isstuck = 0;
+    for (i = 0; i < COUNT(keys); i++)
+	if (keypressed[keys[i].key])
+	    (*keys[i].func)(dt);
 }
 
 void

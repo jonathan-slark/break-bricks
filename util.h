@@ -3,9 +3,10 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define COUNT(x)  (sizeof x / sizeof x[0])
 #define CLAMP(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define UNUSED(x) (void) (x)
 
 static const char readonly[] = "r";
