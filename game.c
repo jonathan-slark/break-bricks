@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -50,26 +51,26 @@ static void movepaddleright(float dt);
 static void releaseball(float dt);
 static void moveball(float dt);
 static int getdirection(vec2s vec);
-static inline void createaabb(vec2 aabb[2], Sprite *s);
+static void createaabb(vec2 aabb[2], Sprite *s);
 static int  checkball(Sprite *b, Sprite *s);
 static void levelbreakbricks(Sprite *ball);
 static int leveliscompleted(void);
 static void leveldraw(GLuint shader);
 
 /* Variables */
-static int keypressed[GLFW_KEY_LAST + 1];
+static Brick *bricks;
+static unsigned int brickcount;
+static Ball ball;
+static Sprite paddle;
 static GLuint spritesheet;
 static GLuint spriteshader;
-static Sprite paddle;
-static Ball ball;
+static int keypressed[GLFW_KEY_LAST + 1];
 static const vec2s compass[] = {
     {{  0.0f, 1.0f  }},
     {{  1.0f, 0.0f  }},
     {{  0.0f, -1.0f }},
     {{ -1.0f, 0.0f  }}
 };
-static Brick *bricks;
-static unsigned int brickcount;
 
 /* Config uses types from this file */
 #include "main_config.h"
@@ -318,7 +319,7 @@ getdirection(vec2s vec)
     return bestmatch;
 }
 
-inline void
+void
 createaabb(vec2 aabb[2], Sprite *s)
 {
     aabb[0][0] = s->pos.x;
