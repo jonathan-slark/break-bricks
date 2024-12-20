@@ -16,5 +16,6 @@ void game_movepaddleleft(float dt);
 void game_movepaddleright(float dt);
 void game_releaseball(float dt);
 void game_input(float dt);
+int  game_checkball(Sprite *b, Sprite *s);
 void game_update(float dt);
 void game_render(void);

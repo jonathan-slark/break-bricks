@@ -1,6 +1,7 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+ * TODO: review using multiple headers.
 */
 
 #define GLFW_INCLUDE_NONE
@@ -9,8 +10,8 @@
 #include <GLFW/glfw3.h>
 #include <string.h>
 
-#include "game.h"
 #include "sprite.h"
+#include "game.h"
 #include "level.h"
 #include "main.h"
 #include "shader.h"
@@ -27,11 +28,15 @@ typedef struct {
     Sprite sprite;
 } Ball;
 
+enum { Up, Right, Down, Left };
+
 /* Function prototypes */
 static void initball(void);
 static void initpaddle(void);
 static void movepaddle(float vel);
 static void moveball(float dt);
+static int getdirection(vec2s vec);
+static inline void createaabb(vec2 aabb[2], Sprite *s);
 
 /* Variables */
 static int keypressed[GLFW_KEY_LAST + 1];
@@ -39,6 +44,12 @@ static GLuint spritesheet;
 static GLuint spriteshader;
 static Sprite paddle;
 static Ball ball;
+static const vec2s compass[] = {
+    {{  0.0f, 1.0f  }},
+    {{  1.0f, 0.0f  }},
+    {{  0.0f, -1.0f }},
+    {{ -1.0f, 0.0f  }}
+};
 
 /* Function implementations */
 
@@ -180,6 +191,46 @@ moveball(float dt)
 	ball.vel.y = -ball.vel.y;
 	s->pos.y = 0.0f;
     }
+}
+
+int
+getdirection(vec2s vec)
+{
+    float max = 0.0f, dot;
+    int bestmatch = -1;
+    size_t i;
+
+    for (i = 0; i < COUNT(compass); i++) {
+	dot = glms_vec2_dot(glms_vec2_normalize(vec), compass[i]);
+	if (dot > max) {
+	    max = dot;
+	    bestmatch = i;
+	}
+    }
+
+    return bestmatch;
+}
+
+inline void
+createaabb(vec2 aabb[2], Sprite *s)
+{
+    aabb[0][0] = s->pos.x;
+    aabb[0][1] = s->pos.y;
+    aabb[1][0] = s->pos.x + s->size.x;
+    aabb[1][1] = s->pos.y + s->size.y;
+}
+
+/* Check collision between the ball and a sprite using cglm */
+int
+game_checkball(Sprite *b, Sprite *s)
+{
+    vec2s centre = glms_vec2_adds(b->pos, ballradius);
+    vec3 circle = { centre.x, centre.y, ballradius };
+    vec2 aabb[2];
+
+    createaabb(aabb, s);
+
+    return glm_aabb2d_circle(aabb, circle);
 }
 
 void

@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "game.h"
 #include "sprite.h"
+#include "game.h"
 #include "main.h"
 #include "util.h"
 

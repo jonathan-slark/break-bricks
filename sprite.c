@@ -10,9 +10,9 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-#include "game.h"
 #include "shader.h"
 #include "sprite.h"
+#include "game.h"
 
 #include "config.h"
 
