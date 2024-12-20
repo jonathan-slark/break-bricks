@@ -15,6 +15,16 @@ typedef struct {
     vec2s size, pos;
 } Sprite;
 
+GLuint sprite_shaderload(const char *vertex, const char *fragment);
+void sprite_shaderunload(GLuint shader);
+void sprite_shaderuse(GLuint shader);
+void sprite_shadersetint(GLuint shader, const char *name, GLint val);
+void sprite_shadersetmat4s(GLuint shader, const char *name, mat4s val);
+
+GLuint sprite_sheetload(const char *name, int isalpha);
+void sprite_sheetunload(GLuint id);
+void sprite_sheetuse(GLuint id);
+
 void sprite_init(Sprite *s);
 void sprite_term(const Sprite *s);
 void sprite_draw(GLuint shader, const Sprite *s);

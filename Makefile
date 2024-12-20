@@ -9,7 +9,7 @@ CFLAGS     = -Iglad -std=c99 -pedantic -Wall -Wextra -g -O0
 LDFLAGS    = -static -mwindows -lopengl32 -lglfw3
 
 BIN = breakbricks.exe
-SRC = game.c level.c main.c shader.c sprite.c tex.c util.c
+SRC = game.c main.c sprite.c util.c
 OBJ = $(SRC:.c=.o)
 
 all: $(BIN)
@@ -20,13 +20,9 @@ $(BIN): $(OBJ)
 %.o: %.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
-game.o: game.c game.h sprite.h level.h main.h shader.h tex.h util.h \
-	config.h
-level.o: level.c game.h sprite.h level.h main.h util.h config.h
-main.o: main.c game.h sprite.h main.h util.h config.h
-shader.o: shader.c main.h shader.h util.h
-sprite.o: sprite.c game.h shader.h sprite.h config.h
-tex.o: tex.c main.h
+game.o: game.c game.h main.h sprite.h util.h game_config.h
+main.o: main.c game.h main.h util.h main_config.h
+sprite.o: sprite.c main.h sprite.h sprite_config.h
 util.o: util.c main.h util.h
 
 clean:

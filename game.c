@@ -1,26 +1,35 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO: review using multiple headers.
 */
 
 #define GLFW_INCLUDE_NONE
 #include <cglm/struct.h>
+#include <ctype.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "sprite.h"
 #include "game.h"
-#include "level.h"
 #include "main.h"
-#include "shader.h"
-#include "tex.h"
+#include "sprite.h"
 #include "util.h"
 
-#include "config.h"
-
 /* Types */
+
+enum { Up, Right, Down, Left };
+
+typedef struct {
+    int key;
+    void (*func)(float dt);
+} Key;
+
+typedef struct {
+    int issolid;
+    int isdestroyed;
+    Sprite sprite;
+} Brick;
 
 typedef struct {
     vec2s vel;
@@ -28,15 +37,24 @@ typedef struct {
     Sprite sprite;
 } Ball;
 
-enum { Up, Right, Down, Left };
-
 /* Function prototypes */
+static void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
+static unsigned int readbricks(const char *lvl, Brick *bricks);
+static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
+static void levelunload(void);
 static void movepaddle(float vel);
+static void movepaddleleft(float dt);
+static void movepaddleright(float dt);
+static void releaseball(float dt);
 static void moveball(float dt);
 static int getdirection(vec2s vec);
 static inline void createaabb(vec2 aabb[2], Sprite *s);
+static int  checkball(Sprite *b, Sprite *s);
+static void levelbreakbricks(Sprite *ball);
+static int leveliscompleted(void);
+static void leveldraw(GLuint shader);
 
 /* Variables */
 static int keypressed[GLFW_KEY_LAST + 1];
@@ -50,8 +68,85 @@ static const vec2s compass[] = {
     {{  0.0f, -1.0f }},
     {{ -1.0f, 0.0f  }}
 };
+static Brick *bricks;
+static unsigned int brickcount;
+
+/* Config uses types from this file */
+#include "main_config.h"
+#include "game_config.h"
 
 /* Function implementations */
+
+void
+initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
+{
+    Sprite *s = &brick->sprite;
+    int solid;
+    unsigned int i;
+
+    solid = (!isdigit(id));
+    if (solid)
+	i = id - 'a' + bricktypes;
+    else
+	i = id - '0';
+
+    brick->issolid = solid;
+    brick->isdestroyed = 0;
+    memcpy(s->texverts, brickverts[i], sizeof(brickverts[i]));
+
+    s->size.x = brickwidth;
+    s->size.y = brickheight;
+    s->pos.x  = row * brickwidth;
+    s->pos.y  = col * brickheight;
+
+    sprite_init(s);
+}
+
+/* Run once with bricks = NULL to get the brick count, a second time with
+ * bricks pointing to an array of bricks to be initialised. */
+unsigned int
+readbricks(const char *lvl, Brick *bricks)
+{
+    char c;
+    unsigned count = 0, row = 0, col = 0;
+
+    while ((c = *lvl++) != '\0') {
+	if (c == '#') {
+	    while ((c = *lvl++) != '\n') {
+		/* Comment */
+	    }
+	} else if (c == 'x') {
+	    /* No brick */
+	    row++;
+	} else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
+	    if (bricks)
+		initbrick(&bricks[count], c, row, col);
+	    count++;
+	    row++;
+	} else if (c == '\n') {
+	    /* Ignore blank line */
+	    if (row > 0)
+		col++;
+	    row = 0;
+	} else if (c != ' ' && c != '\t') {
+	    term(EXIT_FAILURE, "Syntax error in level file.\n");
+	}
+    }
+
+    return count;
+}
+
+void
+levelload(const char *name)
+{
+    char *lvl;
+
+    lvl = load(name);
+    brickcount = readbricks(lvl, NULL);
+    bricks = (Brick *) malloc(brickcount * sizeof(Brick));
+    readbricks(lvl, bricks);
+    unload(lvl);
+}
 
 void
 initball(void)
@@ -92,19 +187,31 @@ game_load(void)
     char fmt[] = LVLFOLDER "/%02i.txt";
 
     proj = glms_ortho(0.0f, scrwidth, scrheight, 0.0f, -1.0f, 1.0f);
-    spriteshader = shader_load(vertshader, fragshader);
-    shader_use(spriteshader);
-    shader_setmat4s(spriteshader, projuniform, proj);
+    spriteshader = sprite_shaderload(vertshader, fragshader);
+    sprite_shaderuse(spriteshader);
+    sprite_shadersetmat4s(spriteshader, projuniform, proj);
 
-    spritesheet = tex_load(spritefile, 1);
+    spritesheet = sprite_sheetload(spritefile, 1);
     glActiveTexture(GL_TEXTURE0);
-    tex_use(spritesheet);
-    shader_setint(spriteshader, texuniform, 0);
+    sprite_sheetuse(spritesheet);
+    sprite_shadersetint(spriteshader, texuniform, 0);
 
     sprintf(lvl, fmt, 1);
-    level_load(lvl);
+    levelload(lvl);
     initpaddle();
     initball();
+}
+
+void
+levelunload(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	sprite_term(&bricks[i].sprite);
+
+    free(bricks);
+    brickcount = 0;
 }
 
 void
@@ -112,9 +219,9 @@ game_unload(void)
 {
     sprite_term(&ball.sprite);
     sprite_term(&paddle);
-    level_unload();
-    tex_unload(spritesheet);
-    shader_unload(spriteshader);
+    levelunload();
+    sprite_sheetunload(spritesheet);
+    sprite_shaderunload(spriteshader);
 }
 
 void
@@ -140,19 +247,19 @@ movepaddle(float vel)
 }
 
 void
-game_movepaddleleft(float dt)
+movepaddleleft(float dt)
 {
     movepaddle(-paddlevelocity * dt);
 }
 
 void
-game_movepaddleright(float dt)
+movepaddleright(float dt)
 {
     movepaddle(paddlevelocity * dt);
 }
 
 void
-game_releaseball(float dt)
+releaseball(float dt)
 {
     UNUSED(dt);
 
@@ -222,7 +329,7 @@ createaabb(vec2 aabb[2], Sprite *s)
 
 /* Check collision between the ball and a sprite using cglm */
 int
-game_checkball(Sprite *b, Sprite *s)
+checkball(Sprite *b, Sprite *s)
 {
     vec2s centre = glms_vec2_adds(b->pos, ballradius);
     vec3 circle = { centre.x, centre.y, ballradius };
@@ -234,10 +341,44 @@ game_checkball(Sprite *b, Sprite *s)
 }
 
 void
+levelbreakbricks(Sprite *ball)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	if (!bricks[i].isdestroyed)
+	    if (checkball(ball, &bricks[i].sprite))
+		if (!bricks[i].issolid)
+		    bricks[i].isdestroyed = 1;
+}
+
+int
+leveliscompleted(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	if (!bricks[i].issolid && !bricks[i].isdestroyed)
+	    return 0;
+
+    return 1;
+}
+
+void
 game_update(float dt)
 {
     moveball(dt);
-    level_breakbricks(&ball.sprite); 
+    levelbreakbricks(&ball.sprite); 
+}
+
+void
+leveldraw(GLuint shader)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+	if (!bricks[i].isdestroyed)
+	    sprite_draw(shader, &bricks[i].sprite);
 }
 
 void
@@ -246,7 +387,7 @@ game_render(void)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    level_draw(spriteshader);
+    leveldraw(spriteshader);
     sprite_draw(spriteshader, &paddle);
     sprite_draw(spriteshader, &ball.sprite);
 }

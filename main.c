@@ -10,15 +10,15 @@
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sprite.h"
 #include "game.h"
 #include "main.h"
 #include "util.h"
 
-#include "config.h"
+#include "main_config.h"
 
 /* Function declarations */
 static void errorcallback(int err, const char *desc);

@@ -3,6 +3,10 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-GLuint tex_load(const char *name, int isalpha);
-void tex_unload(GLuint id);
-void tex_use(GLuint id);
+static const GLchar modeluniform[]  = "model";
+static const float quad[] = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f
+};

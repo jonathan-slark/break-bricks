@@ -5,25 +5,15 @@
 
 #define LVLFOLDER "level"
 
-static const char title[]     = "Break Bricks";
-static const unsigned int scrwidth     = 1920;
-static const unsigned int scrheight    = 1080;
-static const unsigned int scrredbits   = 8;
-static const unsigned int scrgreenbits = 8;
-static const unsigned int scrbluebits  = 8;
-static const unsigned int openglmajor  = 3;
-static const unsigned int openglminor  = 3;
-
-static const char vertshader[]      = "shader/sprite_vert.glsl";
-static const char fragshader[]      = "shader/sprite_frag.glsl";
-static const GLchar modeluniform[]  = "model";
+static const char vertshader[]      = "sprite_vert.glsl";
+static const char fragshader[]      = "sprite_frag.glsl";
 static const GLchar projuniform[]   = "proj";
 static const GLchar texuniform[]    = "tex";
-static const char spritefile[]      = "tex/spritesheet.png";
 
+static const char spritefile[]      = "spritesheet.png";
 static const unsigned int brickwidth   = 64;
 static const unsigned int brickheight  = 32;
-static const unsigned int bricktypes   = 6;
+static const unsigned int bricktypes   = 6;	/* Number of brick types */
 static const unsigned int paddlewidth  = 128;
 static const unsigned int paddleheight = 28;
 static const float paddlevelocity      = 500.0f;
@@ -35,9 +25,9 @@ static const unsigned int lvlcount     = 1;
 
 /* Key bindings */
 static const Key keys[] = {
-    { GLFW_KEY_A,     game_movepaddleleft  },
-    { GLFW_KEY_D,     game_movepaddleright },
-    { GLFW_KEY_SPACE, game_releaseball     }
+    { GLFW_KEY_A,     movepaddleleft  },
+    { GLFW_KEY_D,     movepaddleright },
+    { GLFW_KEY_SPACE, releaseball     }
 };
 
 /* Vertices mapping out sprites in spritesheet */
