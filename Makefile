@@ -20,9 +20,9 @@ $(BIN): $(OBJ)
 %.o: %.c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
-game.o: game.c game.h main.h sprite.h util.h game_config.h
+game.o: game.c game.h main.h sprite.h util.h main_config.h game_config.h
 main.o: main.c game.h main.h util.h main_config.h
-sprite.o: sprite.c main.h sprite.h sprite_config.h
+sprite.o: sprite.c main.h sprite.h util.h main_config.h sprite_config.h
 util.o: util.c main.h util.h
 
 clean:
