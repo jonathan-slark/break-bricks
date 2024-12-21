@@ -10,6 +10,7 @@
 
 enum { Verts, TexVerts };
 typedef struct {
+    /* texverts are in screen coords */
     unsigned int texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
     vec2s size, pos;
