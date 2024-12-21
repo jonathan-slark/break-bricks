@@ -18,8 +18,6 @@
 #include "main.h"
 #include "util.h"
 
-#include "main_config.h"
-
 /* Function declarations */
 static void errorcallback(int err, const char *desc);
 static void init(void);

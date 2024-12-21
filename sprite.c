@@ -19,9 +19,6 @@
 #include "sprite.h"
 #include "util.h"
 
-#include "main_config.h"
-#include "sprite_config.h"
-
 /* Macros */
 #define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))
 

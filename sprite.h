@@ -16,6 +16,14 @@ typedef struct {
     vec2s size, pos;
 } Sprite;
 
+static const GLchar modeluniform[]  = "model";
+static const float quad[] = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f
+};
+
 GLuint sprite_shaderload(const char *vertex, const char *fragment);
 void sprite_shaderunload(GLuint shader);
 void sprite_shaderuse(GLuint shader);
