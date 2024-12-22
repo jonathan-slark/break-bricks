@@ -1,10 +1,6 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- *
- * Box2D:
- * Paddle width  = 1 m or 128 px or 1/128 m/px
- * Paddle height = 28 px or 28/128 m
 */
 
 #define GLFW_INCLUDE_NONE
@@ -22,8 +18,10 @@
 #include "sprite.h"
 #include "util.h"
 
-/* Macros */
-#define SCR2BOX2D(x) ((x) / 128.0f)
+/* Macros
+ * Paddle width = 1 m */
+#define PIXEL2M(x) ((x) / (float) paddlewidth)
+#define PIXEL2EXTENT(x) (PIXEL2M(x / 2.0f))
 
 /* Types */
 
@@ -33,11 +31,19 @@ typedef struct {
     Sprite sprite;
 } Ball;
 
+typedef struct {
+    b2BodyId bodyid;
+    Sprite sprite;
+} Paddle;
+
 /* Function prototypes */
 static void initball(void);
+static void initpaddle(void);
+static void setpos(Sprite *s, b2BodyId id);
 
 /* Variables */
 static Ball ball;
+static Paddle paddle;
 static GLuint spritesheet, spriteshader;
 static b2WorldId worldid;
 static int keypressed[GLFW_KEY_LAST + 1];
@@ -53,13 +59,54 @@ void
 initball(void)
 {
     Sprite *s = &ball.sprite;
+    b2BodyDef ballbd;
+    b2Polygon ballbox;
+    b2ShapeDef ballsd;
 
     ball.isstuck = 1;
 
     memcpy(s->texverts, ballverts, sizeof(ballverts));
-    s->size.x = SCR2BOX2D(ballwidth);
-    s->size.y = SCR2BOX2D(ballwidth);
+    s->size.x = PIXEL2M(ballwidth);
+    s->size.y = PIXEL2M(ballheight);
     sprite_init(s);
+
+    ballbd = b2DefaultBodyDef();
+    ballbd.type = b2_dynamicBody;
+    ballbd.position = (b2Vec2){
+	PIXEL2M(scrwidth) / 2.0f,
+	PIXEL2M(scrheight) / 2.0f
+    };
+    ball.bodyid = b2CreateBody(worldid, &ballbd);
+    ballbox = b2MakeBox(PIXEL2EXTENT(ballwidth), PIXEL2EXTENT(ballheight));
+    ballsd = b2DefaultShapeDef();
+    ballsd.density = 1.0f;
+    ballsd.friction = 0.3f;
+    b2CreatePolygonShape(ball.bodyid, &ballsd, &ballbox);
+}
+
+void
+initpaddle(void)
+{
+    Sprite *s = &paddle.sprite;
+    b2BodyDef paddlebd;
+    b2Polygon paddlebox;
+    b2ShapeDef paddlesd;
+
+    memcpy(s->texverts, paddleverts, sizeof(paddleverts));
+    s->size.x = PIXEL2M(paddlewidth);
+    s->size.y = PIXEL2M(paddleheight);
+    sprite_init(s);
+
+    paddlebd = b2DefaultBodyDef();
+    paddlebd.position = (b2Vec2){
+	PIXEL2M(scrwidth / 2.0f),
+	PIXEL2M(paddleheight / 2.0f)
+    };
+    paddle.bodyid = b2CreateBody(worldid, &paddlebd);
+    paddlebox = b2MakeBox(PIXEL2EXTENT(paddlewidth),
+	    PIXEL2EXTENT(paddleheight));
+    paddlesd = b2DefaultShapeDef();
+    b2CreatePolygonShape(paddle.bodyid, &paddlesd, &paddlebox);
 }
 
 void
@@ -67,12 +114,9 @@ game_load(void)
 {
     mat4s proj;
     b2WorldDef worldDef;
-    b2BodyDef groundBodyDef, bodyDef;
-    b2BodyId groundId;
-    b2Polygon groundBox, dynamicBox;
-    b2ShapeDef groundShapeDef, shapeDef;
 
-    proj = glms_ortho(0.0f, SCR2BOX2D(scrwidth), 0.0f, SCR2BOX2D(scrheight), -1.0f, 1.0f);
+    proj = glms_ortho(0.0f, PIXEL2M(scrwidth), 0.0f, PIXEL2M(scrheight), -1.0f,
+	    1.0f);
     spriteshader = sprite_shaderload(vertshader, fragshader);
     sprite_shaderuse(spriteshader);
     sprite_shadersetmat4s(spriteshader, projuniform, proj);
@@ -82,34 +126,19 @@ game_load(void)
     sprite_sheetuse(spritesheet);
     sprite_shadersetint(spriteshader, texuniform, 0);
 
-    initball();
-
     worldDef = b2DefaultWorldDef();
     worldDef.gravity = (b2Vec2){0.0f, -10.0f};
     worldid = b2CreateWorld(&worldDef);
 
-    groundBodyDef = b2DefaultBodyDef();
-    groundBodyDef.position = (b2Vec2){SCR2BOX2D(scrwidth) / 2.0f, SCR2BOX2D(-1)};
-    groundId = b2CreateBody(worldid, &groundBodyDef);
-    groundBox = b2MakeBox(SCR2BOX2D(scrwidth), SCR2BOX2D(2));
-    groundShapeDef = b2DefaultShapeDef();
-    b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
-    
-    bodyDef = b2DefaultBodyDef();
-    bodyDef.type = b2_dynamicBody;
-    bodyDef.position = (b2Vec2){SCR2BOX2D(scrwidth) / 2.0f, SCR2BOX2D(scrheight) / 2.0f};
-    ball.bodyid = b2CreateBody(worldid, &bodyDef);
-    dynamicBox = b2MakeBox(SCR2BOX2D(ballwidth), SCR2BOX2D(ballwidth));
-    shapeDef = b2DefaultShapeDef();
-    shapeDef.density = 1.0f;
-    shapeDef.friction = 0.3f;
-    b2CreatePolygonShape(ball.bodyid, &shapeDef, &dynamicBox);
+    initball();
+    initpaddle();
 }
 
 void
 game_unload(void)
 {
     b2DestroyWorld(worldid);
+    sprite_term(&paddle.sprite);
     sprite_term(&ball.sprite);
     sprite_sheetunload(spritesheet);
     sprite_shaderunload(spriteshader);
@@ -142,17 +171,25 @@ game_update(float dt)
 }
 
 void
+setpos(Sprite *s, b2BodyId id)
+{
+    b2Vec2 pos;
+
+    /* Box2D's origin is in centre of body */
+    pos = b2Body_GetPosition(id);
+    s->pos.x = pos.x - s->size.x / 2.0f;
+    s->pos.y = pos.y - s->size.y / 2.0f;;
+}
+
+void
 game_render(void)
 {
-    Sprite *s = &ball.sprite;
-    b2Vec2 position;
-
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    position = b2Body_GetPosition(ball.bodyid);
-    s->pos.x = position.x;
-    s->pos.y = position.y;
-
+    setpos(&ball.sprite, ball.bodyid);
     sprite_draw(spriteshader, &ball.sprite);
+
+    setpos(&paddle.sprite, paddle.bodyid);
+    sprite_draw(spriteshader, &paddle.sprite);
 }
