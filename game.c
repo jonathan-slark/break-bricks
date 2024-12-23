@@ -37,15 +37,31 @@ typedef struct {
 
 typedef struct {
     b2BodyId bodyid;
+    int issolid;
+    int isdestroyed;
+    Sprite sprite;
+} Brick;
+
+typedef struct {
+    b2BodyId bodyid;
     Sprite sprite;
 } Paddle;
 
 /* Function prototypes */
+static void initsprite(Sprite *s, unsigned int width, unsigned int height,
+	const unsigned int *verts, size_t size);
+static void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
+static unsigned int readbricks(const char *lvl, Brick *bricks);
+static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
+static void levelunload(void);
 static void updatesprite(Sprite *s, b2BodyId id);
+static void leveldraw(GLuint shader);
 
 /* Variables */
+static Brick *bricks;
+static unsigned int brickcount;
 static Ball ball;
 static Paddle paddle;
 static GLuint spritesheet, spriteshader;
@@ -67,6 +83,77 @@ initsprite(Sprite *s, unsigned int width, unsigned int height,
     s->size.x = PIXEL2M(width);
     s->size.y = PIXEL2M(height);
     sprite_init(s);
+}
+
+void
+initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
+{
+    Sprite *s = &brick->sprite;
+    int solid;
+    unsigned int i;
+
+    solid = (!isdigit(id));
+    if (solid)
+        i = id - 'a' + bricktypes;
+    else
+        i = id - '0';
+
+    brick->issolid = solid;
+    brick->isdestroyed = 0;
+    memcpy(s->texverts, brickverts[i], sizeof(brickverts[i]));
+
+    s->size.x = brickwidth;
+    s->size.y = brickheight;
+    s->pos.x  = row * brickwidth;
+    s->pos.y  = col * brickheight;
+
+    sprite_init(s);
+}
+
+/* Run once with bricks = NULL to get the brick count, a second time with
+ * bricks pointing to an array of bricks to be initialised. */
+unsigned int
+readbricks(const char *lvl, Brick *bricks)
+{
+    char c;
+    unsigned count = 0, row = 0, col = 0;
+
+    while ((c = *lvl++) != '\0') {
+        if (c == '#') {
+            while ((c = *lvl++) != '\n') {
+                /* Comment */
+            }
+        } else if (c == 'x') {
+            /* No brick */
+            row++;
+        } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
+            if (bricks)
+                initbrick(&bricks[count], c, row, col);
+            count++;
+            row++;
+        } else if (c == '\n') {
+            /* Ignore blank line */
+            if (row > 0)
+                col++;
+            row = 0;
+        } else if (c != ' ' && c != '\t') {
+            term(EXIT_FAILURE, "Syntax error in level file.\n");
+        }
+    }
+
+    return count;
+}
+
+void
+levelload(const char *name)
+{
+    char *lvl;
+
+    lvl = load(name);
+    brickcount = readbricks(lvl, NULL);
+    bricks = (Brick *) malloc(brickcount * sizeof(Brick));
+    readbricks(lvl, bricks);
+    unload(lvl);
 }
 
 void
@@ -137,6 +224,8 @@ game_load(void)
 {
     mat4s proj;
     b2WorldDef worldDef;
+    char lvl[] = LVLFOLDER "/00.txt";
+    char fmt[] = LVLFOLDER "/%02i.txt";
 
     proj = glms_ortho(0.0f, PIXEL2M(scrwidth), 0.0f, PIXEL2M(scrheight), -1.0f,
 	    1.0f);
@@ -154,8 +243,22 @@ game_load(void)
     worldDef.enableSleep = 0;
     worldid = b2CreateWorld(&worldDef);
 
+    sprintf(lvl, fmt, 1);
+    levelload(lvl);
     initball();
     initpaddle();
+}
+
+void
+levelunload(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+        sprite_term(&bricks[i].sprite);
+
+    free(bricks);
+    brickcount = 0;
 }
 
 void
@@ -164,6 +267,7 @@ game_unload(void)
     b2DestroyWorld(worldid);
     sprite_term(&paddle.sprite);
     sprite_term(&ball.sprite);
+    levelunload();
     sprite_sheetunload(spritesheet);
     sprite_shaderunload(spriteshader);
 }
@@ -215,10 +319,22 @@ updatesprite(Sprite *s, b2BodyId id)
 }
 
 void
+leveldraw(GLuint shader)
+{
+    unsigned int i;
+
+    for (i = 0; i < brickcount; i++)
+        if (!bricks[i].isdestroyed)
+            sprite_draw(shader, &bricks[i].sprite);
+}
+
+void
 game_render(void)
 {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    leveldraw(spriteshader);
 
     updatesprite(&ball.sprite, ball.bodyid);
     sprite_draw(spriteshader, &ball.sprite);

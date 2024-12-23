@@ -3,6 +3,8 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
+#define LVLFOLDER "level"
+
 static const char vertshader[]      = "sprite_vert.glsl";
 static const char fragshader[]      = "sprite_frag.glsl";
 static const GLchar projuniform[]   = "proj";
