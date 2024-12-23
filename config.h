@@ -11,19 +11,19 @@ static const GLchar texuniform[]    = "tex";
 static const char spritefile[]      = "spritesheet.png";
 static const unsigned int ballwidth    = 28;
 static const unsigned int ballheight   = 28;
-static const unsigned int paddlewidth  = 128;
-static const unsigned int paddleheight = 28;
+static const unsigned int paddlewidth  = 126;
+static const unsigned int paddleheight = 26;
 
 /* Vertices mapping out sprites in spritesheet */
 static const unsigned int ballverts[ARRAYCOUNT] = {
-    512, 0,
-    539, 0,
-    512, 27,
-    539, 27
+    510, 0,
+    537, 0,
+    510, 27,
+    537, 27
 };
 static const unsigned int paddleverts[ARRAYCOUNT] = {
     384, 0,
-    511, 0,
-    384, 27,
-    511, 27
+    509, 0,
+    384, 25,
+    509, 25
 };

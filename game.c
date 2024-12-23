@@ -1,6 +1,12 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+ * TODO:
+ * Unlick timestep from framerate.
+ * Multi-thread?
+ * b2World_GetBodyEvents()
+ * Add back sprite rotation.
+ * Adjust origin to match sprites.
 */
 
 #define GLFW_INCLUDE_NONE
@@ -21,7 +27,7 @@
 /* Macros
  * Paddle width = 1 m */
 #define PIXEL2M(x) ((x) / (float) paddlewidth)
-#define PIXEL2EXTENT(x) (PIXEL2M(x / 2.0f))
+#define EXT(x) ((x) / 2.0f)
 
 /* Types */
 
@@ -56,57 +62,73 @@ static const int substepcount = 4;
 /* Function implementations */
 
 void
+initsprite(Sprite *s, unsigned int width, unsigned int height,
+	const unsigned int *verts, size_t size)
+{
+    memcpy(s->texverts, verts, size);
+    s->size.x = PIXEL2M(width);
+    s->size.y = PIXEL2M(height);
+    sprite_init(s);
+}
+
+void
 initball(void)
 {
-    Sprite *s = &ball.sprite;
+    b2Circle circle = {{ 0.0f, 0.0f }, PIXEL2M(EXT(ballwidth)) };
     b2BodyDef ballbd;
-    b2Polygon ballbox;
     b2ShapeDef ballsd;
 
     ball.isstuck = 1;
-
-    memcpy(s->texverts, ballverts, sizeof(ballverts));
-    s->size.x = PIXEL2M(ballwidth);
-    s->size.y = PIXEL2M(ballheight);
-    sprite_init(s);
+    initsprite(&ball.sprite, ballwidth, ballheight, ballverts,
+	    sizeof(ballverts));
 
     ballbd = b2DefaultBodyDef();
     ballbd.type = b2_dynamicBody;
     ballbd.position = (b2Vec2){
-	PIXEL2M(scrwidth) / 2.0f,
-	PIXEL2M(scrheight) / 2.0f
+	PIXEL2M(EXT(scrwidth)),
+	PIXEL2M(EXT(scrheight))
     };
     ball.bodyid = b2CreateBody(worldid, &ballbd);
-    ballbox = b2MakeBox(PIXEL2EXTENT(ballwidth), PIXEL2EXTENT(ballheight));
+
     ballsd = b2DefaultShapeDef();
     ballsd.density = 1.0f;
     ballsd.friction = 0.3f;
-    b2CreatePolygonShape(ball.bodyid, &ballsd, &ballbox);
+    ballsd.restitution = 1.0f;
+    b2CreateCircleShape(ball.bodyid, &ballsd, &circle);
 }
 
 void
 initpaddle(void)
 {
-    Sprite *s = &paddle.sprite;
+    b2Capsule paddlecap;
     b2BodyDef paddlebd;
-    b2Polygon paddlebox;
     b2ShapeDef paddlesd;
 
-    memcpy(s->texverts, paddleverts, sizeof(paddleverts));
-    s->size.x = PIXEL2M(paddlewidth);
-    s->size.y = PIXEL2M(paddleheight);
-    sprite_init(s);
+    initsprite(&paddle.sprite, paddlewidth, paddleheight, paddleverts,
+	    sizeof(paddleverts));
 
     paddlebd = b2DefaultBodyDef();
+    paddlebd.type = b2_kinematicBody;
     paddlebd.position = (b2Vec2){
-	PIXEL2M(scrwidth / 2.0f),
-	PIXEL2M(paddleheight / 2.0f)
+	PIXEL2M(EXT(scrwidth)),
+	PIXEL2M(EXT(paddleheight))
     };
     paddle.bodyid = b2CreateBody(worldid, &paddlebd);
-    paddlebox = b2MakeBox(PIXEL2EXTENT(paddlewidth),
-	    PIXEL2EXTENT(paddleheight));
+
+    paddlecap.center1 = (b2Vec2){
+	PIXEL2M(EXT(paddleheight) - EXT(paddlewidth)),
+	0.0f
+    };
+    paddlecap.center2 = (b2Vec2){
+	PIXEL2M(EXT(paddlewidth) - EXT(paddleheight)),
+	0.0f
+    };
+    paddlecap.radius = PIXEL2M(EXT(paddleheight));
+
     paddlesd = b2DefaultShapeDef();
-    b2CreatePolygonShape(paddle.bodyid, &paddlesd, &paddlebox);
+    paddlesd.density = 1.0f;
+    paddlesd.friction = 0.3f;
+    b2CreateCapsuleShape(paddle.bodyid, &paddlesd, &paddlecap);
 }
 
 void
@@ -128,6 +150,7 @@ game_load(void)
 
     worldDef = b2DefaultWorldDef();
     worldDef.gravity = (b2Vec2){0.0f, -10.0f};
+    worldDef.enableSleep = 0;
     worldid = b2CreateWorld(&worldDef);
 
     initball();
@@ -177,8 +200,8 @@ setpos(Sprite *s, b2BodyId id)
 
     /* Box2D's origin is in centre of body */
     pos = b2Body_GetPosition(id);
-    s->pos.x = pos.x - s->size.x / 2.0f;
-    s->pos.y = pos.y - s->size.y / 2.0f;;
+    s->pos.x = pos.x - EXT(s->size.x);
+    s->pos.y = pos.y - EXT(s->size.y);
 }
 
 void
