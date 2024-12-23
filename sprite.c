@@ -229,13 +229,24 @@ sprite_draw(GLuint shader, const Sprite *s)
     mat4s model;
     vec3s pos3 = {{ s->pos.x, s->pos.y, 0.0f }};
     vec3s size3 = {{ s->size.x, s->size.y, 1.0f }};
+    vec3s prerot = {{ s->size.x / 2.0f, s->size.y / 2.0f, 0.0f }};
+    vec3s postrot = {{ -s->size.x / 2.0f, -s->size.y / 2.0f, 0.0f }};
+    vec3s axis = {{ 0.0f, 0.0f, 1.0f }};
 
+    /* Move to position */
     model = glms_translate_make(pos3);
+
+    /* Move origin to centre, rotate, move origin back */
+    model = glms_translate(model, prerot);
+    model = glms_rotate(model, glm_rad(s->rot), axis);
+    model = glms_translate(model, postrot);
+
+    /* Scale to size */
     model = glms_scale(model, size3);
+
     sprite_shadersetmat4s(shader, modeluniform, model);
 
     glBindVertexArray(s->vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, VERTCOUNT);
     glBindVertexArray(0);
 }
-

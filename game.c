@@ -2,11 +2,9 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  * TODO:
- * Unlick timestep from framerate.
- * Multi-thread?
+ * Unlock timestep from framerate.
  * b2World_GetBodyEvents()
  * Add back sprite rotation.
- * Adjust origin to match sprites.
 */
 
 #define GLFW_INCLUDE_NONE
@@ -45,7 +43,7 @@ typedef struct {
 /* Function prototypes */
 static void initball(void);
 static void initpaddle(void);
-static void setpos(Sprite *s, b2BodyId id);
+static void updatesprite(Sprite *s, b2BodyId id);
 
 /* Variables */
 static Ball ball;
@@ -74,7 +72,10 @@ initsprite(Sprite *s, unsigned int width, unsigned int height,
 void
 initball(void)
 {
-    b2Circle circle = {{ 0.0f, 0.0f }, PIXEL2M(EXT(ballwidth)) };
+    b2Circle circle = {
+	{ PIXEL2M(EXT(ballwidth)), PIXEL2M(EXT(ballwidth)) },
+	PIXEL2M(EXT(ballwidth))
+    };
     b2BodyDef ballbd;
     b2ShapeDef ballsd;
 
@@ -84,9 +85,9 @@ initball(void)
 
     ballbd = b2DefaultBodyDef();
     ballbd.type = b2_dynamicBody;
-    ballbd.position = (b2Vec2){
-	PIXEL2M(EXT(scrwidth)),
-	PIXEL2M(EXT(scrheight))
+    ballbd.position = (b2Vec2) {
+	PIXEL2M(EXT(scrwidth) - EXT(ballwidth)),
+	PIXEL2M(EXT(scrheight) - EXT(ballwidth))
     };
     ball.bodyid = b2CreateBody(worldid, &ballbd);
 
@@ -109,18 +110,18 @@ initpaddle(void)
 
     paddlebd = b2DefaultBodyDef();
     paddlebd.type = b2_kinematicBody;
-    paddlebd.position = (b2Vec2){
-	PIXEL2M(EXT(scrwidth)),
+    paddlebd.position = (b2Vec2) {
+	PIXEL2M(EXT(scrwidth) - EXT(paddlewidth)),
 	PIXEL2M(EXT(paddleheight))
     };
     paddle.bodyid = b2CreateBody(worldid, &paddlebd);
 
-    paddlecap.center1 = (b2Vec2){
-	PIXEL2M(EXT(paddleheight) - EXT(paddlewidth)),
+    paddlecap.center1 = (b2Vec2) {
+	PIXEL2M(EXT(paddleheight)),
 	0.0f
     };
-    paddlecap.center2 = (b2Vec2){
-	PIXEL2M(EXT(paddlewidth) - EXT(paddleheight)),
+    paddlecap.center2 = (b2Vec2) {
+	PIXEL2M(paddlewidth - EXT(paddleheight)),
 	0.0f
     };
     paddlecap.radius = PIXEL2M(EXT(paddleheight));
@@ -149,7 +150,7 @@ game_load(void)
     sprite_shadersetint(spriteshader, texuniform, 0);
 
     worldDef = b2DefaultWorldDef();
-    worldDef.gravity = (b2Vec2){0.0f, -10.0f};
+    worldDef.gravity = (b2Vec2) {0.0f, 0.0f};
     worldDef.enableSleep = 0;
     worldid = b2CreateWorld(&worldDef);
 
@@ -190,18 +191,27 @@ game_update(float dt)
 {
     UNUSED(dt);
 
+    if (ball.isstuck) {
+	b2Vec2 force = { 0.0f, -10.0f };
+	b2Body_ApplyForceToCenter(ball.bodyid, force, 0);
+	ball.isstuck = 0;
+    }
+
     b2World_Step(worldid, timestep, substepcount);
 }
 
 void
-setpos(Sprite *s, b2BodyId id)
+updatesprite(Sprite *s, b2BodyId id)
 {
     b2Vec2 pos;
+    b2Rot rot;
 
-    /* Box2D's origin is in centre of body */
     pos = b2Body_GetPosition(id);
-    s->pos.x = pos.x - EXT(s->size.x);
-    s->pos.y = pos.y - EXT(s->size.y);
+    s->pos.x = pos.x;
+    s->pos.y = pos.y;
+
+    rot = b2Body_GetRotation(id);
+    s->rot = b2Rot_GetAngle(rot);
 }
 
 void
@@ -210,9 +220,9 @@ game_render(void)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    setpos(&ball.sprite, ball.bodyid);
+    updatesprite(&ball.sprite, ball.bodyid);
     sprite_draw(spriteshader, &ball.sprite);
 
-    setpos(&paddle.sprite, paddle.bodyid);
+    updatesprite(&paddle.sprite, paddle.bodyid);
     sprite_draw(spriteshader, &paddle.sprite);
 }

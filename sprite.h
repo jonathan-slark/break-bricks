@@ -14,6 +14,7 @@ typedef struct {
     unsigned int texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
     vec2s size, pos;
+    float rot;
 } Sprite;
 
 static const GLchar modeluniform[]  = "model";
