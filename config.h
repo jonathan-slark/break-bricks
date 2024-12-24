@@ -29,6 +29,7 @@ static const unsigned int bgheight     = 1080;
 /* Rigid body simulation */
 static const float timestep = 1.0f / 60.0f; /* Simulation update frequency */
 static const unsigned int maxsteps = 5;     /* Max steps per frame */
+static const unsigned int wallwidth = 64;   /* Walls left, top and right */
 
 /* Key bindings */
 static const Key keys[] = {

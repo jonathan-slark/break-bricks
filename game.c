@@ -1,9 +1,6 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO:
- * b2World_GetBodyEvents()
- * Resolve pixel vs Box2D pos/size/rot.
 */
 
 #define GLFW_INCLUDE_NONE
@@ -57,10 +54,13 @@ static void initsprite(Sprite *s, unsigned int width, unsigned int height,
 	unsigned int x, unsigned int y, float rot, const unsigned int *verts,
 	size_t size);
 static void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
+static void termbrick(Brick *brick);
 static unsigned int readbricks(const char *lvl, Brick *bricks);
 static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
+static void makewall(unsigned int posx, unsigned int posy, unsigned int width,
+	unsigned int height);
 static void levelunload(void);
 static void movepaddle(b2Vec2 vel);
 static void movepaddleleft(float frametime);
@@ -68,6 +68,7 @@ static void movepaddleright(float frametime);
 static void releaseball(float frametime);
 static void updatesprite(Sprite *s, b2BodyId id, float dt);
 static void resetsmoothstates(void);
+static void collisionresolution(void);
 static void smoothstates(void);
 static void leveldraw(GLuint shader);
 
@@ -127,6 +128,7 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
 	    sizeof(brickverts[i]));
 
     brickbf = b2DefaultBodyDef();
+    brickbf.userData = brick;
     brickbf.position = (b2Vec2) {
 	PIXEL2M(x + EXT(brickwidth)),
 	PIXEL2M(y + EXT(brickheight))
@@ -139,6 +141,16 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
     bricksd.friction = 0.0f;
     bricksd.restitution = 0.0f;
     b2CreatePolygonShape(brick->bodyid, &bricksd, &brickbox);
+}
+
+void
+termbrick(Brick *brick)
+{
+    if (!brick->issolid && !brick->isdestroyed) {
+	brick->isdestroyed = 1;
+	b2DestroyBody(brick->bodyid);
+	brick->bodyid = b2_nullBodyId;
+    }
 }
 
 /* Run once with bricks = NULL to get the brick count, a second time with
@@ -203,6 +215,7 @@ initball(void)
 
     ballbd = b2DefaultBodyDef();
     ballbd.type = b2_dynamicBody;
+    ballbd.userData = &ball;
     ballbd.position = (b2Vec2) {
 	PIXEL2M(EXT(scrwidth) - EXT(ballwidth)),
 	PIXEL2M(EXT(paddleheight) + ballwidth)
@@ -213,6 +226,7 @@ initball(void)
     ballsd.density = 1.0f;
     ballsd.friction = 0.0f;
     ballsd.restitution = 1.0f;
+    ballsd.enableContactEvents = 1;
     b2CreateCircleShape(ball.bodyid, &ballsd, &circle);
 }
 
@@ -252,6 +266,30 @@ initpaddle(void)
 }
 
 void
+makewall(unsigned int posx, unsigned int posy, unsigned int width,
+	unsigned int height)
+{
+    b2BodyDef wallbf;
+    b2Polygon wallbox;
+    b2ShapeDef wallsd;
+    b2BodyId wallid;
+
+    wallbf = b2DefaultBodyDef();
+    wallbf.position = (b2Vec2) {
+	PIXEL2M(posx + EXT(width)),
+	PIXEL2M(posy + EXT(height))
+    };
+    wallid = b2CreateBody(worldid, &wallbf);
+
+    wallbox = b2MakeBox(PIXEL2M(EXT(width)), PIXEL2M(EXT(height)));
+    wallsd = b2DefaultShapeDef();
+    wallsd.density = 1.0f;
+    wallsd.friction = 0.0f;
+    wallsd.restitution = 0.0f;
+    b2CreatePolygonShape(wallid, &wallsd, &wallbox);
+}
+
+void
 game_load(void)
 {
     mat4s proj;
@@ -276,6 +314,11 @@ game_load(void)
     worldDef.gravity = (b2Vec2) {0.0f, 0.0f};
     worldDef.enableSleep = 0;
     worldid = b2CreateWorld(&worldDef);
+
+    makewall(0, 0, wallwidth, scrheight);
+    makewall(wallwidth, scrheight - wallwidth, scrheight - wallwidth,
+	    wallwidth);
+    makewall(scrwidth - wallwidth, 0, wallwidth, scrheight - wallwidth);
 
     sprintf(lvl, fmt, 1);
     levelload(lvl);
@@ -405,6 +448,29 @@ smoothstates(void)
 }
 
 void
+collisionresolution(void)
+{
+    int i;
+    b2ContactEvents events = b2World_GetContactEvents(worldid);
+    b2ContactEndTouchEvent *endevent;
+    b2BodyId bodyid;
+    void *userdata;
+    Brick *brick;
+
+    for (i = 0; i < events.endCount; ++i)
+    {
+	endevent = events.endEvents + i;
+
+	bodyid = b2Shape_GetBody(endevent->shapeIdA);
+	userdata = b2Body_GetUserData(bodyid);
+	if (userdata)
+	    brick = (Brick *) userdata;
+	if (brick)
+	    termbrick(brick);
+    }
+}
+
+void
 game_update(float frametime)
 {
     unsigned int steps, i;
@@ -425,6 +491,7 @@ game_update(float frametime)
 	/* Get actual states for when collision callbacks are fired */
 	resetsmoothstates();
 	b2World_Step(worldid, timestep, substepcount);
+	collisionresolution();
     }
 
     /* Use smooth states for rendering */
