@@ -3,22 +3,36 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
+/* Levels */
 #define LVLFOLDER "level"
+static const unsigned int lvlcount     = 1;
 
+/* Shader */
 static const char vertshader[]      = "sprite_vert.glsl";
 static const char fragshader[]      = "sprite_frag.glsl";
 static const GLchar projuniform[]   = "proj";
 static const GLchar texuniform[]    = "tex";
 
+/* Sprites */
 static const char spritefile[]      = "spritesheet.png";
 static const unsigned int brickwidth   = 64;
 static const unsigned int brickheight  = 32;
-static const unsigned int bricktypes   = 6;     /* Number of brick types */
+static const unsigned int bricktypes   = 6;   /* Number of brick types */
 static const unsigned int ballwidth    = 28;
 static const unsigned int ballheight   = 28;
 static const unsigned int paddlewidth  = 126;
 static const unsigned int paddleheight = 26;
-static const unsigned int lvlcount     = 1;
+
+/* Rigid body simulation */
+static const float timestep = 1.0f / 60.0f; /* Simulation update frequency */
+static const unsigned int maxsteps = 5;     /* Max steps per frame */
+
+/* Key bindings */
+static const Key keys[] = {
+    { GLFW_KEY_A,     movepaddleleft  },
+    { GLFW_KEY_D,     movepaddleright },
+    { GLFW_KEY_SPACE, releaseball     }
+};
 
 /* Vertices mapping out sprites in spritesheet */
 static const unsigned int ballverts[ARRAYCOUNT] = {

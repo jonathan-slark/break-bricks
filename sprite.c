@@ -238,7 +238,7 @@ sprite_draw(GLuint shader, const Sprite *s)
 
     /* Move origin to centre, rotate, move origin back */
     model = glms_translate(model, prerot);
-    model = glms_rotate(model, glm_rad(s->rot), axis);
+    model = glms_rotate(model, s->rot, axis);
     model = glms_translate(model, postrot);
 
     /* Scale to size */

@@ -203,7 +203,7 @@ createwindow(void)
 int
 main(void)
 {
-    float lasttime, curtime, dt;
+    float lasttime, curtime, frametime;
 
     init();
     createwindow();
@@ -211,13 +211,13 @@ main(void)
 
     while (!glfwWindowShouldClose(window)) {
 	curtime = glfwGetTime();
-	dt = curtime - lasttime;
+	frametime = curtime - lasttime;
 	lasttime = curtime;
         glfwPollEvents();
 
 	if (!minimised) {
-	    game_input(dt);
-	    game_update(dt);
+	    game_input(frametime);
+	    game_update(frametime);
 	    game_render();
 
 	    glfwSwapBuffers(window);

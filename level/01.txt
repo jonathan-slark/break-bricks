@@ -7,5 +7,36 @@
 # 5 = yellow, breakable | f = yellow, unbreakable
 # White space, new lines and comments are ignored
 
-f f f f f f f f f f f f f f f f f f f f f f f f f f f f f f
-f x x x x x x x x x x x x x x x x x x x x x x x x x x x x f
+d d d d d d d d d d d d d d d d d d d d d d d d d d d d d d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d
+d x x x x x x x x x x x x x x x x x x x x x x x x x x x x d

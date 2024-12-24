@@ -2,9 +2,8 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  * TODO:
- * Unlock timestep from framerate.
  * b2World_GetBodyEvents()
- * Add back sprite rotation.
+ * Resolve pixel vs Box2D pos/size/rot.
 */
 
 #define GLFW_INCLUDE_NONE
@@ -30,6 +29,11 @@
 /* Types */
 
 typedef struct {
+    int key;
+    void (*func)(float frametime);
+} Key;
+
+typedef struct {
     b2BodyId bodyid;
     int isstuck;
     Sprite sprite;
@@ -44,19 +48,27 @@ typedef struct {
 
 typedef struct {
     b2BodyId bodyid;
+    int ismoving;
     Sprite sprite;
 } Paddle;
 
 /* Function prototypes */
 static void initsprite(Sprite *s, unsigned int width, unsigned int height,
-	const unsigned int *verts, size_t size);
+	unsigned int x, unsigned int y, float rot, const unsigned int *verts,
+	size_t size);
 static void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
 static unsigned int readbricks(const char *lvl, Brick *bricks);
 static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
-static void updatesprite(Sprite *s, b2BodyId id);
+static void movepaddle(b2Vec2 vel);
+static void movepaddleleft(float frametime);
+static void movepaddleright(float frametime);
+static void releaseball(float frametime);
+static void updatesprite(Sprite *s, b2BodyId id, float dt);
+static void resetsmoothstates(void);
+static void smoothstates(void);
 static void leveldraw(GLuint shader);
 
 /* Variables */
@@ -67,8 +79,9 @@ static Paddle paddle;
 static GLuint spritesheet, spriteshader;
 static b2WorldId worldid;
 static int keypressed[GLFW_KEY_LAST + 1];
-static const float timestep = 1.0f / 144.0f;
-static const int substepcount = 4;
+static const int substepcount = 4; /* Number of sub steps per world step */
+static float acc = 0.0f;           /* Time since last world step */
+static float alpha = 0.0f;         /* Accumulator ratio for smooth movements */
 
 /* Config uses types from this file */
 #include "config.h"
@@ -76,12 +89,15 @@ static const int substepcount = 4;
 /* Function implementations */
 
 void
-initsprite(Sprite *s, unsigned int width, unsigned int height,
-	const unsigned int *verts, size_t size)
+initsprite(Sprite *s, unsigned int width, unsigned int height, unsigned int x,
+	unsigned int y, float rot, const unsigned int *verts, size_t size)
 {
     memcpy(s->texverts, verts, size);
     s->size.x = PIXEL2M(width);
     s->size.y = PIXEL2M(height);
+    s->pos.x = PIXEL2M(x);
+    s->pos.y = PIXEL2M(scrheight - y - height); /* Box2D y axis is flipped */
+    s->rot = rot;
     sprite_init(s);
 }
 
@@ -90,7 +106,10 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
 {
     Sprite *s = &brick->sprite;
     int solid;
-    unsigned int i;
+    unsigned int i, x, y;
+    b2BodyDef brickbf;
+    b2Polygon brickbox;
+    b2ShapeDef bricksd;
 
     solid = (!isdigit(id));
     if (solid)
@@ -100,14 +119,25 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
 
     brick->issolid = solid;
     brick->isdestroyed = 0;
-    memcpy(s->texverts, brickverts[i], sizeof(brickverts[i]));
 
-    s->size.x = brickwidth;
-    s->size.y = brickheight;
-    s->pos.x  = row * brickwidth;
-    s->pos.y  = col * brickheight;
+    x  = row * brickwidth;
+    y  = col * brickheight;
+    initsprite(s, brickwidth, brickheight, x, y, 0.0f, brickverts[i],
+	    sizeof(brickverts[i]));
 
-    sprite_init(s);
+    brickbf = b2DefaultBodyDef();
+    brickbf.position = (b2Vec2) {
+	PIXEL2M(x + EXT(brickwidth)),
+	PIXEL2M(EXT(brickheight) + scrheight - y - brickheight)
+    };
+    brick->bodyid = b2CreateBody(worldid, &brickbf);
+
+    brickbox = b2MakeBox(PIXEL2M(EXT(brickwidth)), PIXEL2M(EXT(brickheight)));
+    bricksd = b2DefaultShapeDef();
+    bricksd.density = 1.0f;
+    bricksd.friction = 0.0f;
+    bricksd.restitution = 0.0f;
+    b2CreatePolygonShape(brick->bodyid, &bricksd, &brickbox);
 }
 
 /* Run once with bricks = NULL to get the brick count, a second time with
@@ -167,20 +197,20 @@ initball(void)
     b2ShapeDef ballsd;
 
     ball.isstuck = 1;
-    initsprite(&ball.sprite, ballwidth, ballheight, ballverts,
-	    sizeof(ballverts));
+    initsprite(&ball.sprite, ballwidth, ballheight, 0.0f, 0.0f, 0.0f,
+	    ballverts, sizeof(ballverts));
 
     ballbd = b2DefaultBodyDef();
     ballbd.type = b2_dynamicBody;
     ballbd.position = (b2Vec2) {
 	PIXEL2M(EXT(scrwidth) - EXT(ballwidth)),
-	PIXEL2M(EXT(scrheight) - EXT(ballwidth))
+	PIXEL2M(EXT(paddleheight) + ballwidth)
     };
     ball.bodyid = b2CreateBody(worldid, &ballbd);
 
     ballsd = b2DefaultShapeDef();
     ballsd.density = 1.0f;
-    ballsd.friction = 0.3f;
+    ballsd.friction = 0.0f;
     ballsd.restitution = 1.0f;
     b2CreateCircleShape(ball.bodyid, &ballsd, &circle);
 }
@@ -192,8 +222,8 @@ initpaddle(void)
     b2BodyDef paddlebd;
     b2ShapeDef paddlesd;
 
-    initsprite(&paddle.sprite, paddlewidth, paddleheight, paddleverts,
-	    sizeof(paddleverts));
+    initsprite(&paddle.sprite, paddlewidth, paddleheight, 0.0f, 0.0f, 0.0f,
+	    paddleverts, sizeof(paddleverts));
 
     paddlebd = b2DefaultBodyDef();
     paddlebd.type = b2_kinematicBody;
@@ -215,7 +245,8 @@ initpaddle(void)
 
     paddlesd = b2DefaultShapeDef();
     paddlesd.density = 1.0f;
-    paddlesd.friction = 0.3f;
+    paddlesd.friction = 0.0f;
+    paddlesd.restitution = 0.0f;
     b2CreateCapsuleShape(paddle.bodyid, &paddlesd, &paddlecap);
 }
 
@@ -285,37 +316,115 @@ game_keyup(int key)
 }
 
 void
-game_input(float dt)
+movepaddle(b2Vec2 vel)
 {
-    UNUSED(dt);
+    b2Body_SetLinearVelocity(paddle.bodyid, vel);
 }
 
 void
-game_update(float dt)
+stoppaddle(void)
 {
-    UNUSED(dt);
+    b2Vec2 vel = { -0.0f, 0.0f };
+    movepaddle(vel);
+}
 
-    if (ball.isstuck) {
-	b2Vec2 force = { 0.0f, -10.0f };
-	b2Body_ApplyForceToCenter(ball.bodyid, force, 0);
-	ball.isstuck = 0;
+void
+movepaddleleft(float frametime)
+{
+    UNUSED(frametime);
+
+    paddle.ismoving = 1;
+    b2Vec2 vel = { -5.0f, 0.0f };
+    movepaddle(vel);
+}
+
+void
+movepaddleright(float frametime)
+{
+    UNUSED(frametime);
+
+    paddle.ismoving = 1;
+    b2Vec2 vel = { 5.0f, 0.0f };
+    movepaddle(vel);
+}
+
+void
+releaseball(float frametime)
+{
+    UNUSED(frametime);
+    b2Vec2 force = { -0.5f, 0.5f };
+
+    b2Body_ApplyForceToCenter(ball.bodyid, force, 0);
+}
+
+void
+game_input(float frametime)
+{
+    size_t i;
+
+    paddle.ismoving = 0;
+
+    for (i = 0; i < COUNT(keys); i++)
+        if (keypressed[keys[i].key])
+            (*keys[i].func)(frametime);
+}
+
+/* Use interpolation to smooth movement */
+void
+updatesprite(Sprite *s, b2BodyId id, float dt)
+{
+    b2Vec2 pos   = b2Body_GetPosition(id);
+    b2Rot rot    = b2Body_GetRotation(id);
+    b2Vec2 vel   = b2Body_GetLinearVelocity(id);
+    float angvel = b2Body_GetAngularVelocity(id);
+
+    s->pos.x = pos.x + vel.x * dt;
+    s->pos.y = pos.y + vel.y * dt;
+
+    s->rot = b2Rot_GetAngle(rot) + angvel * dt;
+}
+
+void
+resetsmoothstates(void)
+{
+    updatesprite(&ball.sprite, ball.bodyid, 0.0f);
+    updatesprite(&paddle.sprite, paddle.bodyid, 0.0f);
+}
+
+void
+smoothstates(void)
+{
+    float dt = alpha * timestep;
+
+    updatesprite(&ball.sprite, ball.bodyid, dt);
+    updatesprite(&paddle.sprite, paddle.bodyid, dt);
+}
+
+void
+game_update(float frametime)
+{
+    unsigned int steps, i;
+
+    if (!paddle.ismoving)
+	stoppaddle();
+
+    acc += frametime;
+    steps = acc / timestep;
+
+    /* Only update acc when needed, to avoid rounding errors */
+    if (steps > 0)
+	acc -= steps * timestep;
+
+    alpha = acc / timestep;
+
+    for (i = 0; i < MIN(steps, maxsteps); i++) {
+	/* Get actual states for when collision callbacks are fired */
+	resetsmoothstates();
+	b2World_Step(worldid, timestep, substepcount);
     }
 
-    b2World_Step(worldid, timestep, substepcount);
-}
-
-void
-updatesprite(Sprite *s, b2BodyId id)
-{
-    b2Vec2 pos;
-    b2Rot rot;
-
-    pos = b2Body_GetPosition(id);
-    s->pos.x = pos.x;
-    s->pos.y = pos.y;
-
-    rot = b2Body_GetRotation(id);
-    s->rot = b2Rot_GetAngle(rot);
+    /* Use smooth states for rendering */
+    smoothstates();
 }
 
 void
@@ -335,10 +444,6 @@ game_render(void)
     glClear(GL_COLOR_BUFFER_BIT);
 
     leveldraw(spriteshader);
-
-    updatesprite(&ball.sprite, ball.bodyid);
     sprite_draw(spriteshader, &ball.sprite);
-
-    updatesprite(&paddle.sprite, paddle.bodyid);
     sprite_draw(spriteshader, &paddle.sprite);
 }
