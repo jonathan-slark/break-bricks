@@ -31,9 +31,9 @@ void sprite_shaderuse(GLuint shader);
 void sprite_shadersetint(GLuint shader, const char *name, GLint val);
 void sprite_shadersetmat4s(GLuint shader, const char *name, mat4s val);
 
-GLuint sprite_sheetload(const char *name, int isalpha);
-void sprite_sheetunload(GLuint id);
-void sprite_sheetuse(GLuint id);
+GLuint sprite_load(const char *name, int isalpha);
+void sprite_unload(GLuint id);
+void sprite_use(GLuint id);
 
 void sprite_init(Sprite *s);
 void sprite_term(const Sprite *s);

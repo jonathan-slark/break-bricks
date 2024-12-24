@@ -3,7 +3,7 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
 */
 
-static const char title[]     = "Box2D Test";
+static const char title[]     = "Break Bricks";
 static const unsigned int scrwidth     = 1920;
 static const unsigned int scrheight    = 1080;
 static const unsigned int scrredbits   = 8;

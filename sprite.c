@@ -135,6 +135,8 @@ loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps,
     int width, height, chan;
     unsigned char *data;
 
+    /* OpenGL's origin is bottom left, instead of top left */
+    stbi_set_flip_vertically_on_load(1);  
     data = stbi_load(name, &width, &height, &chan, 0);
     if (!data)
 	term(EXIT_FAILURE, "Could not loadtex image %s\n.", name);
@@ -155,7 +157,7 @@ loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps,
 }
 
 GLuint
-sprite_sheetload(const char *name, int isalpha)
+sprite_load(const char *name, int isalpha)
 {
     if (isalpha)
 	return loadtex(name, GL_RGBA, GL_RGBA, GL_REPEAT, GL_REPEAT, GL_LINEAR,
@@ -166,13 +168,13 @@ sprite_sheetload(const char *name, int isalpha)
 }
 
 void
-sprite_sheetunload(GLuint id)
+sprite_unload(GLuint id)
 {
     glDeleteTextures(1, &id);
 }
 
 void
-sprite_sheetuse(GLuint id)
+sprite_use(GLuint id)
 {
     glBindTexture(GL_TEXTURE_2D, id);
 }

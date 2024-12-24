@@ -76,7 +76,8 @@ static Brick *bricks;
 static unsigned int brickcount;
 static Ball ball;
 static Paddle paddle;
-static GLuint spritesheet, spriteshader;
+static GLuint spritesheet, spriteshader, bg;
+static Sprite bgsprite;
 static b2WorldId worldid;
 static int keypressed[GLFW_KEY_LAST + 1];
 static const int substepcount = 4; /* Number of sub steps per world step */
@@ -96,7 +97,7 @@ initsprite(Sprite *s, unsigned int width, unsigned int height, unsigned int x,
     s->size.x = PIXEL2M(width);
     s->size.y = PIXEL2M(height);
     s->pos.x = PIXEL2M(x);
-    s->pos.y = PIXEL2M(scrheight - y - height); /* Box2D y axis is flipped */
+    s->pos.y = PIXEL2M(y);
     s->rot = rot;
     sprite_init(s);
 }
@@ -121,14 +122,14 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
     brick->isdestroyed = 0;
 
     x  = row * brickwidth;
-    y  = col * brickheight;
+    y  = scrheight - brickheight - (col * brickheight);
     initsprite(s, brickwidth, brickheight, x, y, 0.0f, brickverts[i],
 	    sizeof(brickverts[i]));
 
     brickbf = b2DefaultBodyDef();
     brickbf.position = (b2Vec2) {
 	PIXEL2M(x + EXT(brickwidth)),
-	PIXEL2M(EXT(brickheight) + scrheight - y - brickheight)
+	PIXEL2M(y + EXT(brickheight))
     };
     brick->bodyid = b2CreateBody(worldid, &brickbf);
 
@@ -264,9 +265,11 @@ game_load(void)
     sprite_shaderuse(spriteshader);
     sprite_shadersetmat4s(spriteshader, projuniform, proj);
 
-    spritesheet = sprite_sheetload(spritefile, 1);
+    spritesheet = sprite_load(spritefile, 1);
+    bg = sprite_load(bgfile, 1);
+    initsprite(&bgsprite, bgwidth, bgheight, 0.0f, 0.0f, 0.0f, bgverts,
+	    sizeof(bgverts));
     glActiveTexture(GL_TEXTURE0);
-    sprite_sheetuse(spritesheet);
     sprite_shadersetint(spriteshader, texuniform, 0);
 
     worldDef = b2DefaultWorldDef();
@@ -299,7 +302,8 @@ game_unload(void)
     sprite_term(&paddle.sprite);
     sprite_term(&ball.sprite);
     levelunload();
-    sprite_sheetunload(spritesheet);
+    sprite_unload(spritesheet);
+    sprite_unload(bg);
     sprite_shaderunload(spriteshader);
 }
 
@@ -440,9 +444,10 @@ leveldraw(GLuint shader)
 void
 game_render(void)
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    sprite_use(bg);
+    sprite_draw(spriteshader, &bgsprite);
 
+    sprite_use(spritesheet);
     leveldraw(spriteshader);
     sprite_draw(spriteshader, &ball.sprite);
     sprite_draw(spriteshader, &paddle.sprite);
