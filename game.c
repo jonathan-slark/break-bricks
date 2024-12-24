@@ -316,7 +316,7 @@ game_load(void)
     worldid = b2CreateWorld(&worldDef);
 
     makewall(0, 0, wallwidth, scrheight);
-    makewall(wallwidth, scrheight - wallwidth, scrheight - wallwidth,
+    makewall(wallwidth, scrheight - wallwidth, scrwidth - wallwidth,
 	    wallwidth);
     makewall(scrwidth - wallwidth, 0, wallwidth, scrheight - wallwidth);
 
