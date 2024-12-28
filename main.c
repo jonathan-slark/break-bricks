@@ -21,12 +21,10 @@
 /* Function declarations */
 static void errorcallback(int err, const char *desc);
 static void init(void);
-static void keycallback(GLFWwindow *window, int key, int scancode, int action,
-	int mods);
+static void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 static void resizecallback(GLFWwindow* window, int width, int height);
 #ifndef NDEBUG
-static int ismember(const unsigned int array[], size_t size,
-	unsigned int value);
+static bool ismember(const unsigned int array[], size_t size, unsigned int value);
 static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
         GLenum severity, GLsizei length, const GLchar *message,
         const void *userparam);
@@ -42,28 +40,22 @@ static const unsigned int ignorelog[] = {
 };
 #endif /* !NDEBUG */
 static GLFWwindow *window;
-static int minimised;
+static bool minimised;
 
 /* Function implementations */
 
-void
-errorcallback(int err, const char *desc)
-{
+void errorcallback(int err, const char *desc) {
     fprintf(stderr, "%i: %s\n", err, desc);
 }
 
-void
-init(void)
-{
+void init(void) {
     glfwSetErrorCallback(errorcallback);
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
 }
 
-void
-term(int status, const char *fmt, ...)
-{
+void term(int status, const char *fmt, ...) {
     va_list ap;
 
     game_unload();
@@ -82,9 +74,7 @@ term(int status, const char *fmt, ...)
     exit(status);
 }
 
-void
-keycallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
+void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     UNUSED(scancode);
     UNUSED(mods);
 
@@ -97,38 +87,30 @@ keycallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	game_keyup(key);
 }
 
-void
-resizecallback(GLFWwindow* window, int width, int height)
-{
+void resizecallback(GLFWwindow* window, int width, int height) {
     UNUSED(window);
 
     if (!width || !height) {
-	minimised = 1;
+	minimised = true;
     } else {
-	minimised = 0;
+	minimised = false;
 	glViewport(0, 0, width, height);
     }
 }
 
 #ifndef NDEBUG
 
-int
-ismember(const unsigned int array[], size_t size, unsigned int value)
-{
-    size_t i;
-
-    for (i = 0; i < size; i++)
+bool ismember(const unsigned int array[], size_t size, unsigned int value) {
+    for (size_t i = 0; i < size; i++)
         if (array[i] == value)
-            return 1;
+            return true;
 
-    return 0;
+    return false;
 }
 
-void GLAPIENTRY
-gldebugoutput(GLenum source, GLenum type, GLuint id,
+void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
         GLenum severity, GLsizei length, const GLchar *message,
-        const void *userparam)
-{
+        const void *userparam) {
     UNUSED(source);
     UNUSED(type);
     UNUSED(severity);
@@ -143,13 +125,7 @@ gldebugoutput(GLenum source, GLenum type, GLuint id,
 
 #endif /* !NDEBUG */
 
-void
-createwindow(void)
-{
-    int ver, flags;
-    GLFWmonitor *mon = glfwGetPrimaryMonitor();
-    const GLFWvidmode *mode = glfwGetVideoMode(mon);
-
+void createwindow(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openglmajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openglminor);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -161,23 +137,24 @@ createwindow(void)
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif /* !NDEBUG */
 
+    GLFWmonitor *mon = glfwGetPrimaryMonitor();
+    const GLFWvidmode *mode = glfwGetVideoMode(mon);
+
     /* Request 8-bit full screen but keep the refresh rate the same. If this
      * matches the current mode then it will use borderless window. */
     glfwWindowHint(GLFW_RED_BITS, scrredbits);
     glfwWindowHint(GLFW_GREEN_BITS, scrgreenbits);
     glfwWindowHint(GLFW_BLUE_BITS, scrbluebits);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
     if (!(window = glfwCreateWindow(scrwidth, scrheight, title, mon, NULL)))
 	    term(EXIT_FAILURE, NULL);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwMakeContextCurrent(window);
-    if (!(ver = gladLoadGL(glfwGetProcAddress)))
+    int ver = gladLoadGL(glfwGetProcAddress);
+    if (!ver)
         term(EXIT_FAILURE, "Failed to load OpenGL.\n");
-#ifndef NDEBUG
-    fprintf(stderr, "OpenGL %d.%d\n", GLAD_VERSION_MAJOR(ver), 
-	    GLAD_VERSION_MINOR(ver));
-#endif /* !NDEBUG */
 
     glfwSetKeyCallback(window, keycallback);
     glfwSetFramebufferSizeCallback(window, resizecallback);
@@ -185,6 +162,7 @@ createwindow(void)
 
 #ifndef NDEBUG
     if (GLAD_GL_ARB_debug_output) {
+	GLint flags;
 	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
 	    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
@@ -200,18 +178,15 @@ createwindow(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-int
-main(void)
-{
-    float lasttime, curtime, frametime;
-
+int main(void) {
     init();
     createwindow();
     game_load();
 
+    double lasttime = 0.0f;
     while (!glfwWindowShouldClose(window)) {
-	curtime = glfwGetTime();
-	frametime = curtime - lasttime;
+	double curtime = glfwGetTime();
+	double frametime = curtime - lasttime;
 	lasttime = curtime;
         glfwPollEvents();
 

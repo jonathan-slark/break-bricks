@@ -5,7 +5,7 @@
 
 /* Levels */
 #define LVLFOLDER "level"
-static const unsigned int lvlcount     = 1;
+static const unsigned int lvlcount = 1;
 
 /* Shader */
 static const char vertshader[]      = "shader/sprite_vert.glsl";

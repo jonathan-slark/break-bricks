@@ -27,7 +27,7 @@
 
 typedef struct {
     int key;
-    void (*func)(float frametime);
+    void (*func)(double frametime);
 } Key;
 
 typedef struct {
@@ -59,13 +59,12 @@ static unsigned int readbricks(const char *lvl, Brick *bricks);
 static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
-static void makewall(unsigned int posx, unsigned int posy, unsigned int width,
-	unsigned int height);
+static void makewall(unsigned int posx, unsigned int posy, unsigned int width, unsigned int height);
 static void levelunload(void);
 static void movepaddle(b2Vec2 vel);
-static void movepaddleleft(float frametime);
-static void movepaddleright(float frametime);
-static void releaseball(float frametime);
+static void movepaddleleft(double frametime);
+static void movepaddleright(double frametime);
+static void releaseball(double frametime);
 static void updatesprite(Sprite *s, b2BodyId id, float dt);
 static void resetsmoothstates(void);
 static void collisionresolution(void);
@@ -202,32 +201,10 @@ levelload(const char *name)
 void
 initball(void)
 {
-    b2Circle circle = {
-	{ PIXEL2M(EXT(ballwidth)), PIXEL2M(EXT(ballwidth)) },
-	PIXEL2M(EXT(ballwidth))
-    };
-    b2BodyDef ballbd;
-    b2ShapeDef ballsd;
-
+    /* Only create the sprite, simulated circle is created on ball release */
     ball.isstuck = 1;
     initsprite(&ball.sprite, ballwidth, ballheight, 0.0f, 0.0f, 0.0f,
 	    ballverts, sizeof(ballverts));
-
-    ballbd = b2DefaultBodyDef();
-    ballbd.type = b2_dynamicBody;
-    ballbd.userData = &ball;
-    ballbd.position = (b2Vec2) {
-	PIXEL2M(EXT(scrwidth) - EXT(ballwidth)),
-	PIXEL2M(EXT(paddleheight) + ballwidth)
-    };
-    ball.bodyid = b2CreateBody(worldid, &ballbd);
-
-    ballsd = b2DefaultShapeDef();
-    ballsd.density = 1.0f;
-    ballsd.friction = 0.0f;
-    ballsd.restitution = 1.0f;
-    ballsd.enableContactEvents = 1;
-    b2CreateCircleShape(ball.bodyid, &ballsd, &circle);
 }
 
 void
@@ -292,34 +269,28 @@ makewall(unsigned int posx, unsigned int posy, unsigned int width,
 void
 game_load(void)
 {
-    mat4s proj;
-    b2WorldDef worldDef;
-    char lvl[] = LVLFOLDER "/00.txt";
-    char fmt[] = LVLFOLDER "/%02i.txt";
-
-    proj = glms_ortho(0.0f, PIXEL2M(scrwidth), 0.0f, PIXEL2M(scrheight), -1.0f,
-	    1.0f);
+    mat4s proj = glms_ortho(0.0f, PIXEL2M(scrwidth), 0.0f, PIXEL2M(scrheight), -1.0f, 1.0f);
     spriteshader = sprite_shaderload(vertshader, fragshader);
     sprite_shaderuse(spriteshader);
     sprite_shadersetmat4s(spriteshader, projuniform, proj);
 
     spritesheet = sprite_load(spritefile, 1);
     bg = sprite_load(bgfile, 1);
-    initsprite(&bgsprite, bgwidth, bgheight, 0.0f, 0.0f, 0.0f, bgverts,
-	    sizeof(bgverts));
+    initsprite(&bgsprite, bgwidth, bgheight, 0.0f, 0.0f, 0.0f, bgverts, sizeof(bgverts));
     glActiveTexture(GL_TEXTURE0);
     sprite_shadersetint(spriteshader, texuniform, 0);
 
-    worldDef = b2DefaultWorldDef();
+    b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = (b2Vec2) {0.0f, 0.0f};
     worldDef.enableSleep = 0;
     worldid = b2CreateWorld(&worldDef);
 
     makewall(0, 0, wallwidth, scrheight);
-    makewall(wallwidth, scrheight - wallwidth, scrwidth - wallwidth,
-	    wallwidth);
+    makewall(wallwidth, scrheight - wallwidth, scrwidth - wallwidth, wallwidth);
     makewall(scrwidth - wallwidth, 0, wallwidth, scrheight - wallwidth);
 
+    char lvl[] = LVLFOLDER "/00.txt";
+    char fmt[] = LVLFOLDER "/%02i.txt";
     sprintf(lvl, fmt, 1);
     levelload(lvl);
     initball();
@@ -376,7 +347,7 @@ stoppaddle(void)
 }
 
 void
-movepaddleleft(float frametime)
+movepaddleleft(double frametime)
 {
     UNUSED(frametime);
 
@@ -386,7 +357,7 @@ movepaddleleft(float frametime)
 }
 
 void
-movepaddleright(float frametime)
+movepaddleright(double frametime)
 {
     UNUSED(frametime);
 
@@ -396,16 +367,42 @@ movepaddleright(float frametime)
 }
 
 void
-releaseball(float frametime)
+releaseball(double frametime)
 {
+    if (!ball.isstuck)
+	return;
+
     UNUSED(frametime);
     b2Vec2 force = { -0.5f, 0.5f };
 
+    b2Circle circle = {
+	{ PIXEL2M(EXT(ballwidth)), PIXEL2M(EXT(ballwidth)) },
+	PIXEL2M(EXT(ballwidth))
+    };
+    b2BodyDef ballbd;
+    b2ShapeDef ballsd;
+
+    ballbd = b2DefaultBodyDef();
+    ballbd.type = b2_dynamicBody;
+    ballbd.userData = &ball;
+    ballbd.position.x = paddle.sprite.pos.x +
+	PIXEL2M(EXT(paddlewidth) - EXT(ballwidth));
+    ballbd.position.y = paddle.sprite.pos.y + PIXEL2M(ballheight);
+    ball.bodyid = b2CreateBody(worldid, &ballbd);
+
+    ballsd = b2DefaultShapeDef();
+    ballsd.density = 1.0f;
+    ballsd.friction = 0.0f;
+    ballsd.restitution = 1.0f;
+    ballsd.enableContactEvents = 1;
+    b2CreateCircleShape(ball.bodyid, &ballsd, &circle);
+
     b2Body_ApplyForceToCenter(ball.bodyid, force, 0);
+    ball.isstuck = 0;
 }
 
 void
-game_input(float frametime)
+game_input(double frametime)
 {
     size_t i;
 
@@ -434,8 +431,8 @@ updatesprite(Sprite *s, b2BodyId id, float dt)
 void
 resetsmoothstates(void)
 {
-    updatesprite(&ball.sprite, ball.bodyid, 0.0f);
     updatesprite(&paddle.sprite, paddle.bodyid, 0.0f);
+    updatesprite(&ball.sprite, ball.bodyid, 0.0f);
 }
 
 void
@@ -443,8 +440,18 @@ smoothstates(void)
 {
     float dt = alpha * timestep;
 
-    updatesprite(&ball.sprite, ball.bodyid, dt);
     updatesprite(&paddle.sprite, paddle.bodyid, dt);
+
+    /* When ball is stuck, draw the sprite in relation to the paddle and
+     * ignore the simulated circle */
+    if (ball.isstuck) {
+	Sprite *b = &ball.sprite;
+	Sprite *p = &paddle.sprite;
+	b->pos.x = p->pos.x + PIXEL2M(EXT(paddlewidth) - EXT(ballwidth));
+	b->pos.y = p->pos.y + PIXEL2M(ballheight);
+    } else {
+	updatesprite(&ball.sprite, ball.bodyid, dt);
+    }
 }
 
 void
@@ -471,7 +478,7 @@ collisionresolution(void)
 }
 
 void
-game_update(float frametime)
+game_update(double frametime)
 {
     unsigned int steps, i;
 

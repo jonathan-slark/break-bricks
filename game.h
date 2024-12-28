@@ -7,6 +7,6 @@ void game_load(void);
 void game_unload(void);
 void game_keydown(int key);
 void game_keyup(int key);
-void game_input(float dt);
-void game_update(float dt);
+void game_input(double frametime);
+void game_update(double frametime);
 void game_render(void);
