@@ -1,7 +1,7 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
-*/
+ */
 
 #define GLFW_INCLUDE_NONE
 #include <box2d/box2d.h>
@@ -20,30 +20,34 @@
 
 /* Macros
  * Paddle width = 1 m */
-#define PIXEL2M(x) ((x) / (float) paddlewidth)
+#define PIXEL2M(x) ((x) / (float)paddlewidth)
 #define EXT(x) ((x) / 2.0f)
 
 /* Types */
 
-typedef struct {
+typedef struct
+{
     int key;
     void (*func)(double frametime);
 } Key;
 
-typedef struct {
+typedef struct
+{
     b2BodyId bodyid;
     int isstuck;
     Sprite sprite;
 } Ball;
 
-typedef struct {
+typedef struct
+{
     b2BodyId bodyid;
     int issolid;
     int isdestroyed;
     Sprite sprite;
 } Brick;
 
-typedef struct {
+typedef struct
+{
     b2BodyId bodyid;
     int ismoving;
     Sprite sprite;
@@ -51,8 +55,8 @@ typedef struct {
 
 /* Function prototypes */
 static void initsprite(Sprite *s, unsigned int width, unsigned int height,
-	unsigned int x, unsigned int y, float rot, const unsigned int *verts,
-	size_t size);
+                       unsigned int x, unsigned int y, float rot, const unsigned int *verts,
+                       size_t size);
 static void initbrick(Brick *brick, char id, unsigned int row, unsigned int col);
 static void termbrick(Brick *brick);
 static unsigned int readbricks(const char *lvl, Brick *bricks);
@@ -89,9 +93,8 @@ static float alpha = 0.0f;         /* Accumulator ratio for smooth movements */
 
 /* Function implementations */
 
-void
-initsprite(Sprite *s, unsigned int width, unsigned int height, unsigned int x,
-	unsigned int y, float rot, const unsigned int *verts, size_t size)
+void initsprite(Sprite *s, unsigned int width, unsigned int height, unsigned int x,
+                unsigned int y, float rot, const unsigned int *verts, size_t size)
 {
     memcpy(s->texverts, verts, size);
     s->size.x = PIXEL2M(width);
@@ -102,8 +105,7 @@ initsprite(Sprite *s, unsigned int width, unsigned int height, unsigned int x,
     sprite_init(s);
 }
 
-void
-initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
+void initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
 {
     Sprite *s = &brick->sprite;
     int solid;
@@ -121,17 +123,16 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
-    x  = row * brickwidth;
-    y  = scrheight - brickheight - (col * brickheight);
+    x = row * brickwidth;
+    y = scrheight - brickheight - (col * brickheight);
     initsprite(s, brickwidth, brickheight, x, y, 0.0f, brickverts[i],
-	    sizeof(brickverts[i]));
+               sizeof(brickverts[i]));
 
     brickbf = b2DefaultBodyDef();
     brickbf.userData = brick;
-    brickbf.position = (b2Vec2) {
-	PIXEL2M(x + EXT(brickwidth)),
-	PIXEL2M(y + EXT(brickheight))
-    };
+    brickbf.position = (b2Vec2){
+        PIXEL2M(x + EXT(brickwidth)),
+        PIXEL2M(y + EXT(brickheight))};
     brick->bodyid = b2CreateBody(worldid, &brickbf);
 
     brickbox = b2MakeBox(PIXEL2M(EXT(brickwidth)), PIXEL2M(EXT(brickheight)));
@@ -142,13 +143,13 @@ initbrick(Brick *brick, char id, unsigned int row, unsigned int col)
     b2CreatePolygonShape(brick->bodyid, &bricksd, &brickbox);
 }
 
-void
-termbrick(Brick *brick)
+void termbrick(Brick *brick)
 {
-    if (!brick->issolid && !brick->isdestroyed) {
-	brick->isdestroyed = 1;
-	b2DestroyBody(brick->bodyid);
-	brick->bodyid = b2_nullBodyId;
+    if (!brick->issolid && !brick->isdestroyed)
+    {
+        brick->isdestroyed = 1;
+        b2DestroyBody(brick->bodyid);
+        brick->bodyid = b2_nullBodyId;
     }
 }
 
@@ -160,25 +161,36 @@ readbricks(const char *lvl, Brick *bricks)
     char c;
     unsigned count = 0, row = 0, col = 0;
 
-    while ((c = *lvl++) != '\0') {
-        if (c == '#') {
-            while ((c = *lvl++) != '\n') {
+    while ((c = *lvl++) != '\0')
+    {
+        if (c == '#')
+        {
+            while ((c = *lvl++) != '\n')
+            {
                 /* Comment */
             }
-        } else if (c == 'x') {
+        }
+        else if (c == 'x')
+        {
             /* No brick */
             row++;
-        } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
+        }
+        else if (isdigit(c) || (c >= 'a' && c <= 'f'))
+        {
             if (bricks)
                 initbrick(&bricks[count], c, row, col);
             count++;
             row++;
-        } else if (c == '\n') {
+        }
+        else if (c == '\n')
+        {
             /* Ignore blank line */
             if (row > 0)
                 col++;
             row = 0;
-        } else if (c != ' ' && c != '\t') {
+        }
+        else if (c != ' ' && c != '\t')
+        {
             term(EXIT_FAILURE, "Syntax error in level file.\n");
         }
     }
@@ -186,53 +198,47 @@ readbricks(const char *lvl, Brick *bricks)
     return count;
 }
 
-void
-levelload(const char *name)
+void levelload(const char *name)
 {
     char *lvl;
 
     lvl = load(name);
     brickcount = readbricks(lvl, NULL);
-    bricks = (Brick *) malloc(brickcount * sizeof(Brick));
+    bricks = (Brick *)malloc(brickcount * sizeof(Brick));
     readbricks(lvl, bricks);
     unload(lvl);
 }
 
-void
-initball(void)
+void initball(void)
 {
     /* Only create the sprite, simulated circle is created on ball release */
     ball.isstuck = 1;
     initsprite(&ball.sprite, ballwidth, ballheight, 0.0f, 0.0f, 0.0f,
-	    ballverts, sizeof(ballverts));
+               ballverts, sizeof(ballverts));
 }
 
-void
-initpaddle(void)
+void initpaddle(void)
 {
     b2Capsule paddlecap;
     b2BodyDef paddlebd;
     b2ShapeDef paddlesd;
 
     initsprite(&paddle.sprite, paddlewidth, paddleheight, 0.0f, 0.0f, 0.0f,
-	    paddleverts, sizeof(paddleverts));
+               paddleverts, sizeof(paddleverts));
 
     paddlebd = b2DefaultBodyDef();
     paddlebd.type = b2_kinematicBody;
-    paddlebd.position = (b2Vec2) {
-	PIXEL2M(EXT(scrwidth) - EXT(paddlewidth)),
-	PIXEL2M(EXT(paddleheight))
-    };
+    paddlebd.position = (b2Vec2){
+        PIXEL2M(EXT(scrwidth) - EXT(paddlewidth)),
+        PIXEL2M(EXT(paddleheight))};
     paddle.bodyid = b2CreateBody(worldid, &paddlebd);
 
-    paddlecap.center1 = (b2Vec2) {
-	PIXEL2M(EXT(paddleheight)),
-	0.0f
-    };
-    paddlecap.center2 = (b2Vec2) {
-	PIXEL2M(paddlewidth - EXT(paddleheight)),
-	0.0f
-    };
+    paddlecap.center1 = (b2Vec2){
+        PIXEL2M(EXT(paddleheight)),
+        0.0f};
+    paddlecap.center2 = (b2Vec2){
+        PIXEL2M(paddlewidth - EXT(paddleheight)),
+        0.0f};
     paddlecap.radius = PIXEL2M(EXT(paddleheight));
 
     paddlesd = b2DefaultShapeDef();
@@ -242,9 +248,8 @@ initpaddle(void)
     b2CreateCapsuleShape(paddle.bodyid, &paddlesd, &paddlecap);
 }
 
-void
-makewall(unsigned int posx, unsigned int posy, unsigned int width,
-	unsigned int height)
+void makewall(unsigned int posx, unsigned int posy, unsigned int width,
+              unsigned int height)
 {
     b2BodyDef wallbf;
     b2Polygon wallbox;
@@ -252,10 +257,9 @@ makewall(unsigned int posx, unsigned int posy, unsigned int width,
     b2BodyId wallid;
 
     wallbf = b2DefaultBodyDef();
-    wallbf.position = (b2Vec2) {
-	PIXEL2M(posx + EXT(width)),
-	PIXEL2M(posy + EXT(height))
-    };
+    wallbf.position = (b2Vec2){
+        PIXEL2M(posx + EXT(width)),
+        PIXEL2M(posy + EXT(height))};
     wallid = b2CreateBody(worldid, &wallbf);
 
     wallbox = b2MakeBox(PIXEL2M(EXT(width)), PIXEL2M(EXT(height)));
@@ -266,8 +270,7 @@ makewall(unsigned int posx, unsigned int posy, unsigned int width,
     b2CreatePolygonShape(wallid, &wallsd, &wallbox);
 }
 
-void
-game_load(void)
+void game_load(void)
 {
     mat4s proj = glms_ortho(0.0f, PIXEL2M(scrwidth), 0.0f, PIXEL2M(scrheight), -1.0f, 1.0f);
     spriteshader = sprite_shaderload(vertshader, fragshader);
@@ -281,7 +284,7 @@ game_load(void)
     sprite_shadersetint(spriteshader, texuniform, 0);
 
     b2WorldDef worldDef = b2DefaultWorldDef();
-    worldDef.gravity = (b2Vec2) {0.0f, 0.0f};
+    worldDef.gravity = (b2Vec2){0.0f, 0.0f};
     worldDef.enableSleep = 0;
     worldid = b2CreateWorld(&worldDef);
 
@@ -297,8 +300,7 @@ game_load(void)
     initpaddle();
 }
 
-void
-levelunload(void)
+void levelunload(void)
 {
     unsigned int i;
 
@@ -309,8 +311,7 @@ levelunload(void)
     brickcount = 0;
 }
 
-void
-game_unload(void)
+void game_unload(void)
 {
     b2DestroyWorld(worldid);
     sprite_term(&paddle.sprite);
@@ -321,64 +322,55 @@ game_unload(void)
     sprite_shaderunload(spriteshader);
 }
 
-void
-game_keydown(int key)
+void game_keydown(int key)
 {
     keypressed[key] = 1;
 }
 
-void
-game_keyup(int key)
+void game_keyup(int key)
 {
     keypressed[key] = 0;
 }
 
-void
-movepaddle(b2Vec2 vel)
+void movepaddle(b2Vec2 vel)
 {
     b2Body_SetLinearVelocity(paddle.bodyid, vel);
 }
 
-void
-stoppaddle(void)
+void stoppaddle(void)
 {
-    b2Vec2 vel = { -0.0f, 0.0f };
+    b2Vec2 vel = {-0.0f, 0.0f};
     movepaddle(vel);
 }
 
-void
-movepaddleleft(double frametime)
+void movepaddleleft(double frametime)
 {
     UNUSED(frametime);
 
     paddle.ismoving = 1;
-    b2Vec2 vel = { -5.0f, 0.0f };
+    b2Vec2 vel = {-5.0f, 0.0f};
     movepaddle(vel);
 }
 
-void
-movepaddleright(double frametime)
+void movepaddleright(double frametime)
 {
     UNUSED(frametime);
 
     paddle.ismoving = 1;
-    b2Vec2 vel = { 5.0f, 0.0f };
+    b2Vec2 vel = {5.0f, 0.0f};
     movepaddle(vel);
 }
 
-void
-releaseball(double frametime)
+void releaseball(double frametime)
 {
     if (!ball.isstuck)
-	return;
+        return;
 
     UNUSED(frametime);
-    b2Vec2 force = { -0.5f, 0.5f };
 
     b2Circle circle = {
-	{ PIXEL2M(EXT(ballwidth)), PIXEL2M(EXT(ballwidth)) },
-	PIXEL2M(EXT(ballwidth))
-    };
+        {PIXEL2M(EXT(ballwidth)), PIXEL2M(EXT(ballwidth))},
+        PIXEL2M(EXT(ballwidth))};
     b2BodyDef ballbd;
     b2ShapeDef ballsd;
 
@@ -386,7 +378,7 @@ releaseball(double frametime)
     ballbd.type = b2_dynamicBody;
     ballbd.userData = &ball;
     ballbd.position.x = paddle.sprite.pos.x +
-	PIXEL2M(EXT(paddlewidth) - EXT(ballwidth));
+                        PIXEL2M(EXT(paddlewidth) - EXT(ballwidth));
     ballbd.position.y = paddle.sprite.pos.y + PIXEL2M(ballheight);
     ball.bodyid = b2CreateBody(worldid, &ballbd);
 
@@ -397,12 +389,12 @@ releaseball(double frametime)
     ballsd.enableContactEvents = 1;
     b2CreateCircleShape(ball.bodyid, &ballsd, &circle);
 
+    b2Vec2 force = {-5.0f, 5.0f};
     b2Body_ApplyForceToCenter(ball.bodyid, force, 0);
     ball.isstuck = 0;
 }
 
-void
-game_input(double frametime)
+void game_input(double frametime)
 {
     size_t i;
 
@@ -414,12 +406,11 @@ game_input(double frametime)
 }
 
 /* Use interpolation to smooth movement */
-void
-updatesprite(Sprite *s, b2BodyId id, float dt)
+void updatesprite(Sprite *s, b2BodyId id, float dt)
 {
-    b2Vec2 pos   = b2Body_GetPosition(id);
-    b2Rot rot    = b2Body_GetRotation(id);
-    b2Vec2 vel   = b2Body_GetLinearVelocity(id);
+    b2Vec2 pos = b2Body_GetPosition(id);
+    b2Rot rot = b2Body_GetRotation(id);
+    b2Vec2 vel = b2Body_GetLinearVelocity(id);
     float angvel = b2Body_GetAngularVelocity(id);
 
     s->pos.x = pos.x + vel.x * dt;
@@ -428,15 +419,13 @@ updatesprite(Sprite *s, b2BodyId id, float dt)
     s->rot = b2Rot_GetAngle(rot) + angvel * dt;
 }
 
-void
-resetsmoothstates(void)
+void resetsmoothstates(void)
 {
     updatesprite(&paddle.sprite, paddle.bodyid, 0.0f);
     updatesprite(&ball.sprite, ball.bodyid, 0.0f);
 }
 
-void
-smoothstates(void)
+void smoothstates(void)
 {
     float dt = alpha * timestep;
 
@@ -444,18 +433,20 @@ smoothstates(void)
 
     /* When ball is stuck, draw the sprite in relation to the paddle and
      * ignore the simulated circle */
-    if (ball.isstuck) {
-	Sprite *b = &ball.sprite;
-	Sprite *p = &paddle.sprite;
-	b->pos.x = p->pos.x + PIXEL2M(EXT(paddlewidth) - EXT(ballwidth));
-	b->pos.y = p->pos.y + PIXEL2M(ballheight);
-    } else {
-	updatesprite(&ball.sprite, ball.bodyid, dt);
+    if (ball.isstuck)
+    {
+        Sprite *b = &ball.sprite;
+        Sprite *p = &paddle.sprite;
+        b->pos.x = p->pos.x + PIXEL2M(EXT(paddlewidth) - EXT(ballwidth));
+        b->pos.y = p->pos.y + PIXEL2M(ballheight);
+    }
+    else
+    {
+        updatesprite(&ball.sprite, ball.bodyid, dt);
     }
 }
 
-void
-collisionresolution(void)
+void collisionresolution(void)
 {
     int i;
     b2ContactEvents events = b2World_GetContactEvents(worldid);
@@ -466,47 +457,46 @@ collisionresolution(void)
 
     for (i = 0; i < events.endCount; ++i)
     {
-	endevent = events.endEvents + i;
+        endevent = events.endEvents + i;
 
-	bodyid = b2Shape_GetBody(endevent->shapeIdA);
-	userdata = b2Body_GetUserData(bodyid);
-	if (userdata)
-	    brick = (Brick *) userdata;
-	if (brick)
-	    termbrick(brick);
+        bodyid = b2Shape_GetBody(endevent->shapeIdA);
+        userdata = b2Body_GetUserData(bodyid);
+        if (userdata)
+            brick = (Brick *)userdata;
+        if (brick)
+            termbrick(brick);
     }
 }
 
-void
-game_update(double frametime)
+void game_update(double frametime)
 {
     unsigned int steps, i;
 
     if (!paddle.ismoving)
-	stoppaddle();
+        stoppaddle();
 
     acc += frametime;
     steps = acc / timestep;
 
     /* Only update acc when needed, to avoid rounding errors */
     if (steps > 0)
-	acc -= steps * timestep;
+        acc -= steps * timestep;
 
     alpha = acc / timestep;
 
-    for (i = 0; i < MIN(steps, maxsteps); i++) {
-	/* Get actual states for when collision callbacks are fired */
-	resetsmoothstates();
-	b2World_Step(worldid, timestep, substepcount);
-	collisionresolution();
+    for (i = 0; i < MIN(steps, maxsteps); i++)
+    {
+        /* Get actual states for when collision callbacks are fired */
+        resetsmoothstates();
+        b2World_Step(worldid, timestep, substepcount);
+        // collisionresolution();
     }
 
     /* Use smooth states for rendering */
     smoothstates();
 }
 
-void
-leveldraw(GLuint shader)
+void leveldraw(GLuint shader)
 {
     unsigned int i;
 
@@ -515,8 +505,7 @@ leveldraw(GLuint shader)
             sprite_draw(shader, &bricks[i].sprite);
 }
 
-void
-game_render(void)
+void game_render(void)
 {
     sprite_use(bg);
     sprite_draw(spriteshader, &bgsprite);
