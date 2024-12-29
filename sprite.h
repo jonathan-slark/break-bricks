@@ -1,15 +1,20 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
-*/
+ */
 
-#define INDCOUNT   2	/* Number of indices per vertex */
-#define VERTCOUNT  4	/* Number of vertices per sprite */
+#define INDCOUNT 2  /* Number of indices per vertex */
+#define VERTCOUNT 4 /* Number of vertices per sprite */
 #define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
-#define VBOCOUNT 2	/* One for Verts, one for TexVerts */
+#define VBOCOUNT 2 /* One for Verts, one for TexVerts */
 
-enum { Verts, TexVerts };
-typedef struct {
+enum
+{
+    Verts,
+    TexVerts
+};
+typedef struct
+{
     /* texverts are in screen coords */
     unsigned int texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
@@ -17,13 +22,12 @@ typedef struct {
     float rot;
 } Sprite;
 
-static const GLchar modeluniform[]  = "model";
+static const GLchar modeluniform[] = "model";
 static const float quad[] = {
     0.0f, 0.0f,
     1.0f, 0.0f,
     0.0f, 1.0f,
-    1.0f, 1.0f
-};
+    1.0f, 1.0f};
 
 GLuint sprite_shaderload(const char *vertex, const char *fragment);
 void sprite_shaderunload(GLuint shader);

@@ -1,17 +1,17 @@
-Credits
--------
+# README
+
+## Credits
 
 Tiny Breakout Pack by Screaming Brain Studios:
-https://screamingbrainstudios.com/dl-tiny-breakout-pack/
+<https://screamingbrainstudios.com/dl-tiny-breakout-pack/>
 CC0 License:
-https://creativecommons.org/publicdomain/zero/1.0/
+<https://creativecommons.org/publicdomain/zero/1.0/>
 
-
-MSYS2
------
+## MSYS2
 
 Packages:
-mingw-w64-ucrt-x86_64-gcc
-mingw-w64-ucrt-x86_64-glfw
-mingw-w64-ucrt-x86_64-stb
-mingw-w64-ucrt-x86_64-cglm
+
+- mingw-w64-ucrt-x86_64-gcc
+- mingw-w64-ucrt-x86_64-glfw
+- mingw-w64-ucrt-x86_64-stb
+- mingw-w64-ucrt-x86_64-cglm

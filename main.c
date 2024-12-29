@@ -1,7 +1,7 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
-*/
+ */
 
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLAD_GL_IMPLEMENTATION
@@ -22,12 +22,10 @@
 static void errorcallback(int err, const char *desc);
 static void init(void);
 static void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods);
-static void resizecallback(GLFWwindow* window, int width, int height);
+static void resizecallback(GLFWwindow *window, int width, int height);
 #ifndef NDEBUG
 static bool ismember(const unsigned int array[], size_t size, unsigned int value);
-static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
-        GLenum severity, GLsizei length, const GLchar *message,
-        const void *userparam);
+static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userparam);
 #endif /* !NDEBUG */
 static void createwindow(void);
 
@@ -39,25 +37,26 @@ static const unsigned int ignorelog[] = {
     131218  /* Recompilation warning */
 };
 #endif /* !NDEBUG */
-static GLFWwindow *window;
-static bool minimised;
+static GLFWwindow *window = NULL;
+static bool minimised = false;
 
 /* Function implementations */
 
-void errorcallback(int err, const char *desc) {
+void errorcallback(int err, const char *desc)
+{
     fprintf(stderr, "%i: %s\n", err, desc);
 }
 
-void init(void) {
+void init(void)
+{
     glfwSetErrorCallback(errorcallback);
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
 }
 
-void term(int status, const char *fmt, ...) {
-    va_list ap;
-
+void term(int status, const char *fmt, ...)
+{
     game_unload();
 
     if (window)
@@ -65,7 +64,9 @@ void term(int status, const char *fmt, ...) {
 
     glfwTerminate();
 
-    if (fmt) {
+    if (fmt)
+    {
+        va_list ap = NULL;
         va_start(ap, fmt);
         vfprintf(stderr, fmt, ap);
         va_end(ap);
@@ -74,33 +75,34 @@ void term(int status, const char *fmt, ...) {
     exit(status);
 }
 
-void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    UNUSED(scancode);
-    UNUSED(mods);
-
+void keycallback(GLFWwindow *window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods)
+{
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 
     if (action == GLFW_PRESS)
-	game_keydown(key);
+        game_keydown(key);
     else if (action == GLFW_RELEASE)
-	game_keyup(key);
+        game_keyup(key);
 }
 
-void resizecallback(GLFWwindow* window, int width, int height) {
-    UNUSED(window);
-
-    if (!width || !height) {
-	minimised = true;
-    } else {
-	minimised = false;
-	glViewport(0, 0, width, height);
+void resizecallback([[maybe_unused]] GLFWwindow *window, int width, int height)
+{
+    if (!width || !height)
+    {
+        minimised = true;
+    }
+    else
+    {
+        minimised = false;
+        glViewport(0, 0, width, height);
     }
 }
 
 #ifndef NDEBUG
 
-bool ismember(const unsigned int array[], size_t size, unsigned int value) {
+bool ismember(const unsigned int array[], size_t size, unsigned int value)
+{
     for (size_t i = 0; i < size; i++)
         if (array[i] == value)
             return true;
@@ -108,24 +110,18 @@ bool ismember(const unsigned int array[], size_t size, unsigned int value) {
     return false;
 }
 
-void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
-        GLenum severity, GLsizei length, const GLchar *message,
-        const void *userparam) {
-    UNUSED(source);
-    UNUSED(type);
-    UNUSED(severity);
-    UNUSED(length);
-    UNUSED(userparam);
-
+void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]] GLenum type, GLuint id, [[maybe_unused]] GLenum severity, [[maybe_unused]] GLsizei length, const GLchar *message, [[maybe_unused]] const void *userparam)
+{
     if (ismember(ignorelog, sizeof(ignorelog), id))
         return;
 
-    fprintf(stderr, "%u: %s\n", id, (const char *) message);
+    fprintf(stderr, "%u: %s\n", id, (const char *)message);
 }
 
 #endif /* !NDEBUG */
 
-void createwindow(void) {
+void createwindow(void)
+{
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openglmajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openglminor);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -148,7 +144,7 @@ void createwindow(void) {
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
     if (!(window = glfwCreateWindow(scrwidth, scrheight, title, mon, NULL)))
-	    term(EXIT_FAILURE, NULL);
+        term(EXIT_FAILURE, NULL);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwMakeContextCurrent(window);
@@ -161,15 +157,17 @@ void createwindow(void) {
     glfwSwapInterval(1);
 
 #ifndef NDEBUG
-    if (GLAD_GL_ARB_debug_output) {
-	GLint flags;
-	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-	    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-	    glDebugMessageCallbackARB(gldebugoutput, NULL);
-	    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
-		    GL_TRUE);
-	}
+    if (GLAD_GL_ARB_debug_output)
+    {
+        GLint flags = 0;
+        glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+        if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+        {
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+            glDebugMessageCallbackARB(gldebugoutput, NULL);
+            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
+                                     GL_TRUE);
+        }
     }
 #endif /* !NDEBUG */
 
@@ -178,25 +176,28 @@ void createwindow(void) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-int main(void) {
+int main(void)
+{
     init();
     createwindow();
     game_load();
 
     double lasttime = 0.0f;
-    while (!glfwWindowShouldClose(window)) {
-	double curtime = glfwGetTime();
-	double frametime = curtime - lasttime;
-	lasttime = curtime;
+    while (!glfwWindowShouldClose(window))
+    {
+        double curtime = glfwGetTime();
+        double frametime = curtime - lasttime;
+        lasttime = curtime;
         glfwPollEvents();
 
-	if (!minimised) {
-	    game_input(frametime);
-	    game_update(frametime);
-	    game_render();
+        if (!minimised)
+        {
+            game_input(frametime);
+            game_update(frametime);
+            game_render();
 
-	    glfwSwapBuffers(window);
-	}
+            glfwSwapBuffers(window);
+        }
     }
 
     term(EXIT_SUCCESS, NULL);
