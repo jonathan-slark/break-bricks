@@ -6,7 +6,7 @@ CPPFLAGS   = -D_POSIX_C_SOURCE=200809L
 #CPPFLAGS  = -D_POSIX_C_SOURCE=200809L -DNDEBUG
 CFLAGS     = -Iglad -std=c23 -pedantic -Wall -Wextra -g -O0
 #CFLAGS    = -Iglad std=c23 -pedantic -Wall -Wextra -O2
-LDFLAGS    = -static -mwindows -lopengl32 -lglfw3 -lbox2d
+LDFLAGS    = -static -mwindows -lopengl32 -lglfw3
 
 BIN = breakbricks.exe
 SRC = game.c main.c sprite.c util.c

@@ -32,15 +32,14 @@ static void screentonormal(const unsigned *vin, unsigned count, unsigned width, 
 GLint createshader(GLenum type, const GLchar *src)
 {
     GLuint s = glCreateShader(type);
-    /* Requires OpenGL 4.6 */
     glShaderSource(s, 1, &src, NULL);
     glCompileShader(s);
 
-    GLint iscompiled;
+    GLint iscompiled = false;
     glGetShaderiv(s, GL_COMPILE_STATUS, &iscompiled);
     if (!iscompiled)
     {
-        GLint len;
+        GLint len = 0;
         glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
         if (len)
         {
@@ -103,16 +102,16 @@ void sprite_shaderuse(GLuint shader)
 
 void sprite_shadersetint(GLuint shader, const char *name, GLint val)
 {
-    GLint loc = -1;
-    if ((loc = glGetUniformLocation(shader, name)) == -1)
+    GLint loc = glGetUniformLocation(shader, name);
+    if (loc == -1)
         fprintf(stderr, "Could not get uniform location.\n");
     glUniform1i(loc, val);
 }
 
 void sprite_shadersetmat4s(GLuint shader, const char *name, mat4s val)
 {
-    GLint loc = -1;
-    if ((loc = glGetUniformLocation(shader, name)) == -1)
+    GLint loc = glGetUniformLocation(shader, name);
+    if (loc == -1)
         fprintf(stderr, "Could not get uniform location.\n");
     glUniformMatrix4fv(loc, 1, GL_FALSE, val.raw[0]);
 }
@@ -129,8 +128,7 @@ GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps,
     GLuint id = 0;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, intformat, width, height, 0, imgformat,
-                 GL_UNSIGNED_BYTE, (const void *)data);
+    glTexImage2D(GL_TEXTURE_2D, 0, intformat, width, height, 0, imgformat, GL_UNSIGNED_BYTE, (const void *)data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wraps);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapt);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtermin);

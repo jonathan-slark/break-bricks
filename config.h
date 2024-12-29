@@ -23,6 +23,7 @@ static const unsigned ballwidth = 28;
 static const unsigned ballheight = 28;
 static const unsigned paddlewidth = 126;
 static const unsigned paddleheight = 26;
+static const unsigned paddlemove = 10;
 static const unsigned bgwidth = 1920;
 static const unsigned bgheight = 1080;
 static const unsigned wallwidth = 64; /* Walls left, top and right */

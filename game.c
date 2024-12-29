@@ -17,9 +17,7 @@
 #include "sprite.h"
 #include "util.h"
 
-/* Macros
- * Paddle width = 1 m */
-#define PIXEL2M(x) ((x) / (double)paddlewidth)
+/* Macros */
 #define EXT(x) ((x) / 2.0f)
 
 /* Types */
@@ -46,13 +44,11 @@ typedef struct
 /* Function prototypes */
 static void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, double rot, const unsigned *verts, size_t size);
 static void initbrick(Brick *brick, char id, unsigned row, unsigned col);
-static void termbrick(Brick *brick);
 static unsigned readbricks(const char *lvl, Brick *bricks);
 static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
-static void movepaddle(double vel);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static void releaseball(double frametime);
@@ -61,11 +57,11 @@ static void leveldraw(GLuint shader);
 /* Variables */
 static Brick *bricks = NULL;
 static unsigned brickcount = 0;
-static Ball ball = {0};
-static Sprite paddle = {0};
+static Ball ball = {};
+static Sprite paddle = {};
 static GLuint spritesheet = 0, spriteshader = 0, bg = 0;
-static Sprite bgsprite = {0};
-static bool keypressed[GLFW_KEY_LAST + 1] = {0};
+static Sprite bgsprite = {};
+static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
 /* Config uses types from this file */
 #include "config.h"
@@ -75,10 +71,10 @@ static bool keypressed[GLFW_KEY_LAST + 1] = {0};
 void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, double rot, const unsigned *verts, size_t size)
 {
     memcpy(s->texverts, verts, size);
-    s->size.x = PIXEL2M(width);
-    s->size.y = PIXEL2M(height);
-    s->pos.x = PIXEL2M(x);
-    s->pos.y = PIXEL2M(y);
+    s->size.x = width;
+    s->size.y = height;
+    s->pos.x = x;
+    s->pos.y = y;
     s->rot = rot;
     sprite_init(s);
 }
@@ -162,21 +158,21 @@ void levelload(const char *name)
 void initball(void)
 {
     ball.isstuck = 1;
-    double x = scrwidth / 2.0f - ballwidth / 2.0f;
-    double y = scrheight / 2.0f - ballheight / 2.0f;
+    unsigned x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
+    unsigned y = paddle.pos.y - ballheight;
     initsprite(&ball.sprite, ballwidth, ballheight, x, y, 0.0f, ballverts, sizeof(ballverts));
 }
 
 void initpaddle(void)
 {
-    double x = scrwidth / 2.0f - paddlewidth / 2.0f;
-    double y = scrheight - paddleheight;
+    unsigned x = scrwidth / 2 - paddlewidth / 2;
+    unsigned y = scrheight - paddleheight;
     initsprite(&paddle, paddlewidth, paddleheight, x, y, 0.0f, paddleverts, sizeof(paddleverts));
 }
 
 void game_load(void)
 {
-    mat4s proj = glms_ortho(0.0f, PIXEL2M(scrwidth), 0.0f, PIXEL2M(scrheight), -1.0f, 1.0f);
+    mat4s proj = glms_ortho(0.0f, scrwidth, scrheight, 0.0f, -1.0f, 1.0f);
     spriteshader = sprite_shaderload(vertshader, fragshader);
     sprite_shaderuse(spriteshader);
     sprite_shadersetmat4s(spriteshader, projuniform, proj);
@@ -191,8 +187,8 @@ void game_load(void)
     char fmt[] = LVLFOLDER "/%02i.txt";
     sprintf(lvl, fmt, 1);
     levelload(lvl);
-    initball();
     initpaddle();
+    initball();
 }
 
 void levelunload(void)
@@ -224,30 +220,20 @@ void game_keyup(int key)
     keypressed[key] = false;
 }
 
-void movepaddle(double vel)
+void movepaddleleft([[maybe_unused]] double frametime)
 {
+    paddle.pos.x = MAX(paddle.pos.x - paddlemove, 0);
 }
 
-void movepaddleleft(double frametime)
+void movepaddleright([[maybe_unused]] double frametime)
 {
-    UNUSED(frametime);
-
-    movepaddle(-5.0f);
+    paddle.pos.x = MIN(paddle.pos.x + paddlemove, scrwidth - paddlewidth);
 }
 
-void movepaddleright(double frametime)
-{
-    UNUSED(frametime);
-
-    movepaddle(5.0f);
-}
-
-void releaseball(double frametime)
+void releaseball([[maybe_unused]] double frametime)
 {
     if (!ball.isstuck)
         return;
-
-    UNUSED(frametime);
 
     ball.isstuck = 0;
 }
@@ -259,7 +245,7 @@ void game_input(double frametime)
             (*keys[i].func)(frametime);
 }
 
-void game_update(double frametime)
+void game_update([[maybe_unused]] double frametime)
 {
 
 }
@@ -273,11 +259,11 @@ void leveldraw(GLuint shader)
 
 void game_render(void)
 {
-    sprite_use(bg);
-    sprite_draw(spriteshader, &bgsprite);
+    //sprite_use(bg);
+    //sprite_draw(spriteshader, &bgsprite);
 
     sprite_use(spritesheet);
-    leveldraw(spriteshader);
-    sprite_draw(spriteshader, &ball.sprite);
+    //leveldraw(spriteshader);
+    //sprite_draw(spriteshader, &ball.sprite);
     sprite_draw(spriteshader, &paddle);
 }
