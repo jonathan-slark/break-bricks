@@ -25,7 +25,7 @@
 /* Function prototypes */
 static GLint createshader(GLenum type, const GLchar *src);
 static GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
-static void screentonormal(const unsigned int *vin, int count, int width, int height, float *vout);
+static void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, double *vout);
 
 /* Function declarations */
 
@@ -161,9 +161,9 @@ void sprite_use(GLuint id)
 }
 
 /* https://stackoverflow.com/q/40574677 */
-void screentonormal(const unsigned int *vin, int count, int width, int height, float *vout)
+void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, double *vout)
 {
-    for (int i = 0; i < count; i += INDCOUNT)
+    for (unsigned i = 0; i < count; i += INDCOUNT)
     {
         vout[i] = SCR2NORM(vin[i], width);
         vout[i + 1] = SCR2NORM(vin[i + 1], height);
@@ -172,7 +172,7 @@ void screentonormal(const unsigned int *vin, int count, int width, int height, f
 
 void sprite_init(Sprite *s)
 {
-    float texverts[ARRAYCOUNT];
+    double texverts[ARRAYCOUNT];
     screentonormal(s->texverts, ARRAYCOUNT, scrwidth, scrheight, texverts);
 
     glGenVertexArrays(1, &s->vao);
@@ -181,12 +181,12 @@ void sprite_init(Sprite *s)
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(double), (void *)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(double), (void *)0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -16,14 +16,14 @@ enum
 typedef struct
 {
     /* texverts are in screen coords */
-    unsigned int texverts[ARRAYCOUNT];
+    unsigned texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
     vec2s size, pos;
-    float rot;
+    double rot;
 } Sprite;
 
 static const GLchar modeluniform[] = "model";
-static const float quad[] = {
+static const double quad[] = {
     0.0f, 0.0f,
     1.0f, 0.0f,
     0.0f, 1.0f,

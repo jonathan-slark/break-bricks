@@ -5,7 +5,7 @@
 
 /* Levels */
 #define LVLFOLDER "level"
-static const unsigned int lvlcount = 1;
+static const unsigned lvlcount = 1;
 
 /* Shader */
 static const char vertshader[] = "shader/sprite_vert.glsl";
@@ -16,16 +16,16 @@ static const GLchar texuniform[] = "tex";
 /* Sprites */
 static const char spritefile[] = "sprite/spritesheet.png";
 static const char bgfile[] = "sprite/background.png";
-static const unsigned int brickwidth = 64;
-static const unsigned int brickheight = 32;
-static const unsigned int bricktypes = 6; /* Number of brick types */
-static const unsigned int ballwidth = 28;
-static const unsigned int ballheight = 28;
-static const unsigned int paddlewidth = 126;
-static const unsigned int paddleheight = 26;
-static const unsigned int bgwidth = 1920;
-static const unsigned int bgheight = 1080;
-static const unsigned int wallwidth = 64; /* Walls left, top and right */
+static const unsigned brickwidth = 64;
+static const unsigned brickheight = 32;
+static const unsigned bricktypes = 6; /* Number of brick types */
+static const unsigned ballwidth = 28;
+static const unsigned ballheight = 28;
+static const unsigned paddlewidth = 126;
+static const unsigned paddleheight = 26;
+static const unsigned bgwidth = 1920;
+static const unsigned bgheight = 1080;
+static const unsigned wallwidth = 64; /* Walls left, top and right */
 
 /* Key bindings */
 static const Key keys[] = {
@@ -34,22 +34,22 @@ static const Key keys[] = {
     {GLFW_KEY_SPACE, releaseball}};
 
 /* Vertices mapping out sprites in spritesheet */
-static const unsigned int ballverts[ARRAYCOUNT] = {
+static const unsigned ballverts[ARRAYCOUNT] = {
     510, 1052,
     537, 1052,
     510, 1079,
     537, 1079};
-static const unsigned int paddleverts[ARRAYCOUNT] = {
+static const unsigned paddleverts[ARRAYCOUNT] = {
     384, 1054,
     509, 1054,
     384, 1079,
     509, 1079};
-static const unsigned int bgverts[ARRAYCOUNT] = {
+static const unsigned bgverts[ARRAYCOUNT] = {
     0, 0,
     1919, 0,
     0, 1079,
     1919, 1079};
-static const unsigned int brickverts[][ARRAYCOUNT] = {
+static const unsigned brickverts[][ARRAYCOUNT] = {
     /* blue, breakable, id = 0 */
     {
         0, 1048,

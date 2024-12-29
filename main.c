@@ -24,14 +24,14 @@ static void init(void);
 static void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 static void resizecallback(GLFWwindow *window, int width, int height);
 #ifndef NDEBUG
-static bool ismember(const unsigned int array[], size_t size, unsigned int value);
+static bool ismember(const unsigned array[], size_t size, unsigned value);
 static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userparam);
 #endif /* !NDEBUG */
 static void createwindow(void);
 
 /* Variables */
 #ifndef NDEBUG
-static const unsigned int ignorelog[] = {
+static const unsigned ignorelog[] = {
     131185, /* Buffer info */
     131204, /* Texture mapping warning */
     131218  /* Recompilation warning */
@@ -101,7 +101,7 @@ void resizecallback([[maybe_unused]] GLFWwindow *window, int width, int height)
 
 #ifndef NDEBUG
 
-bool ismember(const unsigned int array[], size_t size, unsigned int value)
+bool ismember(const unsigned array[], size_t size, unsigned value)
 {
     for (size_t i = 0; i < size; i++)
         if (array[i] == value)

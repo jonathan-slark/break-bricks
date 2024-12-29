@@ -19,7 +19,7 @@
 
 /* Macros
  * Paddle width = 1 m */
-#define PIXEL2M(x) ((x) / (float)paddlewidth)
+#define PIXEL2M(x) ((x) / (double)paddlewidth)
 #define EXT(x) ((x) / 2.0f)
 
 /* Types */
@@ -44,22 +44,18 @@ typedef struct
 } Brick;
 
 /* Function prototypes */
-static void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, float rot, const unsigned *verts, size_t size);
+static void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, double rot, const unsigned *verts, size_t size);
 static void initbrick(Brick *brick, char id, unsigned row, unsigned col);
 static void termbrick(Brick *brick);
 static unsigned readbricks(const char *lvl, Brick *bricks);
 static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
-static void makewall(unsigned posx, unsigned posy, unsigned width, unsigned height);
 static void levelunload(void);
 static void movepaddle(double vel);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static void releaseball(double frametime);
-static void resetsmoothstates(void);
-static void collisionresolution(void);
-static void smoothstates(void);
 static void leveldraw(GLuint shader);
 
 /* Variables */
@@ -76,7 +72,7 @@ static bool keypressed[GLFW_KEY_LAST + 1] = {0};
 
 /* Function implementations */
 
-void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, float rot, const unsigned *verts, size_t size)
+void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, double rot, const unsigned *verts, size_t size)
 {
     memcpy(s->texverts, verts, size);
     s->size.x = PIXEL2M(width);
@@ -165,14 +161,17 @@ void levelload(const char *name)
 
 void initball(void)
 {
-    /* Only create the sprite, simulated circle is created on ball release */
     ball.isstuck = 1;
-    initsprite(&ball.sprite, ballwidth, ballheight, 0.0f, 0.0f, 0.0f, ballverts, sizeof(ballverts));
+    double x = scrwidth / 2.0f - ballwidth / 2.0f;
+    double y = scrheight / 2.0f - ballheight / 2.0f;
+    initsprite(&ball.sprite, ballwidth, ballheight, x, y, 0.0f, ballverts, sizeof(ballverts));
 }
 
 void initpaddle(void)
 {
-    initsprite(&paddle, paddlewidth, paddleheight, 0.0f, 0.0f, 0.0f, paddleverts, sizeof(paddleverts));
+    double x = scrwidth / 2.0f - paddlewidth / 2.0f;
+    double y = scrheight - paddleheight;
+    initsprite(&paddle, paddlewidth, paddleheight, x, y, 0.0f, paddleverts, sizeof(paddleverts));
 }
 
 void game_load(void)
