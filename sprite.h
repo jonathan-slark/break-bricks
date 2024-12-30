@@ -19,11 +19,11 @@ typedef struct
     unsigned texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
     vec2s size, pos;
-    double rot;
+    float rot;
 } Sprite;
 
 static const GLchar modeluniform[] = "model";
-static const double quad[] = {
+static const float quad[] = {
     0.0f, 0.0f,
     1.0f, 0.0f,
     0.0f, 1.0f,

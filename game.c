@@ -42,7 +42,7 @@ typedef struct
 } Brick;
 
 /* Function prototypes */
-static void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, double rot, const unsigned *verts, size_t size);
+static void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, float rot, const unsigned *verts, size_t size);
 static void initbrick(Brick *brick, char id, unsigned row, unsigned col);
 static unsigned readbricks(const char *lvl, Brick *bricks);
 static void levelload(const char *lvl);
@@ -68,7 +68,7 @@ static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
 /* Function implementations */
 
-void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, double rot, const unsigned *verts, size_t size)
+void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, float rot, const unsigned *verts, size_t size)
 {
     memcpy(s->texverts, verts, size);
     s->size.x = width;
@@ -91,8 +91,8 @@ void initbrick(Brick *brick, char id, unsigned row, unsigned col)
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
-    unsigned x = row * brickwidth;
-    unsigned y = scrheight - brickheight - (col * brickheight);
+    unsigned x = row * brickwidth + wallwidth;
+    unsigned y = col * brickheight + wallwidth;
     initsprite(&brick->sprite, brickwidth, brickheight, x, y, 0.0f, brickverts[i], sizeof(brickverts[i]));
 }
 
@@ -172,6 +172,7 @@ void initpaddle(void)
 
 void game_load(void)
 {
+    /* Using origin top left to match coords typically used with images */
     mat4s proj = glms_ortho(0.0f, scrwidth, scrheight, 0.0f, -1.0f, 1.0f);
     spriteshader = sprite_shaderload(vertshader, fragshader);
     sprite_shaderuse(spriteshader);
@@ -222,12 +223,12 @@ void game_keyup(int key)
 
 void movepaddleleft([[maybe_unused]] double frametime)
 {
-    paddle.pos.x = MAX(paddle.pos.x - paddlemove, 0);
+    paddle.pos.x = MAX(paddle.pos.x - paddlemove, wallwidth);
 }
 
 void movepaddleright([[maybe_unused]] double frametime)
 {
-    paddle.pos.x = MIN(paddle.pos.x + paddlemove, scrwidth - paddlewidth);
+    paddle.pos.x = MIN(paddle.pos.x + paddlemove, scrwidth - paddlewidth - wallwidth);
 }
 
 void releaseball([[maybe_unused]] double frametime)
@@ -259,11 +260,11 @@ void leveldraw(GLuint shader)
 
 void game_render(void)
 {
-    //sprite_use(bg);
-    //sprite_draw(spriteshader, &bgsprite);
+    sprite_use(bg);
+    sprite_draw(spriteshader, &bgsprite);
 
     sprite_use(spritesheet);
-    //leveldraw(spriteshader);
-    //sprite_draw(spriteshader, &ball.sprite);
+    leveldraw(spriteshader);
+    sprite_draw(spriteshader, &ball.sprite);
     sprite_draw(spriteshader, &paddle);
 }

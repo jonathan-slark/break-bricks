@@ -25,7 +25,7 @@
 /* Function prototypes */
 static GLint createshader(GLenum type, const GLchar *src);
 static GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
-static void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, double *vout);
+static void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, float *vout);
 
 /* Function declarations */
 
@@ -118,8 +118,6 @@ void sprite_shadersetmat4s(GLuint shader, const char *name, mat4s val)
 
 GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax)
 {
-    /* OpenGL's origin is bottom left, instead of top left */
-    stbi_set_flip_vertically_on_load(1);
     int width = 0, height = 0, chan = 0;
     unsigned char *data = stbi_load(name, &width, &height, &chan, 0);
     if (!data)
@@ -159,7 +157,7 @@ void sprite_use(GLuint id)
 }
 
 /* https://stackoverflow.com/q/40574677 */
-void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, double *vout)
+void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, float *vout)
 {
     for (unsigned i = 0; i < count; i += INDCOUNT)
     {
@@ -170,7 +168,7 @@ void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigne
 
 void sprite_init(Sprite *s)
 {
-    double texverts[ARRAYCOUNT];
+    float texverts[ARRAYCOUNT];
     screentonormal(s->texverts, ARRAYCOUNT, scrwidth, scrheight, texverts);
 
     glGenVertexArrays(1, &s->vao);
@@ -179,12 +177,12 @@ void sprite_init(Sprite *s)
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(double), (void *)0);
+    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(double), (void *)0);
+    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(float), (void *)0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
