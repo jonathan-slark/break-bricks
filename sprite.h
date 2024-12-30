@@ -8,13 +8,11 @@
 #define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
 #define VBOCOUNT 2 /* One for Verts, one for TexVerts */
 
-enum
-{
+enum {
     Verts,
     TexVerts
 };
-typedef struct
-{
+typedef struct {
     /* texverts are in screen coords */
     unsigned texverts[ARRAYCOUNT];
     GLuint vao, vbo[VBOCOUNT];
@@ -27,7 +25,8 @@ static const float quad[] = {
     0.0f, 0.0f,
     1.0f, 0.0f,
     0.0f, 1.0f,
-    1.0f, 1.0f};
+    1.0f, 1.0f
+};
 
 GLuint sprite_shaderload(const char *vertex, const char *fragment);
 void sprite_shaderunload(GLuint shader);

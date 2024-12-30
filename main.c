@@ -63,8 +63,7 @@ void term(int status, const char *fmt, ...)
 
     glfwTerminate();
 
-    if (fmt)
-    {
+    if (fmt) {
         va_list ap = NULL;
         va_start(ap, fmt);
         vfprintf(stderr, fmt, ap);
@@ -87,12 +86,9 @@ void keycallback(GLFWwindow *window, int key, [[maybe_unused]] int scancode, int
 
 void resizecallback([[maybe_unused]] GLFWwindow *window, int width, int height)
 {
-    if (!width || !height)
-    {
+    if (!width || !height) {
         minimised = true;
-    }
-    else
-    {
+    } else {
         minimised = false;
         glViewport(0, 0, width, height);
     }
@@ -156,12 +152,10 @@ void createwindow(void)
     glfwSwapInterval(1);
 
 #ifndef NDEBUG
-    if (GLAD_GL_ARB_debug_output)
-    {
+    if (GLAD_GL_ARB_debug_output) {
         GLint flags = 0;
         glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-        if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-        {
+        if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
             glDebugMessageCallbackARB(gldebugoutput, NULL);
             glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -181,15 +175,13 @@ int main(void)
     game_load();
 
     double lasttime = 0.0f;
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         double curtime = glfwGetTime();
         double frametime = curtime - lasttime;
         lasttime = curtime;
         glfwPollEvents();
 
-        if (!minimised)
-        {
+        if (!minimised) {
             game_input(frametime);
             game_update(frametime);
             game_render();

@@ -22,20 +22,17 @@
 
 /* Types */
 
-typedef struct
-{
+typedef struct {
     int key;
     void (*func)(double frametime);
 } Key;
 
-typedef struct
-{
+typedef struct {
     bool isstuck;
     Sprite sprite;
 } Ball;
 
-typedef struct
-{
+typedef struct {
     bool issolid;
     bool isdestroyed;
     Sprite sprite;
@@ -49,6 +46,7 @@ static void levelload(const char *lvl);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
+static void movepaddle(signed move);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static void releaseball(double frametime);
@@ -109,36 +107,25 @@ unsigned readbricks(const char *lvl, Brick *bricks)
     unsigned count = 0, row = 0, col = 0;
 
     char c = '\0';
-    while ((c = *lvl++) != '\0')
-    {
-        if (c == '#')
-        {
-            while ((c = *lvl++) != '\n')
-            {
+    while ((c = *lvl++) != '\0') {
+        if (c == '#') {
+            while ((c = *lvl++) != '\n') {
                 /* Comment */
             }
-        }
-        else if (c == 'x')
-        {
+        } else if (c == 'x') {
             /* No brick */
             row++;
-        }
-        else if (isdigit(c) || (c >= 'a' && c <= 'f'))
-        {
+        } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
             if (bricks)
                 initbrick(&bricks[count], c, row, col);
             count++;
             row++;
-        }
-        else if (c == '\n')
-        {
+        } else if (c == '\n') {
             /* Ignore blank line */
             if (row > 0)
                 col++;
             row = 0;
-        }
-        else if (c != ' ' && c != '\t')
-        {
+        } else if (c != ' ' && c != '\t') {
             term(EXIT_FAILURE, "Syntax error in level file.\n");
         }
     }
@@ -221,14 +208,21 @@ void game_keyup(int key)
     keypressed[key] = false;
 }
 
+void movepaddle(signed move)
+{
+    paddle.pos.x = CLAMP(paddle.pos.x + move, wallwidth, scrwidth - paddlewidth - wallwidth);
+    if (ball.isstuck)
+        ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
+}
+
 void movepaddleleft([[maybe_unused]] double frametime)
 {
-    paddle.pos.x = MAX(paddle.pos.x - paddlemove, wallwidth);
+    movepaddle(-paddlemove);
 }
 
 void movepaddleright([[maybe_unused]] double frametime)
 {
-    paddle.pos.x = MIN(paddle.pos.x + paddlemove, scrwidth - paddlewidth - wallwidth);
+    movepaddle(paddlemove);
 }
 
 void releaseball([[maybe_unused]] double frametime)
@@ -246,9 +240,13 @@ void game_input(double frametime)
             (*keys[i].func)(frametime);
 }
 
+void moveball(void)
+{
+}
+
 void game_update([[maybe_unused]] double frametime)
 {
-
+    moveball();
 }
 
 void leveldraw(GLuint shader)

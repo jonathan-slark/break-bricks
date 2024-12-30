@@ -37,12 +37,10 @@ GLint createshader(GLenum type, const GLchar *src)
 
     GLint iscompiled = false;
     glGetShaderiv(s, GL_COMPILE_STATUS, &iscompiled);
-    if (!iscompiled)
-    {
+    if (!iscompiled) {
         GLint len = 0;
         glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
-        if (len)
-        {
+        if (len) {
             GLchar *log = (GLchar *)malloc(len * sizeof(GLchar));
             glGetShaderInfoLog(s, len, &len, &log[0]);
             fprintf(stderr, (char *)log);
@@ -72,12 +70,10 @@ GLuint sprite_shaderload(const char *vertex, const char *fragment)
 
     GLint islinked = false;
     glGetProgramiv(shader, GL_LINK_STATUS, &islinked);
-    if (!islinked)
-    {
+    if (!islinked) {
         GLint len = 0;
         glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &len);
-        if (len)
-        {
+        if (len) {
             GLchar *log = (GLchar *)malloc(len * sizeof(GLchar));
             glGetProgramInfoLog(shader, len, &len, &log[0]);
             fprintf(stderr, (char *)log);
@@ -159,8 +155,7 @@ void sprite_use(GLuint id)
 /* https://stackoverflow.com/q/40574677 */
 void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, float *vout)
 {
-    for (unsigned i = 0; i < count; i += INDCOUNT)
-    {
+    for (unsigned i = 0; i < count; i += INDCOUNT) {
         vout[i] = SCR2NORM(vin[i], width);
         vout[i + 1] = SCR2NORM(vin[i + 1], height);
     }
