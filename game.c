@@ -39,10 +39,11 @@ typedef struct {
 } Brick;
 
 /* Function prototypes */
-static void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, float rot, const unsigned *verts, size_t size);
-static void initbrick(Brick *brick, char id, unsigned row, unsigned col);
-static unsigned readbricks(const char *lvl, Brick *bricks);
-static void levelload(const char *lvl);
+static void initsprite(Sprite* s, unsigned width, unsigned height, unsigned x,
+		       unsigned y, float rot, const unsigned* verts, size_t size);
+static void initbrick(Brick* brick, char id, unsigned row, unsigned col);
+static unsigned readbricks(const char* lvl, Brick* bricks);
+static void levelload(const char* lvl);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
@@ -53,7 +54,7 @@ static void releaseball(double frametime);
 static void leveldraw(GLuint shader);
 
 /* Variables */
-static Brick *bricks = NULL;
+static Brick* bricks = NULL;
 static unsigned brickcount = 0;
 static Ball ball = {};
 static Sprite paddle = {};
@@ -66,8 +67,8 @@ static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
 /* Function implementations */
 
-void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned y, float rot, const unsigned *verts, size_t size)
-{
+void initsprite(Sprite* s, unsigned width, unsigned height, unsigned x,
+		unsigned y, float rot, const unsigned* verts, size_t size) {
     memcpy(s->texverts, verts, size);
     s->size.x = width;
     s->size.y = height;
@@ -77,88 +78,84 @@ void initsprite(Sprite *s, unsigned width, unsigned height, unsigned x, unsigned
     sprite_init(s);
 }
 
-void initbrick(Brick *brick, char id, unsigned row, unsigned col)
-{
+void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
     bool solid = (!isdigit(id));
     unsigned i;
     if (solid)
-        i = id - 'a' + bricktypes;
+	i = id - 'a' + bricktypes;
     else
-        i = id - '0';
+	i = id - '0';
 
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
     unsigned x = row * brickwidth + wallwidth;
     unsigned y = col * brickheight + wallwidth;
-    initsprite(&brick->sprite, brickwidth, brickheight, x, y, 0.0f, brickverts[i], sizeof(brickverts[i]));
+    initsprite(&brick->sprite, brickwidth, brickheight, x, y, 0.0f, brickverts[i],
+	       sizeof(brickverts[i]));
 }
 
-void termbrick(Brick *brick)
-{
+void termbrick(Brick* brick) {
     if (!brick->issolid && !brick->isdestroyed)
-        brick->isdestroyed = 1;
+	brick->isdestroyed = 1;
 }
 
 /* Run once with bricks = NULL to get the brick count, a second time with
  * bricks pointing to an array of bricks to be initialised. */
-unsigned readbricks(const char *lvl, Brick *bricks)
-{
+unsigned readbricks(const char* lvl, Brick* bricks) {
     unsigned count = 0, row = 0, col = 0;
 
     char c = '\0';
     while ((c = *lvl++) != '\0') {
-        if (c == '#') {
-            while ((c = *lvl++) != '\n') {
-                /* Comment */
-            }
-        } else if (c == 'x') {
-            /* No brick */
-            row++;
-        } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
-            if (bricks)
-                initbrick(&bricks[count], c, row, col);
-            count++;
-            row++;
-        } else if (c == '\n') {
-            /* Ignore blank line */
-            if (row > 0)
-                col++;
-            row = 0;
-        } else if (c != ' ' && c != '\t') {
-            term(EXIT_FAILURE, "Syntax error in level file.\n");
-        }
+	if (c == '#') {
+	    while ((c = *lvl++) != '\n') {
+		/* Comment */
+	    }
+	} else if (c == 'x') {
+	    /* No brick */
+	    row++;
+	} else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
+	    if (bricks)
+		initbrick(&bricks[count], c, row, col);
+	    count++;
+	    row++;
+	} else if (c == '\n') {
+	    /* Ignore blank line */
+	    if (row > 0)
+		col++;
+	    row = 0;
+	} else if (c != ' ' && c != '\t') {
+	    term(EXIT_FAILURE, "Syntax error in level file.\n");
+	}
     }
 
     return count;
 }
 
-void levelload(const char *name)
-{
-    char *lvl = load(name);
+void levelload(const char* name) {
+    char* lvl = load(name);
     brickcount = readbricks(lvl, NULL);
-    bricks = (Brick *)malloc(brickcount * sizeof(Brick));
+    bricks = (Brick*)malloc(brickcount * sizeof(Brick));
     readbricks(lvl, bricks);
     unload(lvl);
 }
 
-void initball(void)
-{
+void initball(void) {
     ball.isstuck = 1;
     unsigned x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
     unsigned y = paddle.pos.y - ballheight;
-    initsprite(&ball.sprite, ballwidth, ballheight, x, y, 0.0f, ballverts, sizeof(ballverts));
+    initsprite(&ball.sprite, ballwidth, ballheight, x, y, 0.0f, ballverts,
+	       sizeof(ballverts));
 }
 
-void initpaddle(void)
-{
+void initpaddle(void) {
     unsigned x = scrwidth / 2 - paddlewidth / 2;
     unsigned y = scrheight - paddleheight;
-    initsprite(&paddle, paddlewidth, paddleheight, x, y, 0.0f, paddleverts, sizeof(paddleverts));
+    initsprite(&paddle, paddlewidth, paddleheight, x, y, 0.0f, paddleverts,
+	       sizeof(paddleverts));
 }
 
-void game_load(void)
-{
+void game_load(void) {
     /* Using origin top left to match coords typically used with images */
     mat4s proj = glms_ortho(0.0f, scrwidth, scrheight, 0.0f, -1.0f, 1.0f);
     spriteshader = sprite_shaderload(vertshader, fragshader);
@@ -167,7 +164,8 @@ void game_load(void)
 
     spritesheet = sprite_load(spritefile, 1);
     bg = sprite_load(bgfile, 1);
-    initsprite(&bgsprite, bgwidth, bgheight, 0.0f, 0.0f, 0.0f, bgverts, sizeof(bgverts));
+    initsprite(&bgsprite, bgwidth, bgheight, 0.0f, 0.0f, 0.0f, bgverts,
+	       sizeof(bgverts));
     glActiveTexture(GL_TEXTURE0);
     sprite_shadersetint(spriteshader, texuniform, 0);
 
@@ -179,17 +177,15 @@ void game_load(void)
     initball();
 }
 
-void levelunload(void)
-{
+void levelunload(void) {
     for (unsigned i = 0; i < brickcount; i++)
-        sprite_term(&bricks[i].sprite);
+	sprite_term(&bricks[i].sprite);
 
     free(bricks);
     brickcount = 0;
 }
 
-void game_unload(void)
-{
+void game_unload(void) {
     sprite_term(&paddle);
     sprite_term(&ball.sprite);
     levelunload();
@@ -198,66 +194,56 @@ void game_unload(void)
     sprite_shaderunload(spriteshader);
 }
 
-void game_keydown(int key)
-{
+void game_keydown(int key) {
     keypressed[key] = true;
 }
 
-void game_keyup(int key)
-{
+void game_keyup(int key) {
     keypressed[key] = false;
 }
 
-void movepaddle(signed move)
-{
-    paddle.pos.x = CLAMP(paddle.pos.x + move, wallwidth, scrwidth - paddlewidth - wallwidth);
+void movepaddle(signed move) {
+    paddle.pos.x = CLAMP(paddle.pos.x + move, wallwidth,
+			 scrwidth - paddlewidth - wallwidth);
     if (ball.isstuck)
-        ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
+	ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
 }
 
-void movepaddleleft([[maybe_unused]] double frametime)
-{
+void movepaddleleft([[maybe_unused]] double frametime) {
     movepaddle(-paddlemove);
 }
 
-void movepaddleright([[maybe_unused]] double frametime)
-{
+void movepaddleright([[maybe_unused]] double frametime) {
     movepaddle(paddlemove);
 }
 
-void releaseball([[maybe_unused]] double frametime)
-{
+void releaseball([[maybe_unused]] double frametime) {
     if (!ball.isstuck)
-        return;
+	return;
 
     ball.isstuck = 0;
 }
 
-void game_input(double frametime)
-{
+void game_input(double frametime) {
     for (size_t i = 0; i < COUNT(keys); i++)
-        if (keypressed[keys[i].key])
-            (*keys[i].func)(frametime);
+	if (keypressed[keys[i].key])
+	    (*keys[i].func)(frametime);
 }
 
-void moveball(void)
-{
+void moveball(void) {
 }
 
-void game_update([[maybe_unused]] double frametime)
-{
+void game_update([[maybe_unused]] double frametime) {
     moveball();
 }
 
-void leveldraw(GLuint shader)
-{
+void leveldraw(GLuint shader) {
     for (unsigned i = 0; i < brickcount; i++)
-        if (!bricks[i].isdestroyed)
-            sprite_draw(shader, &bricks[i].sprite);
+	if (!bricks[i].isdestroyed)
+	    sprite_draw(shader, &bricks[i].sprite);
 }
 
-void game_render(void)
-{
+void game_render(void) {
     sprite_use(bg);
     sprite_draw(spriteshader, &bgsprite);
 

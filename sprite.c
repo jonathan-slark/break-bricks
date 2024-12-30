@@ -23,14 +23,15 @@
 #define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))
 
 /* Function prototypes */
-static GLint createshader(GLenum type, const GLchar *src);
-static GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
-static void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, float *vout);
+static GLint createshader(GLenum type, const GLchar* src);
+static GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,
+		      GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
+static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
+			   unsigned height, float* vout);
 
 /* Function declarations */
 
-GLint createshader(GLenum type, const GLchar *src)
-{
+GLint createshader(GLenum type, const GLchar* src) {
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
     glCompileShader(s);
@@ -38,24 +39,23 @@ GLint createshader(GLenum type, const GLchar *src)
     GLint iscompiled = false;
     glGetShaderiv(s, GL_COMPILE_STATUS, &iscompiled);
     if (!iscompiled) {
-        GLint len = 0;
-        glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
-        if (len) {
-            GLchar *log = (GLchar *)malloc(len * sizeof(GLchar));
-            glGetShaderInfoLog(s, len, &len, &log[0]);
-            fprintf(stderr, (char *)log);
-            free(log);
-            glDeleteShader(s);
-        }
-        term(EXIT_FAILURE, "Could not loadtex shader.\n");
+	GLint len = 0;
+	glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
+	if (len) {
+	    GLchar* log = (GLchar*)malloc(len * sizeof(GLchar));
+	    glGetShaderInfoLog(s, len, &len, &log[0]);
+	    fprintf(stderr, (char*)log);
+	    free(log);
+	    glDeleteShader(s);
+	}
+	term(EXIT_FAILURE, "Could not loadtex shader.\n");
     }
     return s;
 }
 
-GLuint sprite_shaderload(const char *vertex, const char *fragment)
-{
-    GLchar *vsrc = (GLchar *)load(vertex);
-    GLchar *fsrc = (GLchar *)load(fragment);
+GLuint sprite_shaderload(const char* vertex, const char* fragment) {
+    GLchar* vsrc = (GLchar*)load(vertex);
+    GLchar* fsrc = (GLchar*)load(fragment);
     GLuint v = createshader(GL_VERTEX_SHADER, vsrc);
     GLuint f = createshader(GL_FRAGMENT_SHADER, fsrc);
     unload(vsrc);
@@ -71,58 +71,55 @@ GLuint sprite_shaderload(const char *vertex, const char *fragment)
     GLint islinked = false;
     glGetProgramiv(shader, GL_LINK_STATUS, &islinked);
     if (!islinked) {
-        GLint len = 0;
-        glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &len);
-        if (len) {
-            GLchar *log = (GLchar *)malloc(len * sizeof(GLchar));
-            glGetProgramInfoLog(shader, len, &len, &log[0]);
-            fprintf(stderr, (char *)log);
-            free(log);
-        }
-        glDeleteProgram(shader);
-        term(EXIT_FAILURE, "Could not link shaders.\n");
+	GLint len = 0;
+	glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &len);
+	if (len) {
+	    GLchar* log = (GLchar*)malloc(len * sizeof(GLchar));
+	    glGetProgramInfoLog(shader, len, &len, &log[0]);
+	    fprintf(stderr, (char*)log);
+	    free(log);
+	}
+	glDeleteProgram(shader);
+	term(EXIT_FAILURE, "Could not link shaders.\n");
     }
 
     return shader;
 }
 
-void sprite_shaderunload(GLuint shader)
-{
+void sprite_shaderunload(GLuint shader) {
     glDeleteProgram(shader);
 }
 
-void sprite_shaderuse(GLuint shader)
-{
+void sprite_shaderuse(GLuint shader) {
     glUseProgram(shader);
 }
 
-void sprite_shadersetint(GLuint shader, const char *name, GLint val)
-{
+void sprite_shadersetint(GLuint shader, const char* name, GLint val) {
     GLint loc = glGetUniformLocation(shader, name);
     if (loc == -1)
-        fprintf(stderr, "Could not get uniform location.\n");
+	fprintf(stderr, "Could not get uniform location.\n");
     glUniform1i(loc, val);
 }
 
-void sprite_shadersetmat4s(GLuint shader, const char *name, mat4s val)
-{
+void sprite_shadersetmat4s(GLuint shader, const char* name, mat4s val) {
     GLint loc = glGetUniformLocation(shader, name);
     if (loc == -1)
-        fprintf(stderr, "Could not get uniform location.\n");
+	fprintf(stderr, "Could not get uniform location.\n");
     glUniformMatrix4fv(loc, 1, GL_FALSE, val.raw[0]);
 }
 
-GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax)
-{
+GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,
+	       GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax) {
     int width = 0, height = 0, chan = 0;
-    unsigned char *data = stbi_load(name, &width, &height, &chan, 0);
+    unsigned char* data = stbi_load(name, &width, &height, &chan, 0);
     if (!data)
-        term(EXIT_FAILURE, "Could not loadtex image %s\n.", name);
+	term(EXIT_FAILURE, "Could not loadtex image %s\n.", name);
 
     GLuint id = 0;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, intformat, width, height, 0, imgformat, GL_UNSIGNED_BYTE, (const void *)data);
+    glTexImage2D(GL_TEXTURE_2D, 0, intformat, width, height, 0, imgformat,
+		 GL_UNSIGNED_BYTE, (const void*)data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wraps);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapt);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtermin);
@@ -134,35 +131,33 @@ GLuint loadtex(const char *name, GLint intformat, GLenum imgformat, GLint wraps,
     return id;
 }
 
-GLuint sprite_load(const char *name, int isalpha)
-{
+GLuint sprite_load(const char* name, int isalpha) {
     if (isalpha)
-        return loadtex(name, GL_RGBA, GL_RGBA, GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR);
+	return loadtex(name, GL_RGBA, GL_RGBA, GL_REPEAT, GL_REPEAT, GL_LINEAR,
+		       GL_LINEAR);
     else
-        return loadtex(name, GL_RGB, GL_RGB, GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR);
+	return loadtex(name, GL_RGB, GL_RGB, GL_REPEAT, GL_REPEAT, GL_LINEAR,
+		       GL_LINEAR);
 }
 
-void sprite_unload(GLuint id)
-{
+void sprite_unload(GLuint id) {
     glDeleteTextures(1, &id);
 }
 
-void sprite_use(GLuint id)
-{
+void sprite_use(GLuint id) {
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
 /* https://stackoverflow.com/q/40574677 */
-void screentonormal(const unsigned *vin, unsigned count, unsigned width, unsigned height, float *vout)
-{
+void screentonormal(const unsigned* vin, unsigned count, unsigned width,
+		    unsigned height, float* vout) {
     for (unsigned i = 0; i < count; i += INDCOUNT) {
-        vout[i] = SCR2NORM(vin[i], width);
-        vout[i + 1] = SCR2NORM(vin[i + 1], height);
+	vout[i] = SCR2NORM(vin[i], width);
+	vout[i + 1] = SCR2NORM(vin[i + 1], height);
     }
 }
 
-void sprite_init(Sprite *s)
-{
+void sprite_init(Sprite* s) {
     float texverts[ARRAYCOUNT];
     screentonormal(s->texverts, ARRAYCOUNT, scrwidth, scrheight, texverts);
 
@@ -172,26 +167,26 @@ void sprite_init(Sprite *s)
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE,
+			  INDCOUNT * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, INDCOUNT * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE,
+			  INDCOUNT * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
-void sprite_term(const Sprite *s)
-{
+void sprite_term(const Sprite* s) {
     glDeleteVertexArrays(1, &s->vao);
     glDeleteBuffers(VBOCOUNT, s->vbo);
 }
 
-void sprite_draw(GLuint shader, const Sprite *s)
-{
+void sprite_draw(GLuint shader, const Sprite* s) {
     /* Move to position */
     vec3s pos3 = {{s->pos.x, s->pos.y, 0.0f}};
     mat4s model = glms_translate_make(pos3);

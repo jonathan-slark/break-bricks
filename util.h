@@ -10,5 +10,5 @@
 
 static const char readonly[] = "r";
 
-char *load(const char *filename);
-void unload(char *src);
+char* load(const char* filename);
+void unload(char* src);

@@ -12,4 +12,4 @@ static const unsigned scrbluebits  = 8;
 static const unsigned openglmajor  = 3;
 static const unsigned openglminor  = 3;
 
-void term(int status, const char *fmt, ...);
+void term(int status, const char* fmt, ...);
