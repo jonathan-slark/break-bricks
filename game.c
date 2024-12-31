@@ -39,15 +39,15 @@ typedef struct {
 } Brick;
 
 /* Function prototypes */
-static void initsprite(Sprite* s, unsigned width, unsigned height, unsigned x,
-		       unsigned y, float rot, const unsigned* verts, size_t size);
+static void initsprite(Sprite* s, float width, float height, float x,
+		       float y, float rot, const unsigned* verts, size_t size);
 static void initbrick(Brick* brick, char id, unsigned row, unsigned col);
 static unsigned readbricks(const char* lvl, Brick* bricks);
 static void levelload(const char* lvl);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
-static void movepaddle(signed move);
+static void movepaddle(float move);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static void releaseball(double frametime);
@@ -67,8 +67,8 @@ static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
 /* Function implementations */
 
-void initsprite(Sprite* s, unsigned width, unsigned height, unsigned x,
-		unsigned y, float rot, const unsigned* verts, size_t size) {
+void initsprite(Sprite* s, float width, float height, float x,
+		float y, float rot, const unsigned* verts, size_t size) {
     memcpy(s->texverts, verts, size);
     s->size.x = width;
     s->size.y = height;
@@ -89,8 +89,8 @@ void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
-    unsigned x = row * brickwidth + wallwidth;
-    unsigned y = col * brickheight + wallwidth;
+    float x = row * brickwidth + wallwidth;
+    float y = col * brickheight + wallwidth;
     initsprite(&brick->sprite, brickwidth, brickheight, x, y, 0.0f, brickverts[i],
 	       sizeof(brickverts[i]));
 }
@@ -142,15 +142,15 @@ void levelload(const char* name) {
 
 void initball(void) {
     ball.isstuck = 1;
-    unsigned x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
-    unsigned y = paddle.pos.y - ballheight;
+    float x = paddle.pos.x + paddlewidth / 2.0f - ballwidth / 2.0f;
+    float y = paddle.pos.y - ballheight;
     initsprite(&ball.sprite, ballwidth, ballheight, x, y, 0.0f, ballverts,
 	       sizeof(ballverts));
 }
 
 void initpaddle(void) {
-    unsigned x = scrwidth / 2 - paddlewidth / 2;
-    unsigned y = scrheight - paddleheight;
+    float x = scrwidth / 2.0f - paddlewidth / 2.0f;
+    float y = scrheight - paddleheight;
     initsprite(&paddle, paddlewidth, paddleheight, x, y, 0.0f, paddleverts,
 	       sizeof(paddleverts));
 }
@@ -202,19 +202,20 @@ void game_keyup(int key) {
     keypressed[key] = false;
 }
 
-void movepaddle(signed move) {
+void movepaddle(float move) {
     paddle.pos.x = CLAMP(paddle.pos.x + move, wallwidth,
 			 scrwidth - paddlewidth - wallwidth);
     if (ball.isstuck)
-	ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2 - ballwidth / 2;
+	ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2.0f -
+	    ballwidth / 2.0f;
 }
 
-void movepaddleleft([[maybe_unused]] double frametime) {
-    movepaddle(-paddlemove);
+void movepaddleleft(double frametime) {
+    movepaddle(paddlemove * -frametime);
 }
 
-void movepaddleright([[maybe_unused]] double frametime) {
-    movepaddle(paddlemove);
+void movepaddleright(double frametime) {
+    movepaddle(paddlemove * frametime);
 }
 
 void releaseball([[maybe_unused]] double frametime) {
