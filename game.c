@@ -62,7 +62,7 @@ static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
-/* Config uses types from this file */
+/* Uses types defined above */
 #include "config.h"
 
 /* Function implementations */
@@ -135,7 +135,7 @@ unsigned readbricks(const char* lvl, Brick* bricks) {
 void levelload(const char* name) {
     char* lvl = util_load(name);
     brickcount = readbricks(lvl, NULL);
-    bricks = (Brick*)malloc(brickcount * sizeof(Brick));
+    bricks = (Brick*) malloc(brickcount * sizeof(Brick));
     readbricks(lvl, bricks);
     util_unload(lvl);
 }

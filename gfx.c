@@ -4,19 +4,19 @@
  * TODO: Only store QUAD verts once, not per sprite.
  */
 
+#define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
 #include <ctype.h>
 #include <cglm/struct.h>
 #include <glad.h>
-#include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "main.h"
 #include "gfx.h"
+#include "main.h"
 #include "util.h"
 
 /* Macros */
@@ -29,14 +29,27 @@ enum {
 };
 
 /* Function prototypes */
+#ifndef NDEBUG
+static bool ismember(const unsigned array[], size_t size, unsigned value);
+static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
+	GLenum severity, GLsizei length, const GLchar* message,
+	const void* userparam);
+#endif /* !NDEBUG */
 static GLint createshader(GLenum type, const GLchar* src);
 static GLuint shaderload(const char* vertex, const char* fragment);
 static GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,
-		      GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
+	GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
 static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
-			   unsigned height, float* vout);
+	unsigned height, float* vout);
 
 /* Constants */
+#ifndef NDEBUG
+static const unsigned LOG_IGNORE[] = {
+    131185, /* Buffer info */
+    131204, /* Texture mapping warning */
+    131218  /* Recompilation warning */
+};
+#endif /* !NDEBUG */
 static const char   SHADER_VERT[]   = "shader/sprite_vert.glsl";
 static const char   SHADER_FRAG[]   = "shader/sprite_frag.glsl";
 static const GLchar UNIFORM_MODEL[] = "model";
@@ -53,6 +66,28 @@ static const float  QUAD[] = {
 static GLuint shader = 0;
 
 /* Function declarations */
+
+#ifndef NDEBUG
+
+bool ismember(const unsigned array[], size_t size, unsigned value) {
+    for (size_t i = 0; i < size; i++)
+        if (array[i] == value)
+            return true;
+
+    return false;
+}
+
+void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
+                              GLenum type, GLuint id, [[maybe_unused]] GLenum severity, [[maybe_unused]]
+                              GLsizei length, const GLchar* message, [[maybe_unused]] const void*
+                              userparam) {
+    if (ismember(LOG_IGNORE, sizeof(LOG_IGNORE), id))
+        return;
+
+    fprintf(stderr, "%u: %s\n", id, (const char*)message);
+}
+
+#endif /* !NDEBUG */
 
 GLint createshader(GLenum type, const GLchar* src) {
     GLuint s = glCreateShader(type);
@@ -132,6 +167,21 @@ void shadersetmat4s(GLuint shader, const char* name, mat4s val) {
 }
 
 void gfx_init(void) {
+    gfx_resize(SCR_WIDTH, SCR_HEIGHT);
+
+#ifndef NDEBUG
+    if (GLAD_GL_ARB_debug_output) {
+        GLint flags = 0;
+        glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+        if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+            glDebugMessageCallbackARB(gldebugoutput, NULL);
+            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE,
+		    0, NULL, GL_TRUE);
+        }
+    }
+#endif /* !NDEBUG */
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -147,6 +197,10 @@ void gfx_init(void) {
 
 void gfx_term(void) {
     shaderunload(shader);
+}
+
+void gfx_resize(int width, int height) {
+    glViewport(0, 0, width, height);
 }
 
 GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,

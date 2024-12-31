@@ -18,6 +18,7 @@ typedef struct {
 
 void   gfx_init(void);
 void   gfx_term(void);
+void   gfx_resize(int width, int height);
 
 /* Sprite sheet */
 GLuint gfx_ss_load(const char* name, int isalpha);

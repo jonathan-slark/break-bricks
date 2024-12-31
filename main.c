@@ -3,9 +3,9 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
-#define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
+#include <cglm/struct.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
@@ -14,8 +14,8 @@
 #include <stdlib.h>
 
 #include "game.h"
+#include "gfx.h"
 #include "main.h"
-#include "util.h"
 
 /* Function declarations */
 static void errorcallback(int err, const char* desc);
@@ -23,11 +23,6 @@ static void init(void);
 static void keycallback(GLFWwindow* window, int key, int scancode, int action,
 			int mods);
 static void resizecallback(GLFWwindow* window, int width, int height);
-#ifndef NDEBUG
-static bool ismember(const unsigned array[], size_t size, unsigned value);
-static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
-				     GLenum severity, GLsizei length, const GLchar* message, const void* userparam);
-#endif /* !NDEBUG */
 static void createwindow(void);
 
 /* Constants */
@@ -39,13 +34,6 @@ static const unsigned SCR_GREEN_BITS = 8;
 static const unsigned SCR_BLUE_BITS  = 8;
 static const unsigned OPENGL_MAJOR   = 3;
 static const unsigned OPENGL_MINOR   = 3;
-#ifndef NDEBUG
-static const unsigned LOG_IGNORE[] = {
-    131185, /* Buffer info */
-    131204, /* Texture mapping warning */
-    131218  /* Recompilation warning */
-};
-#endif /* !NDEBUG */
 
 /* Variables */
 static GLFWwindow* window = NULL;
@@ -99,31 +87,9 @@ void resizecallback([[maybe_unused]] GLFWwindow* window, int width,
 	minimised = true;
     } else {
 	minimised = false;
-	glViewport(0, 0, width, height);
+	gfx_resize(width, height);
     }
 }
-
-#ifndef NDEBUG
-
-bool ismember(const unsigned array[], size_t size, unsigned value) {
-    for (size_t i = 0; i < size; i++)
-	if (array[i] == value)
-	    return true;
-
-    return false;
-}
-
-void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
-			      GLenum type, GLuint id, [[maybe_unused]] GLenum severity, [[maybe_unused]]
-			      GLsizei length, const GLchar* message, [[maybe_unused]] const void*
-			      userparam) {
-    if (ismember(LOG_IGNORE, sizeof(LOG_IGNORE), id))
-	return;
-
-    fprintf(stderr, "%u: %s\n", id, (const char*)message);
-}
-
-#endif /* !NDEBUG */
 
 void createwindow(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR);
@@ -154,26 +120,11 @@ void createwindow(void) {
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
     if (!ver)
-	term(EXIT_FAILURE, "Failed to load OpenGL.\n");
+        term(EXIT_FAILURE, "Failed to load OpenGL.\n");
 
     glfwSetKeyCallback(window, keycallback);
     glfwSetFramebufferSizeCallback(window, resizecallback);
     glfwSwapInterval(1);
-
-#ifndef NDEBUG
-    if (GLAD_GL_ARB_debug_output) {
-	GLint flags = 0;
-	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-	    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-	    glDebugMessageCallbackARB(gldebugoutput, NULL);
-	    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
-				     GL_TRUE);
-	}
-    }
-#endif /* !NDEBUG */
-
-    resizecallback(window, SCR_WIDTH, SCR_HEIGHT);
 }
 
 int main(void) {
