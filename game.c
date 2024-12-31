@@ -235,8 +235,21 @@ void game_input(double frametime) {
 }
 
 void moveball(double frametime) {
+    Sprite* s=&ball.sprite;
     vec2s v = glms_vec2_scale(ball.v, BALL_MOVE * frametime);
-    ball.sprite.pos = glms_vec2_add(ball.sprite.pos, v);
+    s->pos = glms_vec2_add(s->pos, v);
+
+    if (s->pos.x <= WALL_WIDTH) {
+	s->pos.x = WALL_WIDTH;
+	ball.v.x = -ball.v.x;
+    } else if (s->pos.x >= SCR_WIDTH - WALL_WIDTH - BALL_WIDTH) {
+	s->pos.x = SCR_WIDTH - WALL_WIDTH - BALL_WIDTH;;
+	ball.v.x = -ball.v.x;
+    }
+    if (s->pos.y <= WALL_WIDTH) {
+	s->pos.y = WALL_WIDTH;
+	ball.v.y = -ball.v.y;
+    }
 }
 
 void game_update(double frametime) {
