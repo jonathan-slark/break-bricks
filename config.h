@@ -5,56 +5,48 @@
 
 /* Levels */
 #define LVLFOLDER "level"
-static const unsigned lvlcount = 1;
-
-/* Shader */
-static const char vertshader[] = "shader/sprite_vert.glsl";
-static const char fragshader[] = "shader/sprite_frag.glsl";
-static const GLchar projuniform[] = "proj";
-static const GLchar texuniform[] = "tex";
+static const unsigned LVL_COUNT = 3;
 
 /* Sprites */
-static const char spritefile[] = "sprite/spritesheet.png";
-static const char bgfile[] = "sprite/background.png";
-static const unsigned brickwidth = 64;
-static const unsigned brickheight = 32;
-static const unsigned bricktypes = 6; /* Number of brick types */
-static const unsigned ballwidth = 28;
-static const unsigned ballheight = 28;
-static const unsigned paddlewidth = 126;
-static const unsigned paddleheight = 26;
-static const unsigned paddlemove = 500; /* Pixels per second */
-static const unsigned bgwidth = 1920;
-static const unsigned bgheight = 1080;
-static const unsigned wallwidth = 64; /* Walls left, top and right */
+static const char     SPRITE_SHEET[] = "sprite/spritesheet.png";
+static const char     BACKGROUND[]   = "sprite/background.png";
+static const unsigned BALL_WIDTH     = 28;
+static const unsigned BALL_HEIGHT    = 28;
+static const unsigned PADDLE_WIDTH   = 126;
+static const unsigned PADDLE_HEIGHT  = 26;
+static const unsigned PADDLE_MOVE    = 500; /* Pixels per second */
+static const unsigned BRICK_WIDTH    = 64;
+static const unsigned BRICK_HEIGHT   = 32;
+static const unsigned BRICK_TYPES    = 6;   /* Number of brick types */
+static const unsigned WALL_WIDTH     = 64;  /* Walls left, top and right */
 
 /* Key bindings */
-static const Key keys[] = {
-    {GLFW_KEY_A, movepaddleleft},
-    {GLFW_KEY_D, movepaddleright},
-    {GLFW_KEY_SPACE, releaseball}
+static const Key KEYS[] = {
+    { GLFW_KEY_A,     movepaddleleft },
+    { GLFW_KEY_D,     movepaddleright },
+    { GLFW_KEY_SPACE, releaseball}
 };
 
 /* Vertices mapping out sprites in spritesheet */
-static const unsigned ballverts[ARRAYCOUNT] = {
-    510, 0,
-    537, 0,
-    510, 27,
-    537, 27
-};
-static const unsigned paddleverts[ARRAYCOUNT] = {
-    384, 0,
-    509, 0,
-    384, 25,
-    509, 25
-};
-static const unsigned bgverts[ARRAYCOUNT] = {
+static const unsigned BG_VERTS[ARRAYCOUNT] = {
     0,    0,
     1919, 0,
     0,    1079,
     1919, 1079
 };
-static const unsigned brickverts[][ARRAYCOUNT] = {
+static const unsigned BALL_VERTS[ARRAYCOUNT] = {
+    510, 0,
+    537, 0,
+    510, 27,
+    537, 27
+};
+static const unsigned PADDLE_VERTS[ARRAYCOUNT] = {
+    384, 0,
+    509, 0,
+    384, 25,
+    509, 25
+};
+static const unsigned BRICK_VERTS[][ARRAYCOUNT] = {
     /* blue, breakable, id = 0 */
     {
 	0,  0,

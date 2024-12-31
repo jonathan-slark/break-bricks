@@ -30,14 +30,24 @@ static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
 #endif /* !NDEBUG */
 static void createwindow(void);
 
-/* Variables */
+/* Constants */
+static const char     TITLE[]        = "Break Bricks";
+const unsigned        SCR_WIDTH      = 1920;
+const unsigned        SCR_HEIGHT     = 1080;
+static const unsigned SCR_RED_BITS   = 8;
+static const unsigned SCR_GREEN_BITS = 8;
+static const unsigned SCR_BLUE_BITS  = 8;
+static const unsigned OPENGL_MAJOR   = 3;
+static const unsigned OPENGL_MINOR   = 3;
 #ifndef NDEBUG
-static const unsigned ignorelog[] = {
+static const unsigned LOG_IGNORE[] = {
     131185, /* Buffer info */
     131204, /* Texture mapping warning */
     131218  /* Recompilation warning */
 };
 #endif /* !NDEBUG */
+
+/* Variables */
 static GLFWwindow* window = NULL;
 static bool minimised = false;
 
@@ -107,7 +117,7 @@ void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
 			      GLenum type, GLuint id, [[maybe_unused]] GLenum severity, [[maybe_unused]]
 			      GLsizei length, const GLchar* message, [[maybe_unused]] const void*
 			      userparam) {
-    if (ismember(ignorelog, sizeof(ignorelog), id))
+    if (ismember(LOG_IGNORE, sizeof(LOG_IGNORE), id))
 	return;
 
     fprintf(stderr, "%u: %s\n", id, (const char*)message);
@@ -116,8 +126,8 @@ void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
 #endif /* !NDEBUG */
 
 void createwindow(void) {
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openglmajor);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openglminor);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
@@ -132,12 +142,12 @@ void createwindow(void) {
 
     /* Request 8-bit full screen but keep the refresh rate the same. If this
      * matches the current mode then it will use borderless window. */
-    glfwWindowHint(GLFW_RED_BITS, scrredbits);
-    glfwWindowHint(GLFW_GREEN_BITS, scrgreenbits);
-    glfwWindowHint(GLFW_BLUE_BITS, scrbluebits);
+    glfwWindowHint(GLFW_RED_BITS, SCR_RED_BITS);
+    glfwWindowHint(GLFW_GREEN_BITS, SCR_GREEN_BITS);
+    glfwWindowHint(GLFW_BLUE_BITS, SCR_BLUE_BITS);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    if (!(window = glfwCreateWindow(scrwidth, scrheight, title, mon, NULL)))
+    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, NULL)))
 	term(EXIT_FAILURE, NULL);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
@@ -163,9 +173,7 @@ void createwindow(void) {
     }
 #endif /* !NDEBUG */
 
-    resizecallback(window, scrwidth, scrheight);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    resizecallback(window, SCR_WIDTH, SCR_HEIGHT);
 }
 
 int main(void) {

@@ -4,8 +4,10 @@
 #include "main.h"
 #include "util.h"
 
-char* load(const char* filename) {
-    FILE* fp = fopen(filename, readonly);
+static const char READONLY[] = "r";
+
+char* util_load(const char* filename) {
+    FILE* fp = fopen(filename, READONLY);
     if (!fp)
 	term(EXIT_FAILURE, "Could not open file %s.\n", filename);
 
@@ -28,6 +30,6 @@ char* load(const char* filename) {
     return src;
 }
 
-void unload(char* src) {
+void util_unload(char* src) {
     free(src);
 }

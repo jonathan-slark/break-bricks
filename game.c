@@ -14,7 +14,7 @@
 
 #include "game.h"
 #include "main.h"
-#include "sprite.h"
+#include "gfx.h"
 #include "util.h"
 
 /* Macros */
@@ -51,14 +51,14 @@ static void movepaddle(float move);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static void releaseball(double frametime);
-static void leveldraw(GLuint shader);
+static void leveldraw(void);
 
 /* Variables */
 static Brick* bricks = NULL;
 static unsigned brickcount = 0;
 static Ball ball = {};
 static Sprite paddle = {};
-static GLuint spritesheet = 0, spriteshader = 0, bg = 0;
+static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
@@ -75,24 +75,24 @@ void initsprite(Sprite* s, float width, float height, float x,
     s->pos.x = x;
     s->pos.y = y;
     s->rot = rot;
-    sprite_init(s);
+    gfx_sprite_init(s);
 }
 
 void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
     bool solid = (!isdigit(id));
     unsigned i;
     if (solid)
-	i = id - 'a' + bricktypes;
+	i = id - 'a' + BRICK_TYPES;
     else
 	i = id - '0';
 
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
-    float x = row * brickwidth + wallwidth;
-    float y = col * brickheight + wallwidth;
-    initsprite(&brick->sprite, brickwidth, brickheight, x, y, 0.0f, brickverts[i],
-	       sizeof(brickverts[i]));
+    float x = row * BRICK_WIDTH  + WALL_WIDTH;
+    float y = col * BRICK_HEIGHT + WALL_WIDTH;
+    initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, 0.0f, BRICK_VERTS[i],
+	       sizeof(BRICK_VERTS[i]));
 }
 
 void termbrick(Brick* brick) {
@@ -133,41 +133,35 @@ unsigned readbricks(const char* lvl, Brick* bricks) {
 }
 
 void levelload(const char* name) {
-    char* lvl = load(name);
+    char* lvl = util_load(name);
     brickcount = readbricks(lvl, NULL);
     bricks = (Brick*)malloc(brickcount * sizeof(Brick));
     readbricks(lvl, bricks);
-    unload(lvl);
+    util_unload(lvl);
 }
 
 void initball(void) {
     ball.isstuck = 1;
-    float x = paddle.pos.x + paddlewidth / 2.0f - ballwidth / 2.0f;
-    float y = paddle.pos.y - ballheight;
-    initsprite(&ball.sprite, ballwidth, ballheight, x, y, 0.0f, ballverts,
-	       sizeof(ballverts));
+    float x = paddle.pos.x + PADDLE_WIDTH / 2.0f - BALL_WIDTH / 2.0f;
+    float y = paddle.pos.y - BALL_HEIGHT;
+    initsprite(&ball.sprite, BALL_WIDTH, BALL_HEIGHT, x, y, 0.0f, BALL_VERTS,
+	       sizeof(BALL_VERTS));
 }
 
 void initpaddle(void) {
-    float x = scrwidth / 2.0f - paddlewidth / 2.0f;
-    float y = scrheight - paddleheight;
-    initsprite(&paddle, paddlewidth, paddleheight, x, y, 0.0f, paddleverts,
-	       sizeof(paddleverts));
+    float x = SCR_WIDTH / 2.0f - PADDLE_WIDTH / 2.0f;
+    float y = SCR_HEIGHT - PADDLE_HEIGHT;
+    initsprite(&paddle, PADDLE_WIDTH, PADDLE_HEIGHT, x, y, 0.0f, PADDLE_VERTS,
+	       sizeof(PADDLE_VERTS));
 }
 
 void game_load(void) {
-    /* Using origin top left to match coords typically used with images */
-    mat4s proj = glms_ortho(0.0f, scrwidth, scrheight, 0.0f, -1.0f, 1.0f);
-    spriteshader = sprite_shaderload(vertshader, fragshader);
-    sprite_shaderuse(spriteshader);
-    sprite_shadersetmat4s(spriteshader, projuniform, proj);
+    gfx_init();
 
-    spritesheet = sprite_load(spritefile, 1);
-    bg = sprite_load(bgfile, 1);
-    initsprite(&bgsprite, bgwidth, bgheight, 0.0f, 0.0f, 0.0f, bgverts,
-	       sizeof(bgverts));
-    glActiveTexture(GL_TEXTURE0);
-    sprite_shadersetint(spriteshader, texuniform, 0);
+    spritesheet = gfx_ss_load(SPRITE_SHEET, 1);
+    bg = gfx_ss_load(BACKGROUND, 1);
+    initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, 0.0f, BG_VERTS,
+	       sizeof(BG_VERTS));
 
     char lvl[] = LVLFOLDER "/00.txt";
     char fmt[] = LVLFOLDER "/%02i.txt";
@@ -179,19 +173,19 @@ void game_load(void) {
 
 void levelunload(void) {
     for (unsigned i = 0; i < brickcount; i++)
-	sprite_term(&bricks[i].sprite);
+	gfx_sprite_term(&bricks[i].sprite);
 
     free(bricks);
     brickcount = 0;
 }
 
 void game_unload(void) {
-    sprite_term(&paddle);
-    sprite_term(&ball.sprite);
+    gfx_sprite_term(&ball.sprite);
+    gfx_sprite_term(&paddle);
     levelunload();
-    sprite_unload(spritesheet);
-    sprite_unload(bg);
-    sprite_shaderunload(spriteshader);
+    gfx_ss_unload(bg);
+    gfx_ss_unload(spritesheet);
+    gfx_term();
 }
 
 void game_keydown(int key) {
@@ -203,53 +197,52 @@ void game_keyup(int key) {
 }
 
 void movepaddle(float move) {
-    paddle.pos.x = CLAMP(paddle.pos.x + move, wallwidth,
-			 scrwidth - paddlewidth - wallwidth);
+    paddle.pos.x = CLAMP(paddle.pos.x + move, WALL_WIDTH,
+			 SCR_WIDTH - PADDLE_WIDTH - WALL_WIDTH);
+
     if (ball.isstuck)
-	ball.sprite.pos.x = paddle.pos.x + paddlewidth / 2.0f -
-	    ballwidth / 2.0f;
+	ball.sprite.pos.x = paddle.pos.x + PADDLE_WIDTH / 2.0f -
+	    BALL_WIDTH / 2.0f;
 }
 
 void movepaddleleft(double frametime) {
-    movepaddle(paddlemove * -frametime);
+    movepaddle(PADDLE_MOVE * -frametime);
 }
 
 void movepaddleright(double frametime) {
-    movepaddle(paddlemove * frametime);
+    movepaddle(PADDLE_MOVE * frametime);
 }
 
 void releaseball([[maybe_unused]] double frametime) {
-    if (!ball.isstuck)
-	return;
-
     ball.isstuck = 0;
 }
 
 void game_input(double frametime) {
-    for (size_t i = 0; i < COUNT(keys); i++)
-	if (keypressed[keys[i].key])
-	    (*keys[i].func)(frametime);
+    for (size_t i = 0; i < COUNT(KEYS); i++)
+	if (keypressed[KEYS[i].key])
+	    (*KEYS[i].func)(frametime);
 }
 
 void moveball(void) {
 }
 
 void game_update([[maybe_unused]] double frametime) {
-    moveball();
+    if (!ball.isstuck)
+	moveball();
 }
 
-void leveldraw(GLuint shader) {
+void leveldraw(void) {
     for (unsigned i = 0; i < brickcount; i++)
 	if (!bricks[i].isdestroyed)
-	    sprite_draw(shader, &bricks[i].sprite);
+	    gfx_sprite_draw(&bricks[i].sprite);
 }
 
 void game_render(void) {
-    sprite_use(bg);
-    sprite_draw(spriteshader, &bgsprite);
+    gfx_ss_use(bg);
+    gfx_sprite_draw(&bgsprite);
 
-    sprite_use(spritesheet);
-    leveldraw(spriteshader);
-    sprite_draw(spriteshader, &ball.sprite);
-    sprite_draw(spriteshader, &paddle);
+    gfx_ss_use(spritesheet);
+    leveldraw();
+    gfx_sprite_draw(&ball.sprite);
+    gfx_sprite_draw(&paddle);
 }
