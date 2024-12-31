@@ -252,9 +252,29 @@ void moveball(double frametime) {
     }
 }
 
+void collisiondetect(void) {
+    Sprite* b = &ball.sprite;
+
+    vec2 aabbball[2] = {
+	{ b->pos.x, b->pos.y },
+	{ b->pos.x + b->size.x, b->pos.y + b->size.y }
+    };
+    vec2 aabbpaddle[2] = {
+	{ paddle.pos.x, paddle.pos.y },
+	{ paddle.pos.x + paddle.size.x, paddle.pos.y + paddle.size.y }
+    };
+
+    if (glm_aabb2d_aabb(aabbball, aabbpaddle)) {
+	b->pos.y = paddle.pos.y - paddle.size.y;
+	ball.v.y = -ball.v.y;
+    }
+}
+
 void game_update(double frametime) {
-    if (!ball.isstuck)
+    if (!ball.isstuck) {
 	moveball(frametime);
+	collisiondetect();
+    }
 }
 
 void leveldraw(void) {
