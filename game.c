@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "game.h"
 #include "main.h"
@@ -29,6 +30,7 @@ typedef struct {
 
 typedef struct {
     bool isstuck;
+    vec2s v;
     Sprite sprite;
 } Ball;
 
@@ -50,7 +52,9 @@ static void levelunload(void);
 static void movepaddle(float move);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
+static float random(float min, float max);
 static void releaseball(double frametime);
+static void moveball(double frametime);
 static void leveldraw(void);
 
 /* Variables */
@@ -93,11 +97,6 @@ void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
     float y = col * BRICK_HEIGHT + WALL_WIDTH;
     initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, 0.0f, BRICK_VERTS[i],
 	       sizeof(BRICK_VERTS[i]));
-}
-
-void termbrick(Brick* brick) {
-    if (!brick->issolid && !brick->isdestroyed)
-	brick->isdestroyed = 1;
 }
 
 /* Run once with bricks = NULL to get the brick count, a second time with
@@ -158,6 +157,8 @@ void initpaddle(void) {
 void game_load(void) {
     gfx_init();
 
+    srand(time(NULL));
+
     spritesheet = gfx_ss_load(SPRITE_SHEET, 1);
     bg = gfx_ss_load(BACKGROUND, 1);
     initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, 0.0f, BG_VERTS,
@@ -197,8 +198,8 @@ void game_keyup(int key) {
 }
 
 void movepaddle(float move) {
-    paddle.pos.x = CLAMP(paddle.pos.x + move, WALL_WIDTH,
-			 SCR_WIDTH - PADDLE_WIDTH - WALL_WIDTH);
+    paddle.pos.x = glm_clamp(paddle.pos.x + move, WALL_WIDTH,
+	    SCR_WIDTH - PADDLE_WIDTH - WALL_WIDTH);
 
     if (ball.isstuck)
 	ball.sprite.pos.x = paddle.pos.x + PADDLE_WIDTH / 2.0f -
@@ -213,8 +214,18 @@ void movepaddleright(double frametime) {
     movepaddle(PADDLE_MOVE * frametime);
 }
 
+/* Random number between min and max, closed interval */
+float random(float min, float max) {
+    return min + ((float) rand()) / RAND_MAX * (max - min);
+}
+
 void releaseball([[maybe_unused]] double frametime) {
-    ball.isstuck = 0;
+    if (ball.isstuck) {
+	ball.v = (vec2s) {{ random(-0.5f, 0.5f), -0.5f }};
+	ball.v = glms_vec2_normalize(ball.v);
+
+	ball.isstuck = 0;
+    }
 }
 
 void game_input(double frametime) {
@@ -223,12 +234,14 @@ void game_input(double frametime) {
 	    (*KEYS[i].func)(frametime);
 }
 
-void moveball(void) {
+void moveball(double frametime) {
+    vec2s v = glms_vec2_scale(ball.v, BALL_MOVE * frametime);
+    ball.sprite.pos = glms_vec2_add(ball.sprite.pos, v);
 }
 
-void game_update([[maybe_unused]] double frametime) {
+void game_update(double frametime) {
     if (!ball.isstuck)
-	moveball();
+	moveball(frametime);
 }
 
 void leveldraw(void) {

@@ -12,6 +12,7 @@ static const char     SPRITE_SHEET[] = "sprite/spritesheet.png";
 static const char     BACKGROUND[]   = "sprite/background.png";
 static const unsigned BALL_WIDTH     = 28;
 static const unsigned BALL_HEIGHT    = 28;
+static const unsigned BALL_MOVE      = 500; /* Pixels per second */
 static const unsigned PADDLE_WIDTH   = 126;
 static const unsigned PADDLE_HEIGHT  = 26;
 static const unsigned PADDLE_MOVE    = 500; /* Pixels per second */

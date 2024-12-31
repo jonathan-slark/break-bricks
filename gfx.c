@@ -35,9 +35,9 @@ static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
 	GLenum severity, GLsizei length, const GLchar* message,
 	const void* userparam);
 #endif /* !NDEBUG */
-static GLint createshader(GLenum type, const GLchar* src);
+static GLint shadercreate(GLenum type, const GLchar* src);
 static GLuint shaderload(const char* vertex, const char* fragment);
-static GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,
+static GLuint texload(const char* name, GLint intformat, GLenum imgformat,
 	GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
 static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
@@ -89,7 +89,7 @@ void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
 
 #endif /* !NDEBUG */
 
-GLint createshader(GLenum type, const GLchar* src) {
+GLint shadercreate(GLenum type, const GLchar* src) {
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
     glCompileShader(s);
@@ -106,7 +106,7 @@ GLint createshader(GLenum type, const GLchar* src) {
 	    free(log);
 	    glDeleteShader(s);
 	}
-	term(EXIT_FAILURE, "Could not loadtex shader.\n");
+	term(EXIT_FAILURE, "Could not texload shader.\n");
     }
     return s;
 }
@@ -114,8 +114,8 @@ GLint createshader(GLenum type, const GLchar* src) {
 GLuint shaderload(const char* vertex, const char* fragment) {
     GLchar* vsrc = (GLchar*) util_load(vertex);
     GLchar* fsrc = (GLchar*) util_load(fragment);
-    GLuint v = createshader(GL_VERTEX_SHADER, vsrc);
-    GLuint f = createshader(GL_FRAGMENT_SHADER, fsrc);
+    GLuint v = shadercreate(GL_VERTEX_SHADER, vsrc);
+    GLuint f = shadercreate(GL_FRAGMENT_SHADER, fsrc);
     util_unload(vsrc);
     util_unload(fsrc);
 
@@ -203,12 +203,12 @@ void gfx_resize(int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,
+GLuint texload(const char* name, GLint intformat, GLenum imgformat,
 	       GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax) {
     int width = 0, height = 0, chan = 0;
     unsigned char* data = stbi_load(name, &width, &height, &chan, 0);
     if (!data)
-	term(EXIT_FAILURE, "Could not loadtex image %s\n.", name);
+	term(EXIT_FAILURE, "Could not texload image %s\n.", name);
 
     GLuint id = 0;
     glGenTextures(1, &id);
@@ -228,11 +228,11 @@ GLuint loadtex(const char* name, GLint intformat, GLenum imgformat,
 
 GLuint gfx_ss_load(const char* name, int isalpha) {
     if (isalpha)
-	return loadtex(name, GL_RGBA, GL_RGBA, GL_REPEAT, GL_REPEAT, GL_LINEAR,
-		       GL_LINEAR);
+	return texload(name, GL_RGBA, GL_RGBA, GL_REPEAT, GL_REPEAT, GL_LINEAR,
+		GL_LINEAR);
     else
-	return loadtex(name, GL_RGB, GL_RGB, GL_REPEAT, GL_REPEAT, GL_LINEAR,
-		       GL_LINEAR);
+	return texload(name, GL_RGB, GL_RGB, GL_REPEAT, GL_REPEAT, GL_LINEAR,
+		GL_LINEAR);
 }
 
 void gfx_ss_unload(GLuint id) {
@@ -245,7 +245,7 @@ void gfx_ss_use(GLuint id) {
 
 /* https://stackoverflow.com/q/40574677 */
 void screentonormal(const unsigned* vin, unsigned count, unsigned width,
-		    unsigned height, float* vout) {
+	unsigned height, float* vout) {
     for (unsigned i = 0; i < count; i += INDCOUNT) {
 	vout[i] = SCR2NORM(vin[i], width);
 	vout[i + 1] = SCR2NORM(vin[i + 1], height);
@@ -263,13 +263,13 @@ void gfx_sprite_init(Sprite* s) {
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD), QUAD, GL_STATIC_DRAW);
     glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE,
-			  INDCOUNT * sizeof(float), (void*)0);
+	    INDCOUNT * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
     glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE,
-			  INDCOUNT * sizeof(float), (void*)0);
+	    INDCOUNT * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
