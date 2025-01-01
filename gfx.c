@@ -41,6 +41,7 @@ static GLuint texload(const char* name, GLint intformat, GLenum imgformat,
 	GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
 static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
+static vec3s make_vec3s(vec2s xy, float z);
 
 /* Constants */
 #ifndef NDEBUG
@@ -281,22 +282,24 @@ void gfx_sprite_term(const Sprite* s) {
     glDeleteBuffers(VBOCOUNT, s->vbo);
 }
 
+vec3s make_vec3s(vec2s xy, float z) {
+    return (vec3s) {{ xy.x, xy.y, z }};
+}
+
 void gfx_sprite_draw(const Sprite* s) {
     /* Move to position */
-    vec3s pos3 = {{s->pos.x, s->pos.y, 0.0f}};
-    mat4s model = glms_translate_make(pos3);
+    mat4s model = glms_translate_make(make_vec3s(s->pos, 0.0f));
 
     /* Move origin to centre, rotate, move origin back */
-    vec3s prerot = {{s->size.x / 2.0f, s->size.y / 2.0f, 0.0f}};
+    vec3s prerot = {{ s->size.x / 2.0f, s->size.y / 2.0f, 0.0f }};
     model = glms_translate(model, prerot);
-    vec3s axis = {{0.0f, 0.0f, 1.0f}};
+    vec3s axis = {{ 0.0f, 0.0f, 1.0f }};
     model = glms_rotate(model, s->rot, axis);
-    vec3s postrot = {{-s->size.x / 2.0f, -s->size.y / 2.0f, 0.0f}};
+    vec3s postrot = {{ s->size.x / -2.0f, s->size.y / -2.0f, 0.0f }};
     model = glms_translate(model, postrot);
 
     /* Scale to size */
-    vec3s size3 = {{s->size.x, s->size.y, 1.0f}};
-    model = glms_scale(model, size3);
+    model = glms_scale(model, make_vec3s(s->size, 1.0f));
 
     shadersetmat4s(shader, UNIFORM_MODEL, model);
 

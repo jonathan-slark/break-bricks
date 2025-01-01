@@ -5,6 +5,7 @@
 
 #define GLFW_INCLUDE_NONE
 #include <cglm/struct.h>
+#include <cglm/struct/aabb2d.h>
 #include <ctype.h>
 #include <glad.h>
 #include <GLFW/glfw3.h>
@@ -38,6 +39,7 @@ typedef struct {
     bool issolid;
     bool isdestroyed;
     Sprite sprite;
+    vec2s aabb[2];
 } Brick;
 
 /* Function prototypes */
@@ -55,6 +57,7 @@ static void movepaddleright(double frametime);
 static float random(float min, float max);
 static void releaseball(double frametime);
 static void moveball(double frametime);
+static void collisiondetect(void);
 static void leveldraw(void);
 
 /* Variables */
@@ -97,6 +100,11 @@ void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
     float y = col * BRICK_HEIGHT + WALL_WIDTH;
     initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, 0.0f, BRICK_VERTS[i],
 	       sizeof(BRICK_VERTS[i]));
+
+    brick->aabb[0].x = x;
+    brick->aabb[0].y = y;
+    brick->aabb[1].x = x + BRICK_WIDTH;
+    brick->aabb[1].y = y + BRICK_HEIGHT;
 }
 
 /* Run once with bricks = NULL to get the brick count, a second time with
@@ -157,7 +165,10 @@ void initpaddle(void) {
 void game_load(void) {
     gfx_init();
 
-    srand(time(NULL));
+    /* Decent random seed: https://stackoverflow.com/q/58150771 */
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    srand(ts.tv_nsec);
 
     spritesheet = gfx_ss_load(SPRITE_SHEET, 1);
     bg = gfx_ss_load(BACKGROUND, 1);
@@ -255,18 +266,24 @@ void moveball(double frametime) {
 void collisiondetect(void) {
     Sprite* b = &ball.sprite;
 
-    vec2 aabbball[2] = {
-	{ b->pos.x, b->pos.y },
-	{ b->pos.x + b->size.x, b->pos.y + b->size.y }
-    };
-    vec2 aabbpaddle[2] = {
-	{ paddle.pos.x, paddle.pos.y },
-	{ paddle.pos.x + paddle.size.x, paddle.pos.y + paddle.size.y }
+    /* Circle = x, y, radius */
+    vec3s c = {{ b->pos.x, b->pos.y, EXT(b->size.x) }};
+    vec2s aabb[2] = {
+	{{ paddle.pos.x, paddle.pos.y }},
+	{{ paddle.pos.x + paddle.size.x, paddle.pos.y + paddle.size.y }}
     };
 
-    if (glm_aabb2d_aabb(aabbball, aabbpaddle)) {
+    if (glms_aabb2d_circle(aabb, c)) {
 	b->pos.y = paddle.pos.y - paddle.size.y;
 	ball.v.y = -ball.v.y;
+    }
+
+    for (unsigned i = 0; i < brickcount; i++) {
+	if (!bricks[i].isdestroyed) {
+	    if (glms_aabb2d_circle(bricks[i].aabb, c)) {
+		bricks[i].isdestroyed = true;
+	    }
+	}
     }
 }
 
