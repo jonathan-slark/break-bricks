@@ -175,10 +175,12 @@ void game_load(void) {
     initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, 0.0f, BG_VERTS,
 	       sizeof(BG_VERTS));
 
-    char lvl[] = LVLFOLDER "/00.txt";
-    char fmt[] = LVLFOLDER "/%02i.txt";
-    sprintf(lvl, fmt, 1);
+    const char fmt[] = "%s/%02i.txt";
+    int sz = snprintf(NULL, 0, fmt, LVL_FOLDER, 1);
+    char lvl[sz + 1];
+    snprintf(lvl, sizeof lvl, fmt, LVL_FOLDER, 1);
     levelload(lvl);
+
     initpaddle();
     initball();
 }
@@ -247,18 +249,23 @@ void game_input(double frametime) {
 
 void moveball(double frametime) {
     Sprite* s=&ball.sprite;
+
     vec2s v = glms_vec2_scale(ball.v, BALL_MOVE * frametime);
     s->pos = glms_vec2_add(s->pos, v);
 
-    if (s->pos.x <= WALL_WIDTH) {
-	s->pos.x = WALL_WIDTH;
+    unsigned left = WALL_WIDTH;
+    unsigned right = SCR_WIDTH - WALL_WIDTH - BALL_WIDTH;
+    unsigned top = WALL_WIDTH;
+
+    if (s->pos.x <= left) {
+	s->pos.x = left;
 	ball.v.x = -ball.v.x;
-    } else if (s->pos.x >= SCR_WIDTH - WALL_WIDTH - BALL_WIDTH) {
-	s->pos.x = SCR_WIDTH - WALL_WIDTH - BALL_WIDTH;;
+    } else if (s->pos.x >= right) {
+	s->pos.x = right;
 	ball.v.x = -ball.v.x;
     }
-    if (s->pos.y <= WALL_WIDTH) {
-	s->pos.y = WALL_WIDTH;
+    if (s->pos.y <= top) {
+	s->pos.y = top;
 	ball.v.y = -ball.v.y;
     }
 }
@@ -267,7 +274,8 @@ void collisiondetect(void) {
     Sprite* b = &ball.sprite;
 
     /* Circle = x, y, radius */
-    vec3s c = {{ b->pos.x, b->pos.y, EXT(b->size.x) }};
+    vec3s c = {{ b->pos.x + EXT(b->size.x), b->pos.y + EXT(b->size.y),
+	EXT(b->size.x) }};
     vec2s aabb[2] = {
 	{{ paddle.pos.x, paddle.pos.y }},
 	{{ paddle.pos.x + paddle.size.x, paddle.pos.y + paddle.size.y }}
