@@ -1,6 +1,14 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+ *
+ * A typical AAAB collision detection function, for reference:
+bool isaabbcollision(Sprite* s1, Sprite* s2) {
+    return s1->pos.x < s2->pos.x + s2->size.x &&
+	   s1->pos.x + s1->size.x > s2->pos.x &&
+	   s1->pos.y < s2->pos.y + s2->size.y &&
+	   s1->pos.y + s1->size.y > s2->pos.y;
+}
  */
 
 #define GLFW_INCLUDE_NONE
@@ -8,6 +16,7 @@
 #include <cglm/struct/aabb2d.h>
 #include <ctype.h>
 #include <glad.h>
+#include <math.h>
 #include <GLFW/glfw3.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -19,9 +28,6 @@
 #include "gfx.h"
 #include "util.h"
 
-/* Macros */
-#define EXT(x) ((x) / 2.0f)
-
 /* Types */
 
 typedef struct {
@@ -31,7 +37,7 @@ typedef struct {
 
 typedef struct {
     bool isstuck;
-    vec2s v;
+    vec2s vel;
     Sprite sprite;
 } Ball;
 
@@ -56,8 +62,9 @@ static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static float random(float min, float max);
 static void releaseball(double frametime);
+static bool iswallcollision(vec2s pos, unsigned width);
+static vec2s getwalldistance(vec2s pos, unsigned width);
 static void moveball(double frametime);
-static void collisiondetect(void);
 static void leveldraw(void);
 
 /* Variables */
@@ -234,8 +241,8 @@ float random(float min, float max) {
 
 void releaseball([[maybe_unused]] double frametime) {
     if (ball.isstuck) {
-	ball.v = (vec2s) {{ random(-0.5f, 0.5f), -0.5f }};
-	ball.v = glms_vec2_normalize(ball.v);
+	ball.vel = (vec2s) {{ random(-0.5f, 0.5f), -0.5f }};
+	ball.vel = glms_vec2_normalize(ball.vel);
 
 	ball.isstuck = 0;
     }
@@ -247,65 +254,67 @@ void game_input(double frametime) {
 	    (*KEYS[i].func)(frametime);
 }
 
-void moveball(double frametime) {
-    Sprite* s=&ball.sprite;
-
-    vec2s v = glms_vec2_scale(ball.v, BALL_MOVE * frametime);
-    s->pos = glms_vec2_add(s->pos, v);
-
-    unsigned left = WALL_WIDTH;
-    unsigned right = SCR_WIDTH - WALL_WIDTH - BALL_WIDTH;
-    unsigned top = WALL_WIDTH;
-
-    if (s->pos.x <= left) {
-	s->pos.x = left;
-	ball.v.x = -ball.v.x;
-    } else if (s->pos.x >= right) {
-	s->pos.x = right;
-	ball.v.x = -ball.v.x;
-    }
-    if (s->pos.y <= top) {
-	s->pos.y = top;
-	ball.v.y = -ball.v.y;
-    }
+bool iswallcollision(vec2s pos, unsigned width) {
+    return pos.x < WALL_WIDTH ||
+	   pos.x > SCR_WIDTH - WALL_WIDTH - width ||
+	   pos.y < WALL_WIDTH;
 }
 
-void collisiondetect(void) {
-    Sprite* b = &ball.sprite;
+vec2s getwalldistance(vec2s pos, unsigned width) {
+    float left = pos.x - WALL_WIDTH;
+    float right = SCR_WIDTH - WALL_WIDTH - width - pos.x;
+    float top = pos.y - WALL_WIDTH;
+    return (vec2s) {{ left < right ? left : right, top }};
+}
 
-    /* Circle = x, y, radius */
-    vec3s c = {{ b->pos.x + EXT(b->size.x), b->pos.y + EXT(b->size.y),
-	EXT(b->size.x) }};
-    vec2s aabb[2] = {
-	{{ paddle.pos.x, paddle.pos.y }},
-	{{ paddle.pos.x + paddle.size.x, paddle.pos.y + paddle.size.y }}
-    };
+void moveball(double frametime) {
+    Sprite* s = &ball.sprite;
+    vec2s vel = glms_vec2_scale(ball.vel, BALL_MOVE * frametime);
+    vec2s newpos = glms_vec2_add(s->pos, vel);
 
-    if (glms_aabb2d_circle(aabb, c)) {
-	b->pos.y = paddle.pos.y - paddle.size.y;
-	ball.v.y = -ball.v.y;
-    }
+    if (iswallcollision(newpos, s->size.x)) {
+	fprintf(stderr, "frametime = %f\n\n", frametime);
+	fprintf(stderr, "%s\n", "normal vel = ");
+	glms_vec2_print(vel, stderr);
+	vec2s dist = getwalldistance(s->pos, s->size.x);
 
-    for (unsigned i = 0; i < brickcount; i++) {
-	if (!bricks[i].isdestroyed) {
-	    if (glms_aabb2d_circle(bricks[i].aabb, c)) {
-		bricks[i].isdestroyed = true;
-	    }
+	// Calculate which axis will hit first 
+	float timex = vel.x != 0.0f ? dist.x / fabs(vel.x) : 0.0f;
+	float timey = vel.y != 0.0f ? dist.y / fabs(vel.y) : 0.0f;
+	fprintf(stderr, "timex = %f, timey = %f\n\n", timex, timey);
+	float mintime = fmin(timex, timey);
+
+	// Move the ball to the point of the collision
+	vel = glms_vec2_scale(vel, mintime);
+	fprintf(stderr, "%s\n", "scaled vel = ");
+	glms_vec2_print(vel, stderr);
+	s->pos = glms_vec2_add(s->pos, vel);
+	fprintf(stderr, "%s\n", "new pos = ");
+	glms_vec2_print(s->pos, stderr);
+
+	// Finally, bounce the ball
+	if (timex < timey) {
+	    ball.vel.x = -ball.vel.x;
+	} else {
+	    ball.vel.y = -ball.vel.y;
 	}
+    } else {
+	s->pos = newpos;
     }
 }
 
 void game_update(double frametime) {
     if (!ball.isstuck) {
 	moveball(frametime);
-	collisiondetect();
     }
 }
 
 void leveldraw(void) {
-    for (unsigned i = 0; i < brickcount; i++)
-	if (!bricks[i].isdestroyed)
+    for (unsigned i = 0; i < brickcount; i++) {
+	if (!bricks[i].isdestroyed) {
 	    gfx_sprite_draw(&bricks[i].sprite);
+	}
+    }
 }
 
 void game_render(void) {

@@ -15,3 +15,12 @@ Packages:
 - mingw-w64-ucrt-x86_64-glfw
 - mingw-w64-ucrt-x86_64-stb
 - mingw-w64-ucrt-x86_64-cglm
+
+## AABB Collision Resoultion
+
+<https://nightblade9.github.io/godot-gamedev/2020/a-primer-on-aabb-collision-resolution.html>
+
+1) Detect if objects are about to collide.
+2) Calculate distance between objects about to collide.
+3) Smallest distance tells us which axis will collide first.
+4) Resolve collisions on axes that collide first.
