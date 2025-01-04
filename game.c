@@ -62,8 +62,11 @@ static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
 static float random(float min, float max);
 static void releaseball(double frametime);
-static bool iswallcollision(vec2s pos, unsigned width);
-static vec2s getwalldistance(vec2s pos, unsigned width);
+static bool iswallcollision(Sprite* s, vec2s newpos);
+static vec2s getwalldistance(Sprite* s);
+static void bounce(vec2s vel, vec2s dist);
+static bool ispaddlecollision(Sprite* s, vec2s newpos);
+static vec2s getaabbdistance(Sprite* s1, Sprite* s2);
 static void moveball(double frametime);
 static void leveldraw(void);
 
@@ -254,17 +257,66 @@ void game_input(double frametime) {
 	    (*KEYS[i].func)(frametime);
 }
 
-bool iswallcollision(vec2s pos, unsigned width) {
-    return pos.x < WALL_WIDTH ||
-	   pos.x > SCR_WIDTH - WALL_WIDTH - width ||
-	   pos.y < WALL_WIDTH;
+bool iswallcollision(Sprite* s, vec2s newpos) {
+    return newpos.x < WALL_WIDTH ||
+	   newpos.x > SCR_WIDTH - WALL_WIDTH - s->size.x ||
+	   newpos.y < WALL_WIDTH;
 }
 
-vec2s getwalldistance(vec2s pos, unsigned width) {
-    float left = pos.x - WALL_WIDTH;
-    float right = SCR_WIDTH - WALL_WIDTH - width - pos.x;
-    float top = pos.y - WALL_WIDTH;
+vec2s getwalldistance(Sprite* s) {
+    float left = s->pos.x - WALL_WIDTH;
+    float right = SCR_WIDTH - WALL_WIDTH - s->size.x - s->pos.x;
+    float top = s->pos.y - WALL_WIDTH;
     return (vec2s) {{ left < right ? left : right, top }};
+}
+
+bool ispaddlecollision(Sprite* s, vec2s newpos) {
+    return newpos.y > SCR_HEIGHT - paddle.size.y - s->size.y &&
+	   newpos.y < SCR_HEIGHT &&
+	   newpos.x < paddle.pos.x + paddle.size.x &&
+	   newpos.x + s->size.x > paddle.pos.x;
+}
+
+vec2s getaabbdistance(Sprite* s1, Sprite* s2) {
+    vec2s dist = {};
+    float s1x = s1->pos.x, s1y = s1->pos.y, s2x = s2->pos.x, s2y = s2->pos.y;
+
+    if (s1x < s2x) {
+	dist.x = s2x - (s1x + s1->size.x);
+    } else if (s1x > s2x) {
+	dist.x = s1x - (s2x + s2->size.x);
+    }
+    if (s1y < s2y) {
+	dist.y = s2y - (s1y + s1->size.y);
+    } else if (s1y > s2y) {
+	dist.y = s1y - (s2y + s2->size.y);
+    }
+
+    return dist;
+}
+
+void bounce(vec2s vel, vec2s dist) {
+    Sprite* s = &ball.sprite;
+
+    // Calculate which axis will hit first
+    float timex = vel.x != 0.0f ? fabs(dist.x / vel.x) : 0.0f;
+    float timey = vel.y != 0.0f ? fabs(dist.y / vel.y) : 0.0f;
+    float mintime = fmin(timex, timey);
+
+    // Move ball to the point of the collision
+    vel = glms_vec2_scale(vel, mintime);
+    s->pos = glms_vec2_add(s->pos, vel);
+#ifndef NDEBUG
+    fprintf(stderr, "%s\n", "new pos = ");
+    glms_vec2_print(s->pos, stderr);
+#endif
+
+    // Finally, bounce the ball
+    if (timex < timey) {
+	ball.vel.x = -ball.vel.x;
+    } else {
+	ball.vel.y = -ball.vel.y;
+    }
 }
 
 void moveball(double frametime) {
@@ -272,32 +324,12 @@ void moveball(double frametime) {
     vec2s vel = glms_vec2_scale(ball.vel, BALL_MOVE * frametime);
     vec2s newpos = glms_vec2_add(s->pos, vel);
 
-    if (iswallcollision(newpos, s->size.x)) {
-	fprintf(stderr, "frametime = %f\n\n", frametime);
-	fprintf(stderr, "%s\n", "normal vel = ");
-	glms_vec2_print(vel, stderr);
-	vec2s dist = getwalldistance(s->pos, s->size.x);
-
-	// Calculate which axis will hit first 
-	float timex = vel.x != 0.0f ? dist.x / fabs(vel.x) : 0.0f;
-	float timey = vel.y != 0.0f ? dist.y / fabs(vel.y) : 0.0f;
-	fprintf(stderr, "timex = %f, timey = %f\n\n", timex, timey);
-	float mintime = fmin(timex, timey);
-
-	// Move the ball to the point of the collision
-	vel = glms_vec2_scale(vel, mintime);
-	fprintf(stderr, "%s\n", "scaled vel = ");
-	glms_vec2_print(vel, stderr);
-	s->pos = glms_vec2_add(s->pos, vel);
-	fprintf(stderr, "%s\n", "new pos = ");
-	glms_vec2_print(s->pos, stderr);
-
-	// Finally, bounce the ball
-	if (timex < timey) {
-	    ball.vel.x = -ball.vel.x;
-	} else {
-	    ball.vel.y = -ball.vel.y;
-	}
+    if (iswallcollision(s, newpos)) {
+	vec2s dist = getwalldistance(s);
+	bounce(vel, dist);
+    } else if (ispaddlecollision(s, newpos)) {
+	vec2s dist = getaabbdistance(s, &paddle);
+	bounce(vel, dist);
     } else {
 	s->pos = newpos;
     }

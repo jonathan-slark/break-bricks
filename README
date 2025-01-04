@@ -23,4 +23,4 @@ Packages:
 1) Detect if objects are about to collide.
 2) Calculate distance between objects about to collide.
 3) Smallest distance tells us which axis will collide first.
-4) Resolve collisions on axes that collide first.
+4) Resolve collision on axis that collide first.
