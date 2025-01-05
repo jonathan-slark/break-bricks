@@ -15,6 +15,7 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 #include <cglm/struct.h>
 #include <cglm/struct/aabb2d.h>
 #include <ctype.h>
+#include <float.h>
 #include <glad.h>
 #include <math.h>
 #include <GLFW/glfw3.h>
@@ -28,7 +29,7 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 #include "gfx.h"
 #include "util.h"
 
-/* Types */
+// Types
 
 typedef struct {
     int key;
@@ -42,17 +43,18 @@ typedef struct {
 } Ball;
 
 typedef struct {
+    bool isactive;
     bool issolid;
     bool isdestroyed;
     Sprite sprite;
     vec2s aabb[2];
 } Brick;
 
-/* Function prototypes */
+// Function prototypes
 static void initsprite(Sprite* s, float width, float height, float x,
-		       float y, float rot, const unsigned* verts, size_t size);
-static void initbrick(Brick* brick, char id, unsigned row, unsigned col);
-static unsigned readbricks(const char* lvl, Brick* bricks);
+	float y, float rot, const unsigned* verts, size_t size);
+static void initbrick(Brick* brick, char id, unsigned col, unsigned row);
+static unsigned readbricks(const char* lvl);
 static void levelload(const char* lvl);
 static void initball(void);
 static void initpaddle(void);
@@ -60,29 +62,33 @@ static void levelunload(void);
 static void movepaddle(float move);
 static void movepaddleleft(double frametime);
 static void movepaddleright(double frametime);
-static float random(float min, float max);
+static unsigned random(unsigned min, unsigned max);
 static void releaseball(double frametime);
 static bool iswallcollision(Sprite* s, vec2s newpos);
 static vec2s getwalldistance(Sprite* s);
 static void bounce(vec2s vel, vec2s dist);
 static bool ispaddlecollision(Sprite* s, vec2s newpos);
 static vec2s getaabbdistance(Sprite* s1, Sprite* s2);
+static unsigned getbrickindex(float x, float y);
+static unsigned brickcollisioncount(Sprite* s, vec2s newpos,
+	unsigned hitbricks[4]);
+static vec2s getbrickdistance(Sprite* s, unsigned hitcount,
+	unsigned hitbricks[4]);
 static void moveball(double frametime);
 static void leveldraw(void);
 
-/* Variables */
+// Variables
 static Brick* bricks = NULL;
-static unsigned brickcount = 0;
 static Ball ball = {};
 static Sprite paddle = {};
 static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static bool keypressed[GLFW_KEY_LAST + 1] = {};
 
-/* Uses types defined above */
+// Uses types defined above
 #include "config.h"
 
-/* Function implementations */
+// Function implementations
 
 void initsprite(Sprite* s, float width, float height, float x,
 		float y, float rot, const unsigned* verts, size_t size) {
@@ -95,7 +101,7 @@ void initsprite(Sprite* s, float width, float height, float x,
     gfx_sprite_init(s);
 }
 
-void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
+void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
     bool solid = (!isdigit(id));
     unsigned i;
     if (solid)
@@ -103,47 +109,44 @@ void initbrick(Brick* brick, char id, unsigned row, unsigned col) {
     else
 	i = id - '0';
 
+    brick->isactive = true;
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
-    float x = row * BRICK_WIDTH  + WALL_WIDTH;
-    float y = col * BRICK_HEIGHT + WALL_WIDTH;
+    float x = col * BRICK_WIDTH  + WALL_WIDTH;
+    float y = row * BRICK_HEIGHT + WALL_WIDTH;
     initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, 0.0f, BRICK_VERTS[i],
 	       sizeof(BRICK_VERTS[i]));
-
-    brick->aabb[0].x = x;
-    brick->aabb[0].y = y;
-    brick->aabb[1].x = x + BRICK_WIDTH;
-    brick->aabb[1].y = y + BRICK_HEIGHT;
 }
 
-/* Run once with bricks = NULL to get the brick count, a second time with
- * bricks pointing to an array of bricks to be initialised. */
-unsigned readbricks(const char* lvl, Brick* bricks) {
-    unsigned count = 0, row = 0, col = 0;
+unsigned readbricks(const char* lvl) {
+    unsigned count = 0, col = 0, row = 0;
 
     char c = '\0';
     while ((c = *lvl++) != '\0') {
 	if (c == '#') {
 	    while ((c = *lvl++) != '\n') {
-		/* Comment */
+		// Comment
 	    }
 	} else if (c == 'x') {
-	    /* No brick */
-	    row++;
+	    // No brick
+	    bricks[count++].isactive = false;
+	    col++;
 	} else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
-	    if (bricks)
-		initbrick(&bricks[count], c, row, col);
-	    count++;
-	    row++;
+	    initbrick(&bricks[count++], c, col, row);
+	    col++;
 	} else if (c == '\n') {
-	    /* Ignore blank line */
-	    if (row > 0)
-		col++;
-	    row = 0;
+	    // Ignore blank line
+	    if (col > 0)
+		row++;
+	    col = 0;
 	} else if (c != ' ' && c != '\t') {
 	    term(EXIT_FAILURE, "Syntax error in level file.\n");
 	}
+    }
+
+    if (count != BRICK_COLS * BRICK_ROWS) {
+	term(EXIT_FAILURE, "Incorrect number of bricks in level file.\n");
     }
 
     return count;
@@ -151,9 +154,8 @@ unsigned readbricks(const char* lvl, Brick* bricks) {
 
 void levelload(const char* name) {
     char* lvl = util_load(name);
-    brickcount = readbricks(lvl, NULL);
-    bricks = (Brick*) malloc(brickcount * sizeof(Brick));
-    readbricks(lvl, bricks);
+    bricks = (Brick*) malloc(BRICK_COLS * BRICK_ROWS * sizeof(Brick));
+    readbricks(lvl);
     util_unload(lvl);
 }
 
@@ -175,7 +177,7 @@ void initpaddle(void) {
 void game_load(void) {
     gfx_init();
 
-    /* Decent random seed: https://stackoverflow.com/q/58150771 */
+    // Decent random seed: https://stackoverflow.com/q/58150771
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
@@ -196,11 +198,13 @@ void game_load(void) {
 }
 
 void levelunload(void) {
-    for (unsigned i = 0; i < brickcount; i++)
-	gfx_sprite_term(&bricks[i].sprite);
+    for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
+	if (bricks[i].isactive) {
+	    gfx_sprite_term(&bricks[i].sprite);
+	}
+    }
 
     free(bricks);
-    brickcount = 0;
 }
 
 void game_unload(void) {
@@ -237,14 +241,14 @@ void movepaddleright(double frametime) {
     movepaddle(PADDLE_MOVE * frametime);
 }
 
-/* Random number between min and max, closed interval */
-float random(float min, float max) {
+// Random number between min and max, closed interval
+unsigned random(unsigned min, unsigned max) {
     return min + ((float) rand()) / RAND_MAX * (max - min);
 }
 
 void releaseball([[maybe_unused]] double frametime) {
     if (ball.isstuck) {
-	ball.vel = (vec2s) {{ random(-0.5f, 0.5f), -0.5f }};
+	ball.vel = BALL_RELEASE[random(0, BALL_RELEASE_COUNT - 1)];
 	ball.vel = glms_vec2_normalize(ball.vel);
 
 	ball.isstuck = 0;
@@ -268,6 +272,30 @@ vec2s getwalldistance(Sprite* s) {
     float right = SCR_WIDTH - WALL_WIDTH - s->size.x - s->pos.x;
     float top = s->pos.y - WALL_WIDTH;
     return (vec2s) {{ left < right ? left : right, top }};
+}
+
+void bounce(vec2s vel, vec2s dist) {
+    Sprite* s = &ball.sprite;
+
+    // Calculate which axis will hit first
+    float timex = vel.x != 0.0f ? fabs(dist.x / vel.x) : 0.0f;
+    float timey = vel.y != 0.0f ? fabs(dist.y / vel.y) : 0.0f;
+    float mintime = fmin(timex, timey);
+
+    // Move ball to the point of the collision
+    vel = glms_vec2_scale(vel, mintime);
+    s->pos = glms_vec2_add(s->pos, vel);
+#ifndef NDEBUG
+    fprintf(stderr, "%s\n", "new pos = ");
+    glms_vec2_print(s->pos, stderr);
+#endif
+
+    // Finally, bounce the ball
+    if (timex < timey) {
+	ball.vel.x = -ball.vel.x;
+    } else {
+	ball.vel.y = -ball.vel.y;
+    }
 }
 
 bool ispaddlecollision(Sprite* s, vec2s newpos) {
@@ -295,28 +323,62 @@ vec2s getaabbdistance(Sprite* s1, Sprite* s2) {
     return dist;
 }
 
-void bounce(vec2s vel, vec2s dist) {
-    Sprite* s = &ball.sprite;
+unsigned getbrickindex(float x, float y) {
+    unsigned col = (x - WALL_WIDTH) / BRICK_WIDTH;
+    unsigned row = (y - WALL_WIDTH) / BRICK_HEIGHT;
+    return col + row * BRICK_COLS;
+}
 
-    // Calculate which axis will hit first
-    float timex = vel.x != 0.0f ? fabs(dist.x / vel.x) : 0.0f;
-    float timey = vel.y != 0.0f ? fabs(dist.y / vel.y) : 0.0f;
-    float mintime = fmin(timex, timey);
+// Check if any of the four corners of the ball hit a brick
+unsigned brickcollisioncount(Sprite* s, vec2s newpos, unsigned hitbricks[4]) {
+    unsigned indices[4];
+    unsigned hitbrickcount = 0;
 
-    // Move ball to the point of the collision
-    vel = glms_vec2_scale(vel, mintime);
-    s->pos = glms_vec2_add(s->pos, vel);
-#ifndef NDEBUG
-    fprintf(stderr, "%s\n", "new pos = ");
-    glms_vec2_print(s->pos, stderr);
-#endif
-
-    // Finally, bounce the ball
-    if (timex < timey) {
-	ball.vel.x = -ball.vel.x;
-    } else {
-	ball.vel.y = -ball.vel.y;
+    // Is the ball within the brick area?
+    if (newpos.y < WALL_WIDTH + BRICK_ROWS * BRICK_HEIGHT) {
+	indices[0] = getbrickindex(newpos.x, newpos.y);
+	indices[1] = getbrickindex(newpos.x + s->size.x, newpos.y);
+	indices[2] = getbrickindex(newpos.x, newpos.y + s->size.y);
+	indices[3] = getbrickindex(newpos.x + s->size.x, newpos.y + s->size.y);
+	for (unsigned i = 0; i < 4; i++) {
+	    // Corners of the ball may evaluate to indices outside the boundary
+	    unsigned j = indices[i];
+	    if (j < BRICK_ROWS * BRICK_COLS && bricks[j].isactive &&
+		    !bricks[j].isdestroyed) {
+		hitbricks[hitbrickcount++] = j;
+	    }
+	}
     }
+
+    return hitbrickcount;
+}
+
+// Find the distance to the closest brick and destroy, if applicable
+vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
+    float mindist = FLT_MAX;
+    unsigned mini = 0;
+    vec2s minv = {};
+
+    for (unsigned i = 0; i < hitcount; i++) {
+	vec2s v = getaabbdistance(s, &bricks[hitbricks[i]].sprite);
+	if (v.x < mindist) {
+	    minv = v;
+	    mindist = v.x;
+	    mini = i;
+	}
+	if (v.y < mindist) {
+	    minv = v;
+	    mindist = v.y;
+	    mini = i;
+	}
+    }
+
+    unsigned i = hitbricks[mini];
+    if (!bricks[i].issolid) {
+	bricks[i].isdestroyed = true;
+    }
+
+    return minv;
 }
 
 void moveball(double frametime) {
@@ -331,7 +393,14 @@ void moveball(double frametime) {
 	vec2s dist = getaabbdistance(s, &paddle);
 	bounce(vel, dist);
     } else {
-	s->pos = newpos;
+	unsigned hitbricks[4];
+	unsigned hitcount = brickcollisioncount(s, newpos, hitbricks);
+	if (hitcount > 0) {
+	    vec2s dist = getbrickdistance(s, hitcount, hitbricks);
+	    bounce(vel, dist);
+	} else {
+	    s->pos = newpos;
+	}
     }
 }
 
@@ -342,8 +411,8 @@ void game_update(double frametime) {
 }
 
 void leveldraw(void) {
-    for (unsigned i = 0; i < brickcount; i++) {
-	if (!bricks[i].isdestroyed) {
+    for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
+	if (bricks[i].isactive && !bricks[i].isdestroyed) {
 	    gfx_sprite_draw(&bricks[i].sprite);
 	}
     }
