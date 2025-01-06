@@ -9,6 +9,8 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 	   s1->pos.y < s2->pos.y + s2->size.y &&
 	   s1->pos.y + s1->size.y > s2->pos.y;
 }
+ * We don't use this as can simplify the detection as the walls are one sided,
+ * the bricks are in a grid and the paddle doesn't move on the y-axis.
  */
 
 #define GLFW_INCLUDE_NONE
@@ -47,7 +49,6 @@ typedef struct {
     bool issolid;
     bool isdestroyed;
     Sprite sprite;
-    vec2s aabb[2];
 } Brick;
 
 // Function prototypes
@@ -243,12 +244,12 @@ void movepaddleright(double frametime) {
 
 // Random number between min and max, closed interval
 unsigned random(unsigned min, unsigned max) {
-    return min + ((float) rand()) / RAND_MAX * (max - min);
+    return roundf(min + ((float) rand()) / RAND_MAX * (max - min));
 }
 
 void releaseball([[maybe_unused]] double frametime) {
     if (ball.isstuck) {
-	ball.vel = BALL_RELEASE[random(0, BALL_RELEASE_COUNT - 1)];
+	ball.vel = BALL_RELEASE[random(0, COUNT(BALL_RELEASE) - 1)];
 	ball.vel = glms_vec2_normalize(ball.vel);
 
 	ball.isstuck = 0;
@@ -323,6 +324,7 @@ vec2s getaabbdistance(Sprite* s1, Sprite* s2) {
     return dist;
 }
 
+// Bricks are in a grid and don't move so we can get the index from a position
 unsigned getbrickindex(float x, float y) {
     unsigned col = (x - WALL_WIDTH) / BRICK_WIDTH;
     unsigned row = (y - WALL_WIDTH) / BRICK_HEIGHT;
@@ -353,7 +355,7 @@ unsigned brickcollisioncount(Sprite* s, vec2s newpos, unsigned hitbricks[4]) {
     return hitbrickcount;
 }
 
-// Find the distance to the closest brick and destroy, if applicable
+// Find the distance to the closest brick and destroy it, if applicable
 vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
     float mindist = FLT_MAX;
     unsigned mini = 0;
@@ -406,7 +408,12 @@ void moveball(double frametime) {
 
 void game_update(double frametime) {
     if (!ball.isstuck) {
-	moveball(frametime);
+	double restime = frametime / RES_COUNT;
+	for (unsigned i = 0; i < RES_COUNT - 1; i++) {
+	    moveball(restime);
+	}
+	// Account for rounding errors
+	moveball(frametime - restime * (RES_COUNT - 1));
     }
 }
 

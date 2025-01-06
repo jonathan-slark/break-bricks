@@ -137,15 +137,18 @@ int main(void) {
 	double curtime = glfwGetTime();
 	double frametime = curtime - lasttime;
 	lasttime = curtime;
-	glfwPollEvents();
 
-	if (!minimised) {
-	    game_input(frametime);
-	    game_update(frametime);
-	    game_render();
-
-	    glfwSwapBuffers(window);
+	if (minimised) {
+	    glfwWaitEvents();
+	} else {
+	    glfwPollEvents();
 	}
+
+	game_input(frametime);
+	game_update(frametime);
+	game_render();
+
+	glfwSwapBuffers(window);
     }
 
     term(EXIT_SUCCESS, NULL);

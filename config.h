@@ -3,6 +3,13 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+// Key bindings
+static const Key KEYS[] = {
+    { GLFW_KEY_A,     movepaddleleft },
+    { GLFW_KEY_D,     movepaddleright },
+    { GLFW_KEY_SPACE, releaseball}
+};
+
 // Levels
 static const char     LVL_FOLDER[] = "level";
 static const unsigned LVL_COUNT    = 3;
@@ -23,18 +30,13 @@ static const unsigned BRICK_COLS     = 28;
 static const unsigned BRICK_ROWS     = 8;
 static const unsigned BRICK_TYPES    = 6;   // Number of brick types
 
+// Game logic
+// How many times per frame to run collision resolution
+static const unsigned RES_COUNT = 2;
 // Choose a random release vector for the ball
-static const unsigned BALL_RELEASE_COUNT = 2;
 static const vec2s BALL_RELEASE[] = {
-    {{ -0.5, 0.5 }},
-    {{  0.5, 0.5 }}
-};
-
-// Key bindings
-static const Key KEYS[] = {
-    { GLFW_KEY_A,     movepaddleleft },
-    { GLFW_KEY_D,     movepaddleright },
-    { GLFW_KEY_SPACE, releaseball}
+    {{ -0.5, -0.5 }},
+    {{  0.5, -0.5 }}
 };
 
 // Vertices mapping out sprites in spritesheet
