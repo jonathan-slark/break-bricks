@@ -17,7 +17,7 @@
 #include "gfx.h"
 #include "main.h"
 
-/* Function declarations */
+// Function declarations
 static void errorcallback(int err, const char* desc);
 static void init(void);
 static void keycallback(GLFWwindow* window, int key, int scancode, int action,
@@ -25,7 +25,7 @@ static void keycallback(GLFWwindow* window, int key, int scancode, int action,
 static void resizecallback(GLFWwindow* window, int width, int height);
 static void createwindow(void);
 
-/* Constants */
+// Constants
 static const char     TITLE[]        = "Break Bricks";
 const unsigned        SCR_WIDTH      = 1920;
 const unsigned        SCR_HEIGHT     = 1080;
@@ -35,11 +35,11 @@ static const unsigned SCR_BLUE_BITS  = 8;
 static const unsigned OPENGL_MAJOR   = 3;
 static const unsigned OPENGL_MINOR   = 3;
 
-/* Variables */
+// Variables
 static GLFWwindow* window = NULL;
 static bool minimised = false;
 
-/* Function implementations */
+// Function implementations
 
 void errorcallback(int err, const char* desc) {
     fprintf(stderr, "%i: %s\n", err, desc);
@@ -98,10 +98,10 @@ void createwindow(void) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-#endif /* __APPLE__ */
+#endif // __APPLE__
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif /* !NDEBUG */
+#endif // !NDEBUG
 
     GLFWmonitor* mon = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(mon);
@@ -142,13 +142,12 @@ int main(void) {
 	    glfwWaitEvents();
 	} else {
 	    glfwPollEvents();
+	    game_input(frametime);
+	    game_update(frametime);
+	    game_render();
+
+	    glfwSwapBuffers(window);
 	}
-
-	game_input(frametime);
-	game_update(frametime);
-	game_render();
-
-	glfwSwapBuffers(window);
     }
 
     term(EXIT_SUCCESS, NULL);

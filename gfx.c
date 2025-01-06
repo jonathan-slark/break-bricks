@@ -19,22 +19,22 @@
 #include "main.h"
 #include "util.h"
 
-/* Macros */
+// Macros
 #define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))
 
-/* Types */
+// Types
 enum {
     Verts,
     TexVerts
 };
 
-/* Function prototypes */
+// Function prototypes
 #ifndef NDEBUG
 static bool ismember(const unsigned array[], size_t size, unsigned value);
 static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
 	GLenum severity, GLsizei length, const GLchar* message,
 	const void* userparam);
-#endif /* !NDEBUG */
+#endif // !NDEBUG
 static GLint shadercreate(GLenum type, const GLchar* src);
 static GLuint shaderload(const char* vertex, const char* fragment);
 static GLuint texload(const char* name, GLint intformat, GLenum imgformat,
@@ -43,14 +43,14 @@ static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
 static vec3s make_vec3s(vec2s xy, float z);
 
-/* Constants */
+// Constants
 #ifndef NDEBUG
 static const unsigned LOG_IGNORE[] = {
-    131185, /* Buffer info */
-    131204, /* Texture mapping warning */
-    131218  /* Recompilation warning */
+    131185, // Buffer info
+    131204, // Texture mapping warning
+    131218  // Recompilation warning
 };
-#endif /* !NDEBUG */
+#endif // !NDEBUG
 static const char   SHADER_VERT[]   = "shader/sprite_vert.glsl";
 static const char   SHADER_FRAG[]   = "shader/sprite_frag.glsl";
 static const GLchar UNIFORM_MODEL[] = "model";
@@ -63,10 +63,10 @@ static const float  QUAD[] = {
     1.0f, 1.0f
 };
 
-/* Variables */
+// Variables
 static GLuint shader = 0;
 
-/* Function declarations */
+// Function declarations
 
 #ifndef NDEBUG
 
@@ -88,7 +88,7 @@ void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
     fprintf(stderr, "%u: %s\n", id, (const char*)message);
 }
 
-#endif /* !NDEBUG */
+#endif // !NDEBUG
 
 GLint shadercreate(GLenum type, const GLchar* src) {
     GLuint s = glCreateShader(type);
@@ -181,12 +181,12 @@ void gfx_init(void) {
 		    0, NULL, GL_TRUE);
         }
     }
-#endif /* !NDEBUG */
+#endif // !NDEBUG
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    /* Using origin top left to match coords typically used with images */
+    // Using origin top left to match coords typically used with images
     mat4s proj = glms_ortho(0.0f, SCR_WIDTH, SCR_HEIGHT, 0.0f, -1.0f, 1.0f);
     shader = shaderload(SHADER_VERT, SHADER_FRAG);
     shaderuse(shader);
@@ -244,7 +244,7 @@ void gfx_ss_use(GLuint id) {
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
-/* https://stackoverflow.com/q/40574677 */
+// https://stackoverflow.com/q/40574677
 void screentonormal(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout) {
     for (unsigned i = 0; i < count; i += INDCOUNT) {
@@ -287,10 +287,10 @@ vec3s make_vec3s(vec2s xy, float z) {
 }
 
 void gfx_sprite_draw(const Sprite* s) {
-    /* Move to position */
+    // Move to position
     mat4s model = glms_translate_make(make_vec3s(s->pos, 0.0f));
 
-    /* Move origin to centre, rotate, move origin back */
+    // Move origin to centre, rotate, move origin back
     vec3s prerot = {{ s->size.x / 2.0f, s->size.y / 2.0f, 0.0f }};
     model = glms_translate(model, prerot);
     vec3s axis = {{ 0.0f, 0.0f, 1.0f }};
@@ -298,7 +298,7 @@ void gfx_sprite_draw(const Sprite* s) {
     vec3s postrot = {{ s->size.x / -2.0f, s->size.y / -2.0f, 0.0f }};
     model = glms_translate(model, postrot);
 
-    /* Scale to size */
+    // Scale to size
     model = glms_scale(model, make_vec3s(s->size, 1.0f));
 
     shadersetmat4s(shader, UNIFORM_MODEL, model);

@@ -67,7 +67,7 @@ static unsigned random(unsigned min, unsigned max);
 static void releaseball(double frametime);
 static bool iswallcollision(Sprite* s, vec2s newpos);
 static vec2s getwalldistance(Sprite* s);
-static void bounce(vec2s vel, vec2s dist);
+static void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle);
 static bool ispaddlecollision(Sprite* s, vec2s newpos);
 static vec2s getaabbdistance(Sprite* s1, Sprite* s2);
 static unsigned getbrickindex(float x, float y);
@@ -85,6 +85,9 @@ static Sprite paddle = {};
 static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static bool keypressed[GLFW_KEY_LAST + 1] = {};
+#ifndef NDEBUG
+static unsigned maxhitcount = 0;
+#endif
 
 // Uses types defined above
 #include "config.h"
@@ -162,7 +165,7 @@ void levelload(const char* name) {
 
 void initball(void) {
     ball.isstuck = 1;
-    float x = paddle.pos.x + PADDLE_WIDTH / 2.0f - BALL_WIDTH / 2.0f;
+    float x = paddle.pos.x + paddle.size.x / 2.0f - BALL_WIDTH / 2.0f;
     float y = paddle.pos.y - BALL_HEIGHT;
     initsprite(&ball.sprite, BALL_WIDTH, BALL_HEIGHT, x, y, 0.0f, BALL_VERTS,
 	       sizeof(BALL_VERTS));
@@ -209,6 +212,9 @@ void levelunload(void) {
 }
 
 void game_unload(void) {
+#ifndef NDEBUG
+    fprintf(stderr, "maxhitcount = %u\n", maxhitcount);
+#endif
     gfx_sprite_term(&ball.sprite);
     gfx_sprite_term(&paddle);
     levelunload();
@@ -227,11 +233,11 @@ void game_keyup(int key) {
 
 void movepaddle(float move) {
     paddle.pos.x = glm_clamp(paddle.pos.x + move, WALL_WIDTH,
-	    SCR_WIDTH - PADDLE_WIDTH - WALL_WIDTH);
+	    SCR_WIDTH - paddle.size.x - WALL_WIDTH);
 
     if (ball.isstuck)
-	ball.sprite.pos.x = paddle.pos.x + PADDLE_WIDTH / 2.0f -
-	    BALL_WIDTH / 2.0f;
+	ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
+	    ball.sprite.size.x / 2.0f;
 }
 
 void movepaddleleft(double frametime) {
@@ -275,9 +281,7 @@ vec2s getwalldistance(Sprite* s) {
     return (vec2s) {{ left < right ? left : right, top }};
 }
 
-void bounce(vec2s vel, vec2s dist) {
-    Sprite* s = &ball.sprite;
-
+void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
     // Calculate which axis will hit first
     float timex = vel.x != 0.0f ? fabs(dist.x / vel.x) : 0.0f;
     float timey = vel.y != 0.0f ? fabs(dist.y / vel.y) : 0.0f;
@@ -295,7 +299,17 @@ void bounce(vec2s vel, vec2s dist) {
     if (timex < timey) {
 	ball.vel.x = -ball.vel.x;
     } else {
-	ball.vel.y = -ball.vel.y;
+	// Adjust horizontal velocity based on distance from the paddles centre
+	if (ispaddle) {
+	    float centre = paddle.pos.x + paddle.size.x / 2.0f;
+	    float dist = (s->pos.x + s->size.x / 2.0f) - centre;
+	    float percent = dist / (paddle.size.x / 2.0f);
+	    ball.vel.x = 0.5f * percent * 2.0f;
+	    ball.vel.y = -ball.vel.y;
+	    ball.vel = glms_vec2_normalize(ball.vel);
+	} else {
+	    ball.vel.y = -ball.vel.y;
+	}
     }
 }
 
@@ -363,12 +377,11 @@ vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
 
     for (unsigned i = 0; i < hitcount; i++) {
 	vec2s v = getaabbdistance(s, &bricks[hitbricks[i]].sprite);
-	if (v.x < mindist) {
+	if (v.x < mindist && v.x < v.y) {
 	    minv = v;
 	    mindist = v.x;
 	    mini = i;
-	}
-	if (v.y < mindist) {
+	} else if (v.y < mindist) {
 	    minv = v;
 	    mindist = v.y;
 	    mini = i;
@@ -390,16 +403,19 @@ void moveball(double frametime) {
 
     if (iswallcollision(s, newpos)) {
 	vec2s dist = getwalldistance(s);
-	bounce(vel, dist);
+	bounce(s, vel, dist, false);
     } else if (ispaddlecollision(s, newpos)) {
 	vec2s dist = getaabbdistance(s, &paddle);
-	bounce(vel, dist);
+	bounce(s, vel, dist, true);
     } else {
 	unsigned hitbricks[4];
 	unsigned hitcount = brickcollisioncount(s, newpos, hitbricks);
 	if (hitcount > 0) {
+#ifndef NDEBUG
+	    maxhitcount = MAX(hitcount, maxhitcount);
+#endif
 	    vec2s dist = getbrickdistance(s, hitcount, hitbricks);
-	    bounce(vel, dist);
+	    bounce(s, vel, dist, false);
 	} else {
 	    s->pos = newpos;
 	}
