@@ -3,6 +3,11 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+typedef struct {
+    double x;
+    double y;
+} Mousepos;
+
 extern const unsigned SCR_WIDTH;
 extern const unsigned SCR_HEIGHT;
 

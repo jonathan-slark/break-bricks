@@ -15,7 +15,6 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 
 #define GLFW_INCLUDE_NONE
 #include <cglm/struct.h>
-#include <cglm/struct/aabb2d.h>
 #include <ctype.h>
 #include <float.h>
 #include <glad.h>
@@ -26,8 +25,8 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 #include <string.h>
 #include <time.h>
 
-#include "game.h"
 #include "main.h"
+#include "game.h"
 #include "gfx.h"
 #include "util.h"
 
@@ -37,6 +36,11 @@ typedef struct {
     int key;
     void (*func)(double frametime);
 } Key;
+
+typedef struct {
+    int button;
+    void (*func)(double frametime);
+} Button;
 
 typedef struct {
     bool isstuck;
@@ -60,9 +64,6 @@ static void levelload(const char* lvl);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
-static void movepaddle(float move);
-static void movepaddleleft(double frametime);
-static void movepaddleright(double frametime);
 static unsigned random(unsigned min, unsigned max);
 static void releaseball(double frametime);
 static bool iswallcollision(Sprite* s, vec2s newpos);
@@ -85,6 +86,7 @@ static Sprite paddle = {};
 static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static bool keypressed[GLFW_KEY_LAST + 1] = {};
+static bool buttonpressed[GLFW_MOUSE_BUTTON_LAST + 1] = {};
 #ifndef NDEBUG
 static unsigned maxhitcount = 0;
 #endif
@@ -231,21 +233,12 @@ void game_keyup(int key) {
     keypressed[key] = false;
 }
 
-void movepaddle(float move) {
-    paddle.pos.x = glm_clamp(paddle.pos.x + move, WALL_WIDTH,
-	    SCR_WIDTH - paddle.size.x - WALL_WIDTH);
-
-    if (ball.isstuck)
-	ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
-	    ball.sprite.size.x / 2.0f;
+void game_buttondown(int button) {
+    buttonpressed[button] = true;
 }
 
-void movepaddleleft(double frametime) {
-    movepaddle(PADDLE_MOVE * -frametime);
-}
-
-void movepaddleright(double frametime) {
-    movepaddle(PADDLE_MOVE * frametime);
+void game_buttonup(int button) {
+    buttonpressed[button] = false;
 }
 
 // Random number between min and max, closed interval
@@ -262,10 +255,24 @@ void releaseball([[maybe_unused]] double frametime) {
     }
 }
 
-void game_input(double frametime) {
+Mousepos game_input(double frametime, Mousepos mousepos) {
+    mousepos.x = CLAMP(mousepos.x, WALL_WIDTH,
+	    SCR_WIDTH - paddle.size.x - WALL_WIDTH);
+    paddle.pos.x = mousepos.x;
+
+    if (ball.isstuck)
+	ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
+	    ball.sprite.size.x / 2.0f;
+
     for (size_t i = 0; i < COUNT(KEYS); i++)
 	if (keypressed[KEYS[i].key])
 	    (*KEYS[i].func)(frametime);
+
+    for (size_t i = 0; i < COUNT(BUTTONS); i++)
+	if (buttonpressed[BUTTONS[i].button])
+	    (*BUTTONS[i].func)(frametime);
+
+    return mousepos;
 }
 
 bool iswallcollision(Sprite* s, vec2s newpos) {

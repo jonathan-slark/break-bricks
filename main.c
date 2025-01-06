@@ -13,15 +13,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "main.h"
 #include "game.h"
 #include "gfx.h"
-#include "main.h"
 
 // Function declarations
 static void errorcallback(int err, const char* desc);
 static void init(void);
 static void keycallback(GLFWwindow* window, int key, int scancode, int action,
 			int mods);
+static void mousecallback(GLFWwindow* window, int button, int action,
+	int mods);
 static void resizecallback(GLFWwindow* window, int width, int height);
 static void createwindow(void);
 
@@ -72,13 +74,24 @@ void term(int status, const char* fmt, ...) {
 
 void keycallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode,
 		 int action, [[maybe_unused]] int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 	glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
 
-    if (action == GLFW_PRESS)
+    if (action == GLFW_PRESS) {
 	game_keydown(key);
-    else if (action == GLFW_RELEASE)
+    } else if (action == GLFW_RELEASE) {
 	game_keyup(key);
+    }
+}
+
+void mousecallback([[maybe_unused]] GLFWwindow* window, int button, int action,
+	[[maybe_unused]] int mods) {
+    if (action == GLFW_PRESS) {
+	game_buttondown(button);
+    } else if (action == GLFW_RELEASE) {
+	game_buttonup(button);
+    }
 }
 
 void resizecallback([[maybe_unused]] GLFWwindow* window, int width,
@@ -115,7 +128,12 @@ void createwindow(void) {
 
     if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, NULL)))
 	term(EXIT_FAILURE, NULL);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (glfwRawMouseMotionSupported()) {
+	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    } else {
+	term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
+    }
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
@@ -123,6 +141,7 @@ void createwindow(void) {
         term(EXIT_FAILURE, "Failed to load OpenGL.\n");
 
     glfwSetKeyCallback(window, keycallback);
+    glfwSetMouseButtonCallback(window, mousecallback);
     glfwSetFramebufferSizeCallback(window, resizecallback);
     glfwSwapInterval(1);
 }
@@ -142,7 +161,13 @@ int main(void) {
 	    glfwWaitEvents();
 	} else {
 	    glfwPollEvents();
-	    game_input(frametime);
+
+	    Mousepos mousepos;
+	    glfwGetCursorPos(window, &mousepos.x, &mousepos.y);
+	    mousepos = game_input(frametime, mousepos);
+	    // Allow game to limit mouse position
+	    glfwSetCursorPos(window, mousepos.x, mousepos.y);
+
 	    game_update(frametime);
 	    game_render();
 
