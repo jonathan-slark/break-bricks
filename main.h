@@ -11,4 +11,6 @@ typedef struct {
 extern const unsigned SCR_WIDTH;
 extern const unsigned SCR_HEIGHT;
 
-void term(int status, const char* fmt, ...);
+void     main_term(int status, const char* fmt, ...);
+Mousepos main_getmousepos(void);
+void     main_setmousepos(Mousepos mousepos);

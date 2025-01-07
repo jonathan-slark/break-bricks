@@ -107,7 +107,7 @@ GLint shadercreate(GLenum type, const GLchar* src) {
 	    free(log);
 	    glDeleteShader(s);
 	}
-	term(EXIT_FAILURE, "Could not texload shader.\n");
+	main_term(EXIT_FAILURE, "Could not texload shader.\n");
     }
     return s;
 }
@@ -139,7 +139,7 @@ GLuint shaderload(const char* vertex, const char* fragment) {
 	    free(log);
 	}
 	glDeleteProgram(shader);
-	term(EXIT_FAILURE, "Could not link shaders.\n");
+	main_term(EXIT_FAILURE, "Could not link shaders.\n");
     }
 
     return shader;
@@ -209,7 +209,7 @@ GLuint texload(const char* name, GLint intformat, GLenum imgformat,
     int width = 0, height = 0, chan = 0;
     unsigned char* data = stbi_load(name, &width, &height, &chan, 0);
     if (!data)
-	term(EXIT_FAILURE, "Could not texload image %s\n.", name);
+	main_term(EXIT_FAILURE, "Could not texload image %s\n.", name);
 
     GLuint id = 0;
     glGenTextures(1, &id);

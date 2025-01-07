@@ -54,7 +54,7 @@ void init(void) {
 	exit(EXIT_FAILURE);
 }
 
-void term(int status, const char* fmt, ...) {
+void main_term(int status, const char* fmt, ...) {
     game_unload();
 
     if (window)
@@ -83,6 +83,16 @@ void keycallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode,
     } else if (action == GLFW_RELEASE) {
 	game_keyup(key);
     }
+}
+
+Mousepos main_getmousepos(void) {
+    Mousepos mousepos;
+    glfwGetCursorPos(window, &mousepos.x, &mousepos.y);
+    return mousepos;
+}
+
+void main_setmousepos(Mousepos mousepos) {
+    glfwSetCursorPos(window, mousepos.x, mousepos.y);
 }
 
 void mousecallback([[maybe_unused]] GLFWwindow* window, int button, int action,
@@ -127,18 +137,18 @@ void createwindow(void) {
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
     if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, NULL)))
-	term(EXIT_FAILURE, NULL);
+	main_term(EXIT_FAILURE, NULL);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (glfwRawMouseMotionSupported()) {
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     } else {
-	term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
+	main_term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
     }
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
     if (!ver)
-        term(EXIT_FAILURE, "Failed to load OpenGL.\n");
+        main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
 
     glfwSetKeyCallback(window, keycallback);
     glfwSetMouseButtonCallback(window, mousecallback);
@@ -161,19 +171,12 @@ int main(void) {
 	    glfwWaitEvents();
 	} else {
 	    glfwPollEvents();
-
-	    Mousepos mousepos;
-	    glfwGetCursorPos(window, &mousepos.x, &mousepos.y);
-	    mousepos = game_input(frametime, mousepos);
-	    // Allow game to limit mouse position
-	    glfwSetCursorPos(window, mousepos.x, mousepos.y);
-
+	    game_input(frametime);
 	    game_update(frametime);
 	    game_render();
-
 	    glfwSwapBuffers(window);
 	}
     }
 
-    term(EXIT_SUCCESS, NULL);
+    main_term(EXIT_SUCCESS, NULL);
 }

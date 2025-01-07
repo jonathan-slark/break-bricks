@@ -60,7 +60,8 @@ static void initsprite(Sprite* s, float width, float height, float x,
 	float y, float rot, const unsigned* verts, size_t size);
 static void initbrick(Brick* brick, char id, unsigned col, unsigned row);
 static unsigned readbricks(const char* lvl);
-static void levelload(const char* lvl);
+static void resetlevel(void);
+static void levelload(unsigned num);
 static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
@@ -76,7 +77,9 @@ static unsigned brickcollisioncount(Sprite* s, vec2s newpos,
 	unsigned hitbricks[4]);
 static vec2s getbrickdistance(Sprite* s, unsigned hitcount,
 	unsigned hitbricks[4]);
+static bool isoob(Sprite* s, vec2s newpos);
 static void moveball(double frametime);
+static bool iswincondition(void);
 static void leveldraw(void);
 
 // Variables
@@ -85,6 +88,7 @@ static Ball ball = {};
 static Sprite paddle = {};
 static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
+static unsigned level = 1;
 static bool keypressed[GLFW_KEY_LAST + 1] = {};
 static bool buttonpressed[GLFW_MOUSE_BUTTON_LAST + 1] = {};
 #ifndef NDEBUG
@@ -147,21 +151,27 @@ unsigned readbricks(const char* lvl) {
 		row++;
 	    col = 0;
 	} else if (c != ' ' && c != '\t') {
-	    term(EXIT_FAILURE, "Syntax error in level file.\n");
+	    main_term(EXIT_FAILURE, "Syntax error in level file.\n");
 	}
     }
 
     if (count != BRICK_COLS * BRICK_ROWS) {
-	term(EXIT_FAILURE, "Incorrect number of bricks in level file.\n");
+	main_term(EXIT_FAILURE, "Incorrect number of bricks in level file.\n");
     }
 
     return count;
 }
 
-void levelload(const char* name) {
-    char* lvl = util_load(name);
+void levelload(unsigned num) {
+    const char fmt[] = "%s/%02i.txt";
+    int sz = snprintf(NULL, 0, fmt, LVL_FOLDER, num);
+    char file[sz + 1];
+    snprintf(file, sizeof file, fmt, LVL_FOLDER, num);
+    char* lvl = util_load(file);
+
     bricks = (Brick*) malloc(BRICK_COLS * BRICK_ROWS * sizeof(Brick));
     readbricks(lvl);
+
     util_unload(lvl);
 }
 
@@ -174,7 +184,8 @@ void initball(void) {
 }
 
 void initpaddle(void) {
-    float x = SCR_WIDTH / 2.0f - PADDLE_WIDTH / 2.0f;
+    Mousepos mousepos = main_getmousepos();
+    float x = mousepos.x;
     float y = SCR_HEIGHT - PADDLE_HEIGHT;
     initsprite(&paddle, PADDLE_WIDTH, PADDLE_HEIGHT, x, y, 0.0f, PADDLE_VERTS,
 	       sizeof(PADDLE_VERTS));
@@ -193,12 +204,17 @@ void game_load(void) {
     initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, 0.0f, BG_VERTS,
 	       sizeof(BG_VERTS));
 
-    const char fmt[] = "%s/%02i.txt";
-    int sz = snprintf(NULL, 0, fmt, LVL_FOLDER, 1);
-    char lvl[sz + 1];
-    snprintf(lvl, sizeof lvl, fmt, LVL_FOLDER, 1);
-    levelload(lvl);
+    levelload(level);
+    initpaddle();
+    initball();
+}
 
+void resetlevel(void) {
+    gfx_sprite_term(&ball.sprite);
+    gfx_sprite_term(&paddle);
+    levelunload();
+
+    levelload(level);
     initpaddle();
     initball();
 }
@@ -255,7 +271,8 @@ void releaseball([[maybe_unused]] double frametime) {
     }
 }
 
-Mousepos game_input(double frametime, Mousepos mousepos) {
+void  game_input(double frametime) {
+    Mousepos mousepos = main_getmousepos();
     mousepos.x = CLAMP(mousepos.x, WALL_WIDTH,
 	    SCR_WIDTH - paddle.size.x - WALL_WIDTH);
     paddle.pos.x = mousepos.x;
@@ -272,7 +289,8 @@ Mousepos game_input(double frametime, Mousepos mousepos) {
 	if (buttonpressed[BUTTONS[i].button])
 	    (*BUTTONS[i].func)(frametime);
 
-    return mousepos;
+    // Don't allow cursor to move away from paddle
+    main_setmousepos(mousepos);
 }
 
 bool iswallcollision(Sprite* s, vec2s newpos) {
@@ -311,7 +329,7 @@ void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
 	    float centre = paddle.pos.x + paddle.size.x / 2.0f;
 	    float dist = (s->pos.x + s->size.x / 2.0f) - centre;
 	    float percent = dist / (paddle.size.x / 2.0f);
-	    ball.vel.x = 0.5f * percent * 2.0f;
+	    ball.vel.x = percent * BALL_BOUNCE_STR;
 	    ball.vel.y = -ball.vel.y;
 	    ball.vel = glms_vec2_normalize(ball.vel);
 	} else {
@@ -403,12 +421,18 @@ vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
     return minv;
 }
 
+bool isoob(Sprite* s, vec2s newpos) {
+    return newpos.y + s->size.x > SCR_HEIGHT;
+}
+
 void moveball(double frametime) {
     Sprite* s = &ball.sprite;
     vec2s vel = glms_vec2_scale(ball.vel, BALL_MOVE * frametime);
     vec2s newpos = glms_vec2_add(s->pos, vel);
 
-    if (iswallcollision(s, newpos)) {
+    if (isoob(s, newpos)) {
+	resetlevel();
+    } else if (iswallcollision(s, newpos)) {
 	vec2s dist = getwalldistance(s);
 	bounce(s, vel, dist, false);
     } else if (ispaddlecollision(s, newpos)) {
@@ -429,6 +453,17 @@ void moveball(double frametime) {
     }
 }
 
+bool iswincondition(void) {
+    for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
+	if (bricks[i].isactive && !bricks[i].issolid &&
+		!bricks[i].isdestroyed) {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
 void game_update(double frametime) {
     if (!ball.isstuck) {
 	double restime = frametime / RES_COUNT;
@@ -437,6 +472,14 @@ void game_update(double frametime) {
 	}
 	// Account for rounding errors
 	moveball(frametime - restime * (RES_COUNT - 1));
+    }
+
+    if (iswincondition()) {
+	level++;
+	if (level > LVL_COUNT) {
+	    level = 1;
+	}
+	resetlevel();
     }
 }
 

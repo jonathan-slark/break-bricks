@@ -13,7 +13,7 @@ static const Button BUTTONS[] = {
 
 // Levels
 static const char     LVL_FOLDER[] = "level";
-static const unsigned LVL_COUNT    = 3;
+static const unsigned LVL_COUNT    = 2;
 
 // Sprites
 static const char     SPRITE_SHEET[]  = "gfx/spritesheet.png";
@@ -21,15 +21,15 @@ static const char     BACKGROUND[]    = "gfx/background.png";
 static const unsigned WALL_WIDTH      = 64;   // Walls left, top and right
 static const unsigned BALL_WIDTH      = 28;
 static const unsigned BALL_HEIGHT     = 28;
-static const unsigned BALL_MOVE       = 500;  // Pixels per second
-static const double   BALL_BOUNCE_STR = 3.0f; // Strength of bounce off paddle
+static const unsigned BALL_MOVE       = 750;  // Pixels per second
+static const double   BALL_BOUNCE_STR = 1.5f; // Strength of deflect off paddle
 static const unsigned PADDLE_WIDTH    = 126;
 static const unsigned PADDLE_HEIGHT   = 26;
 static const unsigned PADDLE_MOVE     = 500;  // Pixels per second
 static const unsigned BRICK_WIDTH     = 64;
 static const unsigned BRICK_HEIGHT    = 32;
 static const unsigned BRICK_COLS      = 28;
-static const unsigned BRICK_ROWS      = 8;
+static const unsigned BRICK_ROWS      = 12;
 static const unsigned BRICK_TYPES     = 6;    // Number of brick types
 
 // Game logic
