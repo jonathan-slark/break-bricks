@@ -72,12 +72,12 @@ void main_term(int status, const char* fmt, ...) {
     exit(status);
 }
 
+void main_quit(void) {
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
 void keycallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode,
 		 int action, [[maybe_unused]] int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-	glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-
     if (action == GLFW_PRESS) {
 	game_keydown(key);
     } else if (action == GLFW_RELEASE) {

@@ -34,12 +34,12 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 
 typedef struct {
     int key;
-    void (*func)(double frametime);
+    void (*func)(void);
 } Key;
 
 typedef struct {
     int button;
-    void (*func)(double frametime);
+    void (*func)(void);
 } Button;
 
 typedef struct {
@@ -66,7 +66,9 @@ static void initball(void);
 static void initpaddle(void);
 static void levelunload(void);
 static unsigned random(unsigned min, unsigned max);
-static void releaseball(double frametime);
+static void releaseball(void);
+static void quit(void);
+static void pause(void);
 static bool iswallcollision(Sprite* s, vec2s newpos);
 static vec2s getwalldistance(Sprite* s);
 static void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle);
@@ -89,8 +91,7 @@ static Sprite paddle = {};
 static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static unsigned level = 1;
-static bool keypressed[GLFW_KEY_LAST + 1] = {};
-static bool buttonpressed[GLFW_MOUSE_BUTTON_LAST + 1] = {};
+static bool ispaused = false;
 #ifndef NDEBUG
 static unsigned maxhitcount = 0;
 #endif
@@ -242,19 +243,27 @@ void game_unload(void) {
 }
 
 void game_keydown(int key) {
-    keypressed[key] = true;
+    for (size_t i = 0; i < COUNT(KEYS); i++) {
+	if (KEYS[i].key == key) {
+	    (*KEYS[i].func)();
+	}
+    }
 }
 
-void game_keyup(int key) {
-    keypressed[key] = false;
+void game_keyup([[maybe_unused]] int key) {
+    // VOID
 }
 
 void game_buttondown(int button) {
-    buttonpressed[button] = true;
+    for (size_t i = 0; i < COUNT(BUTTONS); i++) {
+	if (BUTTONS[i].button == button) {
+	    (*BUTTONS[i].func)();
+	}
+    }
 }
 
-void game_buttonup(int button) {
-    buttonpressed[button] = false;
+void game_buttonup([[maybe_unused]] int button) {
+    // VOID
 }
 
 // Random number between min and max, closed interval
@@ -262,7 +271,7 @@ unsigned random(unsigned min, unsigned max) {
     return roundf(min + ((float) rand()) / RAND_MAX * (max - min));
 }
 
-void releaseball([[maybe_unused]] double frametime) {
+void releaseball(void) {
     if (ball.isstuck) {
 	ball.vel = BALL_RELEASE[random(0, COUNT(BALL_RELEASE) - 1)];
 	ball.vel = glms_vec2_normalize(ball.vel);
@@ -271,26 +280,28 @@ void releaseball([[maybe_unused]] double frametime) {
     }
 }
 
-void  game_input(double frametime) {
-    Mousepos mousepos = main_getmousepos();
-    mousepos.x = CLAMP(mousepos.x, WALL_WIDTH,
-	    SCR_WIDTH - paddle.size.x - WALL_WIDTH);
-    paddle.pos.x = mousepos.x;
+void quit(void) {
+    main_quit();
+}
 
-    if (ball.isstuck)
-	ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
-	    ball.sprite.size.x / 2.0f;
+void pause(void) {
+    ispaused = !ispaused;
+}
 
-    for (size_t i = 0; i < COUNT(KEYS); i++)
-	if (keypressed[KEYS[i].key])
-	    (*KEYS[i].func)(frametime);
+void game_input([[maybe_unused]] double frametime) {
+    if (!ispaused) {
+	Mousepos mousepos = main_getmousepos();
+	mousepos.x = CLAMP(mousepos.x, WALL_WIDTH,
+		SCR_WIDTH - paddle.size.x - WALL_WIDTH);
+	paddle.pos.x = mousepos.x;
 
-    for (size_t i = 0; i < COUNT(BUTTONS); i++)
-	if (buttonpressed[BUTTONS[i].button])
-	    (*BUTTONS[i].func)(frametime);
+	if (ball.isstuck)
+	    ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
+		ball.sprite.size.x / 2.0f;
 
-    // Don't allow cursor to move away from paddle
-    main_setmousepos(mousepos);
+	// Don't allow cursor to move away from paddle
+	main_setmousepos(mousepos);
+    }
 }
 
 bool iswallcollision(Sprite* s, vec2s newpos) {
@@ -465,21 +476,21 @@ bool iswincondition(void) {
 }
 
 void game_update(double frametime) {
-    if (!ball.isstuck) {
+    if (!ispaused && !ball.isstuck) {
 	double restime = frametime / RES_COUNT;
 	for (unsigned i = 0; i < RES_COUNT - 1; i++) {
 	    moveball(restime);
 	}
 	// Account for rounding errors
 	moveball(frametime - restime * (RES_COUNT - 1));
-    }
 
-    if (iswincondition()) {
-	level++;
-	if (level > LVL_COUNT) {
-	    level = 1;
+	if (iswincondition()) {
+	    level++;
+	    if (level > LVL_COUNT) {
+		level = 1;
+	    }
+	    resetlevel();
 	}
-	resetlevel();
     }
 }
 

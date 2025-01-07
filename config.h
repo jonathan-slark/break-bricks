@@ -5,10 +5,11 @@
 
 // Key bindings
 static const Key KEYS[] = {
-    { GLFW_KEY_SPACE, releaseball}
+    { GLFW_KEY_ESCAPE, quit },
+    { GLFW_KEY_SPACE, pause }
 };
 static const Button BUTTONS[] = {
-    { GLFW_MOUSE_BUTTON_LEFT, releaseball}
+    { GLFW_MOUSE_BUTTON_LEFT, releaseball }
 };
 
 // Levels
@@ -25,7 +26,6 @@ static const unsigned BALL_MOVE       = 750;  // Pixels per second
 static const double   BALL_BOUNCE_STR = 1.5f; // Strength of deflect off paddle
 static const unsigned PADDLE_WIDTH    = 126;
 static const unsigned PADDLE_HEIGHT   = 26;
-static const unsigned PADDLE_MOVE     = 500;  // Pixels per second
 static const unsigned BRICK_WIDTH     = 64;
 static const unsigned BRICK_HEIGHT    = 32;
 static const unsigned BRICK_COLS      = 28;

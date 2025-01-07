@@ -9,6 +9,7 @@ void game_keydown(int key);
 void game_keyup(int key);
 void game_buttondown(int button);
 void game_buttonup(int button);
+void game_pause(double frametime);
 void game_input(double frametime);
 void game_update(double frametime);
 void game_render(void);
