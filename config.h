@@ -19,7 +19,7 @@ static const unsigned LVL_COUNT    = 2;
 // Sprites
 static const char     SPRITE_SHEET[]  = "gfx/spritesheet.png";
 static const char     BACKGROUND[]    = "gfx/background.png";
-static const unsigned WALL_WIDTH      = 64;   // Walls left, top and right
+static const unsigned WALL_WIDTH      = 32;   // Walls left, top and right
 static const unsigned BALL_WIDTH      = 28;
 static const unsigned BALL_HEIGHT     = 28;
 static const unsigned BALL_MOVE       = 750;  // Pixels per second
@@ -28,7 +28,7 @@ static const unsigned PADDLE_WIDTH    = 126;
 static const unsigned PADDLE_HEIGHT   = 26;
 static const unsigned BRICK_WIDTH     = 64;
 static const unsigned BRICK_HEIGHT    = 32;
-static const unsigned BRICK_COLS      = 28;
+static const unsigned BRICK_COLS      = 29;
 static const unsigned BRICK_ROWS      = 12;
 static const unsigned BRICK_TYPES     = 6;    // Number of brick types
 

@@ -7,15 +7,15 @@
 # 5 = yellow, breakable | f = yellow, unbreakable
 # White space, new lines and comments are ignored
 
-x x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x 3 3 3 3 x x x x 3 3 3 3 3 3 3 x x x x x 3 3 3 3 x x
-x x 1 1 1 1 x x 1 1 1 1 b b b b 1 1 1 1 x x 1 1 1 1 x x
-x x x x x x x x 3 3 3 3 3 3 3 3 3 3 3 3 x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 x x x x
-1 1 1 1 d d d d b b b b d d d d b b b b d d d d 1 1 1 1
-x x x x 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 x x x x
-x x x x 1 1 1 1 x x x x 1 1 1 1 x x x x 1 1 1 1 x x x x
-x x 1 1 1 1 x x x x x x x x x x x x x x x x 1 1 1 1 x x
-x x 3 3 3 3 x x x x x x x x x x x x x x x x 3 3 3 3 x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x 3 3 3 3 x x x x 3 3 3 3 3 3 3 3 x x x x x 3 3 3 3 x x
+x x 1 1 1 1 x x 1 1 1 1 b b b b b 1 1 1 1 x x 1 1 1 1 x x
+x x x x x x x x 3 3 3 3 3 3 3 3 3 3 3 3 3 x x x x x x x x
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 x x x x
+1 1 1 1 d d d d b b b b d d d d d b b b b d d d d 1 1 1 1
+x x x x 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 x x x x
+x x x x 1 1 1 1 x x x x 1 1 1 1 1 x x x x 1 1 1 1 x x x x
+x x 1 1 1 1 x x x x x x x x x x x x x x x x x 1 1 1 1 x x
+x x 3 3 3 3 x x x x x x x x x x x x x x x x x 3 3 3 3 x x

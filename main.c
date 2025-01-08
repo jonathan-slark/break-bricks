@@ -76,8 +76,9 @@ void main_quit(void) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void keycallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode,
-		 int action, [[maybe_unused]] int mods) {
+void keycallback([[maybe_unused]] GLFWwindow* window, int key,
+	[[maybe_unused]] int scancode, int action,
+	[[maybe_unused]] int mods) {
     if (action == GLFW_PRESS) {
 	game_keydown(key);
     } else if (action == GLFW_RELEASE) {
