@@ -26,6 +26,7 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 #include <time.h>
 
 #include "main.h"
+#include "aud.h"
 #include "game.h"
 #include "gfx.h"
 #include "util.h"
@@ -193,6 +194,7 @@ void initpaddle(void) {
 }
 
 void game_load(void) {
+    aud_init();
     gfx_init();
 
     // Decent random seed: https://stackoverflow.com/q/58150771
@@ -240,6 +242,7 @@ void game_unload(void) {
     gfx_ss_unload(bg);
     gfx_ss_unload(spritesheet);
     gfx_term();
+    aud_term();
 }
 
 void game_keydown(int key) {

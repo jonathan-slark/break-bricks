@@ -1,6 +1,56 @@
 # README
 
+## Break Bricks
+
+Break Bricks is a Breakout/Arkanoid inspired game to demonstrate a sprite
+renderer, using modern OpenGL (3.3) and sprite collision and resolution. It is
+based on:
+<https://learnopengl.com/In-Practice/2D-Game/Breakout>
+It has been converted to modern C and I felt the advanced AABB collision
+detection used in the guide was over the top, for this type of game, so most
+of the game code is my own, with collision resolution based on an excellent
+article I found (see below).
+
+The game only runs at 1080p but uses the refresh rate of the desktop on the
+main monitor. If the main monitor is already running at 1080p the game runs in
+a borderless window. The game logic isn't tied to frame rate so it will play
+the same at 60Hz or 500Hz. Higher frame rates will make the ball and paddle
+movements slicker.
+
+I've also implemented the optimisations recommended at the end of the guide:
+sprite sheets and triangle strips. Space partitioning algorithms are not
+needed as my collision detection uses the fact that the bricks are in a fixed
+grid and the paddle doesn't move on the y-axis.
+
+The build environment is MSYS2 as that gives me a modern C environment using a
+Linux tool chain but producing native windows binaries. In theory, the game
+should compile and run on Linux and MacOS but I haven't tested that.
+
+## AABB Collision Resoultion
+
+<https://nightblade9.github.io/godot-gamedev/2020/a-primer-on-aabb-collision-resolution.html>
+
+1) Detect if objects are about to collide.
+2) Calculate distance between objects about to collide.
+3) Smallest distance tells us which axis will collide first.
+4) Resolve collision on axis that collides first.
+
+As long as the objects aren't moving too fast and the collision resolution is
+run at a high enough rate tunnelling shouldn't be a problem.
+
+## Layout
+
+main - OS code to get a window and input.
+game - Game logic.
+gfx  - Sprite renderer.
+aud  - Audio.
+
 ## Credits
+
+glad:
+<https://github.com/Dav1dde/glad>
+CC0 License:
+<https://creativecommons.org/publicdomain/zero/1.0/>
 
 miniaudio:
 <https://miniaud.io/>
@@ -25,12 +75,3 @@ Packages:
 - mingw-w64-ucrt-x86_64-glfw
 - mingw-w64-ucrt-x86_64-stb
 - mingw-w64-ucrt-x86_64-cglm
-
-## AABB Collision Resoultion
-
-<https://nightblade9.github.io/godot-gamedev/2020/a-primer-on-aabb-collision-resolution.html>
-
-1) Detect if objects are about to collide.
-2) Calculate distance between objects about to collide.
-3) Smallest distance tells us which axis will collide first.
-4) Resolve collision on axis that collides first.
