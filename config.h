@@ -32,6 +32,12 @@ static const unsigned BRICK_COLS      = 29;
 static const unsigned BRICK_ROWS      = 12;
 static const unsigned BRICK_TYPES     = 6;    // Number of brick types
 
+// Sounds
+static const float AUD_VOL     = 0.2; // Volume 0 - 1
+static const char  AUD_BRICK[] = "aud/brick.wav";
+static const char  AUD_DEATH[] = "aud/death.wav";
+static const char  AUD_WIN[]   = "aud/win.wav";
+
 // Game logic
 // How many times per frame to run collision resolution
 static const unsigned RES_COUNT = 2;

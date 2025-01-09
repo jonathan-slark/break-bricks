@@ -19,6 +19,7 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 #include <float.h>
 #include <glad.h>
 #include <math.h>
+#include <miniaudio.h>
 #include <GLFW/glfw3.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -32,6 +33,8 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 #include "util.h"
 
 // Types
+
+enum { SoundBrick, SoundDeath, SoundWin };
 
 typedef struct {
     int key;
@@ -92,6 +95,7 @@ static Sprite paddle = {};
 static GLuint spritesheet = 0, bg = 0;
 static Sprite bgsprite = {};
 static unsigned level = 1;
+static ma_sound** sounds;
 static bool ispaused = false;
 #ifndef NDEBUG
 static unsigned maxhitcount = 0;
@@ -194,7 +198,7 @@ void initpaddle(void) {
 }
 
 void game_load(void) {
-    aud_init();
+    aud_init(AUD_VOL);
     gfx_init();
 
     // Decent random seed: https://stackoverflow.com/q/58150771
@@ -206,6 +210,11 @@ void game_load(void) {
     bg = gfx_ss_load(BACKGROUND, 1);
     initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, 0.0f, BG_VERTS,
 	       sizeof(BG_VERTS));
+
+    sounds = (ma_sound**) malloc((SoundWin + 1) * sizeof(ma_sound*));
+    sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
+    sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
+    sounds[SoundWin]   = aud_sound_load(AUD_WIN);
 
     levelload(level);
     initpaddle();
@@ -236,6 +245,10 @@ void game_unload(void) {
 #ifndef NDEBUG
     fprintf(stderr, "maxhitcount = %u\n", maxhitcount);
 #endif
+    aud_sound_unload(sounds[SoundBrick]);
+    aud_sound_unload(sounds[SoundDeath]);
+    aud_sound_unload(sounds[SoundWin]);
+    free(sounds);
     gfx_sprite_term(&ball.sprite);
     gfx_sprite_term(&paddle);
     levelunload();
@@ -430,6 +443,7 @@ vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
     unsigned i = hitbricks[mini];
     if (!bricks[i].issolid) {
 	bricks[i].isdestroyed = true;
+	aud_playsound(sounds[SoundBrick]);
     }
 
     return minv;
@@ -445,6 +459,7 @@ void moveball(double frametime) {
     vec2s newpos = glms_vec2_add(s->pos, vel);
 
     if (isoob(s, newpos)) {
+	aud_playsound(sounds[SoundDeath]);
 	resetlevel();
     } else if (iswallcollision(s, newpos)) {
 	vec2s dist = getwalldistance(s);
@@ -488,6 +503,7 @@ void game_update(double frametime) {
 	moveball(frametime - restime * (RES_COUNT - 1));
 
 	if (iswincondition()) {
+	    aud_playsound(sounds[SoundWin]);
 	    level++;
 	    if (level > LVL_COUNT) {
 		level = 1;

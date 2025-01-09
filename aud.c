@@ -9,35 +9,43 @@
 #include "main.h"
 #include "aud.h"
 
-// Function declarations
-void datacallback(ma_device* dev, void* output, const void* input, ma_uint32 framecount);
-
-// Constants
-static const unsigned FORMAT      = ma_format_f32;
-static const unsigned CHANNELS    = 2;
-static const unsigned SAMPLE_RATE = 48000;
 // Variables
-ma_device device;
+ma_engine engine;
 
 // Function implementations
 
-void datacallback(ma_device* dev, void* output, const void* input, ma_uint32 framecount) {
+void aud_init(float vol) {
+    if (ma_engine_init(NULL, &engine) != MA_SUCCESS) {
+	main_term(EXIT_FAILURE, "Failed to initialise audio engine.\n");
+    }
+    ma_engine_set_volume(&engine, vol);
 }
 
-void aud_init(void) {
-    ma_device_config config = ma_device_config_init(ma_device_type_playback);
-    config.playback.format   = FORMAT;
-    config.playback.channels = CHANNELS;
-    config.sampleRate        = SAMPLE_RATE;
-    config.dataCallback      = datacallback;
+ma_sound* aud_sound_load(const char* file) {
+    ma_sound* sound = (ma_sound*) malloc(sizeof(ma_sound));
 
-    if (ma_device_init(NULL, &config, &device) != MA_SUCCESS) {
-        main_term(EXIT_FAILURE, "Unable to initialise audio.\n");
+    // Load and decode now to avoid overhead during game play
+    if (ma_sound_init_from_file(&engine, file, MA_SOUND_FLAG_DECODE, NULL,
+		NULL, sound) != MA_SUCCESS) {
+	main_term(EXIT_FAILURE, "Unable to load sound %s.\n", file);
     }
 
-    ma_device_start(&device);
+    return sound;
+}
+
+void aud_sound_unload(ma_sound *sound) {
+    ma_sound_uninit(sound);
+    free(sound);
+}
+
+void aud_playsound(ma_sound *sound) {
+    if (ma_sound_is_playing(sound)) {
+	ma_sound_stop(sound);
+	ma_sound_seek_to_pcm_frame(sound, 0);
+    }
+    ma_sound_start(sound);
 }
 
 void aud_term(void) {
-    ma_device_uninit(&device);
+    ma_engine_uninit(&engine);
 }
