@@ -34,7 +34,7 @@ bool isaabbcollision(Sprite* s1, Sprite* s2) {
 
 // Types
 
-enum { SoundBrick, SoundDeath, SoundWin };
+enum { SoundBrick, SoundDeath, SoundMusic, SoundWin };
 
 typedef struct {
     int key;
@@ -212,9 +212,11 @@ void game_load(void) {
 	       sizeof(BG_VERTS));
 
     sounds = (ma_sound**) malloc((SoundWin + 1) * sizeof(ma_sound*));
-    sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
-    sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
-    sounds[SoundWin]   = aud_sound_load(AUD_WIN);
+    sounds[SoundBrick] = aud_sound_load(AUD_BRICK, false);
+    sounds[SoundDeath] = aud_sound_load(AUD_DEATH, false);
+    sounds[SoundMusic] = aud_sound_load(AUD_MUSIC, true);  // Looping
+    sounds[SoundWin]   = aud_sound_load(AUD_WIN, false);
+    aud_sound_start(sounds[SoundMusic]);
 
     levelload(level);
     initpaddle();
@@ -443,7 +445,7 @@ vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
     unsigned i = hitbricks[mini];
     if (!bricks[i].issolid) {
 	bricks[i].isdestroyed = true;
-	aud_playsound(sounds[SoundBrick]);
+	aud_sound_play(AUD_BRICK);
     }
 
     return minv;
@@ -459,7 +461,7 @@ void moveball(double frametime) {
     vec2s newpos = glms_vec2_add(s->pos, vel);
 
     if (isoob(s, newpos)) {
-	aud_playsound(sounds[SoundDeath]);
+	aud_sound_play(AUD_DEATH);
 	resetlevel();
     } else if (iswallcollision(s, newpos)) {
 	vec2s dist = getwalldistance(s);
@@ -503,7 +505,7 @@ void game_update(double frametime) {
 	moveball(frametime - restime * (RES_COUNT - 1));
 
 	if (iswincondition()) {
-	    aud_playsound(sounds[SoundWin]);
+	    aud_sound_play(AUD_WIN);
 	    level++;
 	    if (level > LVL_COUNT) {
 		level = 1;

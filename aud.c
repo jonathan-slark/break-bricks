@@ -21,14 +21,18 @@ void aud_init(float vol) {
     ma_engine_set_volume(&engine, vol);
 }
 
-ma_sound* aud_sound_load(const char* file) {
+// Preload sound
+// https://github.com/mackron/miniaudio/issues/249
+ma_sound* aud_sound_load(const char* file, bool islooping) {
     ma_sound* sound = (ma_sound*) malloc(sizeof(ma_sound));
 
     // Load and decode now to avoid overhead during game play
-    if (ma_sound_init_from_file(&engine, file, MA_SOUND_FLAG_DECODE, NULL,
+    if (ma_sound_init_from_file(&engine, file, MA_SOUND_FLAG_DECODE |
+		MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
 		NULL, sound) != MA_SUCCESS) {
 	main_term(EXIT_FAILURE, "Unable to load sound %s.\n", file);
     }
+    ma_sound_set_looping(sound, islooping);
 
     return sound;
 }
@@ -38,11 +42,12 @@ void aud_sound_unload(ma_sound *sound) {
     free(sound);
 }
 
-void aud_playsound(ma_sound *sound) {
-    if (ma_sound_is_playing(sound)) {
-	ma_sound_stop(sound);
-	ma_sound_seek_to_pcm_frame(sound, 0);
-    }
+// Will use cached sound data and not actually load sound again
+void aud_sound_play(const char* file) {
+    ma_engine_play_sound(&engine, file, NULL);
+}
+
+void aud_sound_start(ma_sound* sound) {
     ma_sound_start(sound);
 }
 

@@ -4,7 +4,8 @@
  */
 
 void aud_init(float vol);
-ma_sound* aud_sound_load(const char* file);
+ma_sound* aud_sound_load(const char* file, bool islooping);
 void aud_sound_unload(ma_sound *sound);
-void aud_playsound(ma_sound* sound);
+void aud_sound_play(const char* file);
+void aud_sound_start(ma_sound* sound);
 void aud_term(void);
