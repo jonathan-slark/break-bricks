@@ -350,7 +350,10 @@ void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
 #endif
 
     // Finally, bounce the ball
-    if (timex < timey) {
+    if (timex == timey) {
+	ball.vel.x = -ball.vel.x;
+	ball.vel.y = -ball.vel.y;
+    } else if (timex < timey) {
 	ball.vel.x = -ball.vel.x;
     } else {
 	// Adjust horizontal velocity based on distance from the paddles centre
