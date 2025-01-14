@@ -7,7 +7,7 @@ renderer, using modern OpenGL (3.3) and sprite collision and resolution. It is
 based on:
 <https://learnopengl.com/In-Practice/2D-Game/Breakout>
 It has been converted to modern C and I felt the advanced AABB collision
-detection used in the guide was over the top, for this type of game, so most
+detection used in the guide was over the top, for this type of game. So, most
 of the game code is my own, with collision resolution based on an excellent
 article I found (see below).
 
@@ -40,12 +40,28 @@ run at a high enough rate tunnelling shouldn't be a problem.
 
 ## Layout
 
-main - OS code to get a window and input.
-game - Game logic.
-gfx  - Sprite renderer.
-aud  - Audio.
+aud.c   - Audio: sound effects and music.
+game.c  - Game logic.
+gfx.c   - Graphics: sprite and font renderer.
+main.c  - OS code to get a window and input.
+extern/ - External libraries (licenses below).
+font/   - TTF fonts.
+gfx/    - Sprite sheets and Paint.NET source.
+level/  - Levels text files.
+music/  - Music here is played in order and repeated.
+sfx/    - Sound effects.
+shader/ - GLSL shader source.
 
-## Credits
+## Credits and Licences
+
+Break Bricks source:
+CC0 License:
+<https://creativecommons.org/publicdomain/zero/1.0/>
+
+glfw (linking):
+<https://www.glfw.org/>
+zlib/libpng License:
+<https://www.glfw.org/license.html>
 
 glad (generated code only):
 <https://github.com/Dav1dde/glad>
@@ -56,6 +72,11 @@ miniaudio:
 <https://miniaud.io/>
 MIT No Attribution:
 <https://github.com/aws/mit-0>
+
+stb_image.h
+<https://github.com/nothings/stb>
+Public Doman:
+<https://github.com/nothings/stb/blob/master/LICENSE>
 
 Tiny Breakout Pack by Screaming Brain Studios:
 <https://screamingbrainstudios.com/dl-tiny-breakout-pack/>
@@ -81,7 +102,7 @@ CC0 License:
 
 Packages:
 
+- mingw-w64-ucrt-x86_64-cglm
 - mingw-w64-ucrt-x86_64-gcc
 - mingw-w64-ucrt-x86_64-glfw
 - mingw-w64-ucrt-x86_64-stb
-- mingw-w64-ucrt-x86_64-cglm

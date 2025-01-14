@@ -1,7 +1,10 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO: Only store QUAD verts once, not per sprite.
+ * TODO:
+ * Only store QUAD verts once, not per sprite.
+ * OpenGL 2.0 / GLSL 1.10
+ * Scale to resolution?
  */
 
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
@@ -23,10 +26,7 @@
 #define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))
 
 // Types
-enum {
-    Verts,
-    TexVerts
-};
+enum { Verts, TexVerts };
 
 // Function prototypes
 #ifndef NDEBUG
@@ -37,8 +37,6 @@ static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
 #endif // !NDEBUG
 static GLint shadercreate(GLenum type, const GLchar* src);
 static GLuint shaderload(const char* vertex, const char* fragment);
-static GLuint texload(const char* name, GLint intformat, GLenum imgformat,
-	GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax);
 static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
 static vec3s make_vec3s(vec2s xy, float z);
@@ -204,9 +202,8 @@ void gfx_resize(int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-GLuint texload(const char* name, GLint intformat, GLenum imgformat,
-	       GLint wraps, GLint wrapt, GLint filtermin, GLint filtermax) {
-    int width = 0, height = 0, chan = 0;
+GLuint gfx_ss_load(const char* name) {
+    int width, height, chan;
     unsigned char* data = stbi_load(name, &width, &height, &chan, 0);
     if (!data)
 	main_term(EXIT_FAILURE, "Could not texload image %s\n.", name);
@@ -214,26 +211,17 @@ GLuint texload(const char* name, GLint intformat, GLenum imgformat,
     GLuint id = 0;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, intformat, width, height, 0, imgformat,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
 		 GL_UNSIGNED_BYTE, (const void*)data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wraps);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapt);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtermin);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filtermax);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     stbi_image_free(data);
 
     return id;
-}
-
-GLuint gfx_ss_load(const char* name, int isalpha) {
-    if (isalpha)
-	return texload(name, GL_RGBA, GL_RGBA, GL_REPEAT, GL_REPEAT, GL_LINEAR,
-		GL_LINEAR);
-    else
-	return texload(name, GL_RGB, GL_RGB, GL_REPEAT, GL_REPEAT, GL_LINEAR,
-		GL_LINEAR);
 }
 
 void gfx_ss_unload(GLuint id) {
@@ -248,7 +236,7 @@ void gfx_ss_use(GLuint id) {
 void screentonormal(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout) {
     for (unsigned i = 0; i < count; i += INDCOUNT) {
-	vout[i] = SCR2NORM(vin[i], width);
+	vout[i]     = SCR2NORM(vin[i], width);
 	vout[i + 1] = SCR2NORM(vin[i + 1], height);
     }
 }
@@ -264,13 +252,13 @@ void gfx_sprite_init(Sprite* s) {
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD), QUAD, GL_STATIC_DRAW);
     glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE,
-	    INDCOUNT * sizeof(float), (void*)0);
+	    INDCOUNT * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
     glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE,
-	    INDCOUNT * sizeof(float), (void*)0);
+	    INDCOUNT * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -289,18 +277,8 @@ vec3s make_vec3s(vec2s xy, float z) {
 void gfx_sprite_draw(const Sprite* s) {
     // Move to position
     mat4s model = glms_translate_make(make_vec3s(s->pos, 0.0f));
-
-    // Move origin to centre, rotate, move origin back
-    vec3s prerot = {{ s->size.x / 2.0f, s->size.y / 2.0f, 0.0f }};
-    model = glms_translate(model, prerot);
-    vec3s axis = {{ 0.0f, 0.0f, 1.0f }};
-    model = glms_rotate(model, s->rot, axis);
-    vec3s postrot = {{ s->size.x / -2.0f, s->size.y / -2.0f, 0.0f }};
-    model = glms_translate(model, postrot);
-
     // Scale to size
     model = glms_scale(model, make_vec3s(s->size, 1.0f));
-
     shadersetmat4s(shader, UNIFORM_MODEL, model);
 
     glBindVertexArray(s->vao);

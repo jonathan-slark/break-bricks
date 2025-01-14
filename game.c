@@ -61,7 +61,7 @@ typedef struct {
 
 // Function prototypes
 static void initsprite(Sprite* s, float width, float height, float x,
-	float y, float rot, const unsigned* verts, size_t size);
+	float y, const unsigned* verts, size_t size);
 static void initbrick(Brick* brick, char id, unsigned col, unsigned row);
 static unsigned readbricks(const char* lvl);
 static void resetlevel(void);
@@ -97,9 +97,6 @@ static Sprite bgsprite = {};
 static unsigned level = 1;
 static ma_sound** sounds;
 static bool ispaused = false;
-#ifndef NDEBUG
-static unsigned maxhitcount = 0;
-#endif
 
 // Uses types defined above
 #include "config.h"
@@ -107,13 +104,12 @@ static unsigned maxhitcount = 0;
 // Function implementations
 
 void initsprite(Sprite* s, float width, float height, float x,
-		float y, float rot, const unsigned* verts, size_t size) {
+		float y, const unsigned* verts, size_t size) {
     memcpy(s->texverts, verts, size);
     s->size.x = width;
     s->size.y = height;
     s->pos.x = x;
     s->pos.y = y;
-    s->rot = rot;
     gfx_sprite_init(s);
 }
 
@@ -131,7 +127,7 @@ void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
 
     float x = col * BRICK_WIDTH  + WALL_WIDTH;
     float y = row * BRICK_HEIGHT + WALL_WIDTH;
-    initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, 0.0f, BRICK_VERTS[i],
+    initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, BRICK_VERTS[i],
 	       sizeof(BRICK_VERTS[i]));
 }
 
@@ -185,7 +181,7 @@ void initball(void) {
     ball.isstuck = 1;
     float x = paddle.pos.x + paddle.size.x / 2.0f - BALL_WIDTH / 2.0f;
     float y = paddle.pos.y - BALL_HEIGHT;
-    initsprite(&ball.sprite, BALL_WIDTH, BALL_HEIGHT, x, y, 0.0f, BALL_VERTS,
+    initsprite(&ball.sprite, BALL_WIDTH, BALL_HEIGHT, x, y, BALL_VERTS,
 	       sizeof(BALL_VERTS));
 }
 
@@ -193,7 +189,7 @@ void initpaddle(void) {
     Mousepos mousepos = main_getmousepos();
     float x = mousepos.x;
     float y = SCR_HEIGHT - PADDLE_HEIGHT;
-    initsprite(&paddle, PADDLE_WIDTH, PADDLE_HEIGHT, x, y, 0.0f, PADDLE_VERTS,
+    initsprite(&paddle, PADDLE_WIDTH, PADDLE_HEIGHT, x, y, PADDLE_VERTS,
 	       sizeof(PADDLE_VERTS));
 }
 
@@ -206,9 +202,9 @@ void game_load(void) {
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
 
-    spritesheet = gfx_ss_load(SPRITE_SHEET, 1);
-    bg = gfx_ss_load(BACKGROUND, 1);
-    initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, 0.0f, BG_VERTS,
+    spritesheet = gfx_ss_load(SPRITE_SHEET);
+    bg = gfx_ss_load(BACKGROUND);
+    initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, BG_VERTS,
 	       sizeof(BG_VERTS));
 
     sounds = (ma_sound**) malloc((SoundWin + 1) * sizeof(ma_sound*));
@@ -244,9 +240,6 @@ void levelunload(void) {
 }
 
 void game_unload(void) {
-#ifndef NDEBUG
-    fprintf(stderr, "maxhitcount = %u\n", maxhitcount);
-#endif
     aud_sound_unload(sounds[SoundBrick]);
     aud_sound_unload(sounds[SoundDeath]);
     aud_sound_unload(sounds[SoundWin]);
@@ -344,10 +337,6 @@ void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
     // Move ball to the point of the collision
     vel = glms_vec2_scale(vel, mintime);
     s->pos = glms_vec2_add(s->pos, vel);
-#ifndef NDEBUG
-    fprintf(stderr, "%s\n", "new pos = ");
-    glms_vec2_print(s->pos, stderr);
-#endif
 
     // Finally, bounce the ball
     if (timex == timey) {
@@ -476,9 +465,6 @@ void moveball(double frametime) {
 	unsigned hitbricks[4];
 	unsigned hitcount = brickcollisioncount(s, newpos, hitbricks);
 	if (hitcount > 0) {
-#ifndef NDEBUG
-	    maxhitcount = MAX(hitcount, maxhitcount);
-#endif
 	    vec2s dist = getbrickdistance(s, hitcount, hitbricks);
 	    bounce(s, vel, dist, false);
 	} else {

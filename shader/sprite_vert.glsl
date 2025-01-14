@@ -8,8 +8,7 @@ out vec2 fragcoords;
 uniform mat4 model;
 uniform mat4 proj;
 
-void main()
-{
+void main() {
     fragcoords = texcoords;
     gl_Position = proj * model * vec4(pos, 0.0, 1.0);
 }

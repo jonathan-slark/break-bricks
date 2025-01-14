@@ -34,10 +34,10 @@ static const unsigned BRICK_TYPES     = 6;    // Number of brick types
 
 // Sounds
 static const float AUD_VOL     = 0.2; // Volume 0 - 1
-static const char  AUD_BRICK[] = "aud/brick.wav";
-static const char  AUD_DEATH[] = "aud/death.wav";
-static const char  AUD_WIN[]   = "aud/win.wav";
-static const char  AUD_MUSIC[] = "aud/music.mp3";
+static const char  AUD_BRICK[] = "sfx/brick.wav";
+static const char  AUD_DEATH[] = "sfx/death.wav";
+static const char  AUD_WIN[]   = "sfx/win.wav";
+static const char  AUD_MUSIC[] = "music/HoliznaCC0 - 2nd Dimension.mp3";
 
 // Game logic
 // How many times per frame to run collision resolution
