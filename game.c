@@ -3,14 +3,19 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
  * A typical AAAB collision detection function, for reference:
-bool isaabbcollision(Sprite* s1, Sprite* s2) {
+bool is_aabb_collision(Sprite* s1, Sprite* s2) {
     return s1->pos.x < s2->pos.x + s2->size.x &&
 	   s1->pos.x + s1->size.x > s2->pos.x &&
 	   s1->pos.y < s2->pos.y + s2->size.y &&
 	   s1->pos.y + s1->size.y > s2->pos.y;
 }
- * We don't use this as can simplify the detection as the walls are one sided,
+ * We don't use this as can simplify the detection: the walls are one sided,
  * the bricks are in a grid and the paddle doesn't move on the y-axis.
+ *
+ * TODO:
+ * Different resolutions?
+ * One sprite per texture.
+ * Use circle for ball and paddle collision detection.
  */
 
 #define GLFW_INCLUDE_NONE

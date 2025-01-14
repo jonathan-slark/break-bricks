@@ -2,7 +2,6 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  * TODO:
- * Only store QUAD verts once, not per sprite.
  * OpenGL 2.0 / GLSL 1.10
  * Scale to resolution?
  */
@@ -23,30 +22,34 @@
 #include "util.h"
 
 // Macros
-#define SCR2NORM(x, extent) (((x) + 0.5f) / (extent))
+#define NORMALISE(x, extent) (((x) + 0.5f) / (extent))
 
 // Types
 enum { Verts, TexVerts };
 
 // Function prototypes
 #ifndef NDEBUG
-static bool ismember(const unsigned array[], size_t size, unsigned value);
-static void GLAPIENTRY gldebugoutput(GLenum source, GLenum type, GLuint id,
+static bool   is_member(const unsigned array[], size_t size, unsigned value);
+static void GLAPIENTRY gl_debug_output(GLenum source, GLenum type, GLuint id,
 	GLenum severity, GLsizei length, const GLchar* message,
 	const void* userparam);
 #endif // !NDEBUG
-static GLint shadercreate(GLenum type, const GLchar* src);
-static GLuint shaderload(const char* vertex, const char* fragment);
-static void screentonormal(const unsigned* vin, unsigned count, unsigned width,
+static GLint  shader_create(GLenum type, const GLchar* src);
+static GLuint shader_load(const char* vertex, const char* fragment);
+static void   shader_unload(GLuint program);
+static void   shader_use(GLuint program);
+static void   shader_set_int(GLuint program, const char* name, GLint val);
+static void   shader_set_mat4s(GLuint program, const char* name, mat4s val);
+static GLuint buffer_load(GLenum target, GLsizei size, const void* data);
+static void   buffer_unload(GLuint vbo);
+static void   normalise(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
-static vec3s make_vec3s(vec2s xy, float z);
+static vec3s  make_vec3s(vec2s xy, float z);
 
 // Constants
 #ifndef NDEBUG
 static const unsigned LOG_IGNORE[] = {
     131185, // Buffer info
-    131204, // Texture mapping warning
-    131218  // Recompilation warning
 };
 #endif // !NDEBUG
 static const char   SHADER_VERT[]   = "shader/sprite_vert.glsl";
@@ -58,111 +61,123 @@ static const float  QUAD[] = {
     0.0f, 0.0f,
     1.0f, 0.0f,
     0.0f, 1.0f,
-    1.0f, 1.0f
+    1.0f, 1.0f,
 };
 
 // Variables
-static GLuint shader = 0;
+static GLuint program, quad_vbo;
 
 // Function declarations
 
 #ifndef NDEBUG
 
-bool ismember(const unsigned array[], size_t size, unsigned value) {
-    for (size_t i = 0; i < size; i++)
-        if (array[i] == value)
+bool is_member(const unsigned array[], size_t size, unsigned value) {
+    for (size_t i = 0; i < size; i++) {
+        if (array[i] == value) {
             return true;
+	}
+    }
 
     return false;
 }
 
-void GLAPIENTRY gldebugoutput([[maybe_unused]] GLenum source, [[maybe_unused]]
-                              GLenum type, GLuint id, [[maybe_unused]] GLenum severity, [[maybe_unused]]
-                              GLsizei length, const GLchar* message, [[maybe_unused]] const void*
-                              userparam) {
-    if (ismember(LOG_IGNORE, sizeof(LOG_IGNORE), id))
+void GLAPIENTRY gl_debug_output([[maybe_unused]] GLenum source,
+	[[maybe_unused]] GLenum type, GLuint id,
+	[[maybe_unused]] GLenum severity, [[maybe_unused]] GLsizei length,
+	const GLchar* message, [[maybe_unused]] const void* userparam) {
+    if (is_member(LOG_IGNORE, sizeof(LOG_IGNORE), id))
         return;
 
-    fprintf(stderr, "%u: %s\n", id, (const char*)message);
+    fprintf(stderr, "%u: %s\n", id, (const char*) message);
 }
 
 #endif // !NDEBUG
 
-GLint shadercreate(GLenum type, const GLchar* src) {
-    GLuint s = glCreateShader(type);
-    glShaderSource(s, 1, &src, NULL);
-    glCompileShader(s);
-
-    GLint iscompiled = false;
-    glGetShaderiv(s, GL_COMPILE_STATUS, &iscompiled);
-    if (!iscompiled) {
-	GLint len = 0;
-	glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
-	if (len) {
-	    GLchar* log = (GLchar*)malloc(len * sizeof(GLchar));
-	    glGetShaderInfoLog(s, len, &len, &log[0]);
-	    fprintf(stderr, (char*)log);
-	    free(log);
-	    glDeleteShader(s);
-	}
-	main_term(EXIT_FAILURE, "Could not texload shader.\n");
+void show_log(GLuint object, PFNGLGETSHADERIVPROC proc_param,
+	PFNGLGETSHADERINFOLOGPROC proc_log) {
+    GLint len;
+    proc_param(object, GL_INFO_LOG_LENGTH, &len);
+    if (len) {
+	GLchar* log = (GLchar*) malloc(len * sizeof(GLchar));
+	proc_log(object, len, &len, log);
+	fprintf(stderr, (char*) log);
+	free(log);
     }
-    return s;
 }
 
-GLuint shaderload(const char* vertex, const char* fragment) {
+GLint shader_create(GLenum type, const GLchar* src) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &src, NULL);
+    glCompileShader(shader);
+
+    GLint iscompiled = false;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &iscompiled);
+    if (!iscompiled) {
+	show_log(shader, glGetShaderiv, glGetShaderInfoLog);
+	glDeleteShader(shader);
+	main_term(EXIT_FAILURE, "Could not texload shader.\n");
+    }
+    return shader;
+}
+
+GLuint shader_load(const char* vertex, const char* fragment) {
     GLchar* vsrc = (GLchar*) util_load(vertex);
     GLchar* fsrc = (GLchar*) util_load(fragment);
-    GLuint v = shadercreate(GL_VERTEX_SHADER, vsrc);
-    GLuint f = shadercreate(GL_FRAGMENT_SHADER, fsrc);
+    GLuint v = shader_create(GL_VERTEX_SHADER, vsrc);
+    GLuint f = shader_create(GL_FRAGMENT_SHADER, fsrc);
     util_unload(vsrc);
     util_unload(fsrc);
 
-    GLuint shader = glCreateProgram();
-    glAttachShader(shader, v);
-    glAttachShader(shader, f);
-    glLinkProgram(shader);
+    GLuint program = glCreateProgram();
+    glAttachShader(program, v);
+    glAttachShader(program, f);
+    glLinkProgram(program);
     glDeleteShader(v);
     glDeleteShader(f);
 
     GLint islinked = false;
-    glGetProgramiv(shader, GL_LINK_STATUS, &islinked);
+    glGetProgramiv(program, GL_LINK_STATUS, &islinked);
     if (!islinked) {
-	GLint len = 0;
-	glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &len);
-	if (len) {
-	    GLchar* log = (GLchar*)malloc(len * sizeof(GLchar));
-	    glGetProgramInfoLog(shader, len, &len, &log[0]);
-	    fprintf(stderr, (char*)log);
-	    free(log);
-	}
-	glDeleteProgram(shader);
+	show_log(program, glGetProgramiv, glGetProgramInfoLog);
+	glDeleteProgram(program);
 	main_term(EXIT_FAILURE, "Could not link shaders.\n");
     }
 
-    return shader;
+    return program;
 }
 
-void shaderunload(GLuint shader) {
-    glDeleteProgram(shader);
+void shader_unload(GLuint program) {
+    glDeleteProgram(program);
 }
 
-void shaderuse(GLuint shader) {
-    glUseProgram(shader);
+void shader_use(GLuint program) {
+    glUseProgram(program);
 }
 
-void shadersetint(GLuint shader, const char* name, GLint val) {
-    GLint loc = glGetUniformLocation(shader, name);
+void shader_set_int(GLuint program, const char* name, GLint val) {
+    GLint loc = glGetUniformLocation(program, name);
     if (loc == -1)
 	fprintf(stderr, "Could not get uniform location.\n");
     glUniform1i(loc, val);
 }
 
-void shadersetmat4s(GLuint shader, const char* name, mat4s val) {
-    GLint loc = glGetUniformLocation(shader, name);
+void shader_set_mat4s(GLuint program, const char* name, mat4s val) {
+    GLint loc = glGetUniformLocation(program, name);
     if (loc == -1)
 	fprintf(stderr, "Could not get uniform location.\n");
     glUniformMatrix4fv(loc, 1, GL_FALSE, val.raw[0]);
+}
+
+GLuint buffer_load(GLenum target, GLsizei size, const void* data) {
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(target, vbo);
+    glBufferData(target, size, data, GL_STATIC_DRAW);
+    return vbo;
+}
+
+void buffer_unload(GLuint vbo) {
+    glDeleteBuffers(1, &vbo);
 }
 
 void gfx_init(void) {
@@ -174,7 +189,7 @@ void gfx_init(void) {
         glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
         if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-            glDebugMessageCallbackARB(gldebugoutput, NULL);
+            glDebugMessageCallbackARB(gl_debug_output, NULL);
             glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE,
 		    0, NULL, GL_TRUE);
         }
@@ -186,16 +201,16 @@ void gfx_init(void) {
 
     // Using origin top left to match coords typically used with images
     mat4s proj = glms_ortho(0.0f, SCR_WIDTH, SCR_HEIGHT, 0.0f, -1.0f, 1.0f);
-    shader = shaderload(SHADER_VERT, SHADER_FRAG);
-    shaderuse(shader);
-    shadersetmat4s(shader, UNIFORM_PROJ, proj);
+    program = shader_load(SHADER_VERT, SHADER_FRAG);
+    shader_use(program);
+    shader_set_mat4s(program, UNIFORM_PROJ, proj);
 
-    glActiveTexture(GL_TEXTURE0);
-    shadersetint(shader, UNIFORM_TEX, 0);
+    quad_vbo = buffer_load(GL_ARRAY_BUFFER, sizeof(QUAD), QUAD);
 }
 
 void gfx_term(void) {
-    shaderunload(shader);
+    shader_unload(program);
+    buffer_unload(quad_vbo);
 }
 
 void gfx_resize(int width, int height) {
@@ -217,7 +232,6 @@ GLuint gfx_ss_load(const char* name) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
 
     stbi_image_free(data);
 
@@ -229,45 +243,43 @@ void gfx_ss_unload(GLuint id) {
 }
 
 void gfx_ss_use(GLuint id) {
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
+    shader_set_int(program, UNIFORM_TEX, 0);
 }
 
 // https://stackoverflow.com/q/40574677
-void screentonormal(const unsigned* vin, unsigned count, unsigned width,
+void normalise(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout) {
     for (unsigned i = 0; i < count; i += INDCOUNT) {
-	vout[i]     = SCR2NORM(vin[i], width);
-	vout[i + 1] = SCR2NORM(vin[i + 1], height);
+	vout[i]     = NORMALISE(vin[i], width);
+	vout[i + 1] = NORMALISE(vin[i + 1], height);
     }
 }
 
 void gfx_sprite_init(Sprite* s) {
     float texverts[ARRAYCOUNT];
-    screentonormal(s->texverts, ARRAYCOUNT, SCR_WIDTH, SCR_HEIGHT, texverts);
+    normalise(s->texverts, ARRAYCOUNT, SCR_WIDTH, SCR_HEIGHT, texverts);
 
     glGenVertexArrays(1, &s->vao);
-    glBindVertexArray(s->vao);
-    glGenBuffers(VBOCOUNT, s->vbo);
+    s->vbo = buffer_load(GL_ARRAY_BUFFER, sizeof(texverts), texverts);
 
-    glBindBuffer(GL_ARRAY_BUFFER, s->vbo[Verts]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD), QUAD, GL_STATIC_DRAW);
+    glBindVertexArray(s->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
     glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE,
 	    INDCOUNT * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, s->vbo[TexVerts]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(texverts), texverts, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, s->vbo);
     glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE,
 	    INDCOUNT * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 }
 
 void gfx_sprite_term(const Sprite* s) {
     glDeleteVertexArrays(1, &s->vao);
-    glDeleteBuffers(VBOCOUNT, s->vbo);
+    glDeleteBuffers(1, &s->vbo);
 }
 
 vec3s make_vec3s(vec2s xy, float z) {
@@ -279,9 +291,8 @@ void gfx_sprite_draw(const Sprite* s) {
     mat4s model = glms_translate_make(make_vec3s(s->pos, 0.0f));
     // Scale to size
     model = glms_scale(model, make_vec3s(s->size, 1.0f));
-    shadersetmat4s(shader, UNIFORM_MODEL, model);
+    shader_set_mat4s(program, UNIFORM_MODEL, model);
 
     glBindVertexArray(s->vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, VERTCOUNT);
-    glBindVertexArray(0);
 }

@@ -6,12 +6,11 @@
 #define INDCOUNT   2  /* Number of indices per vertex */
 #define VERTCOUNT  4  /* Number of vertices per sprite */
 #define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
-#define VBOCOUNT   2  /* One for Verts, one for TexVerts */
 
 typedef struct {
     /* texverts are in screen coords */
     unsigned texverts[ARRAYCOUNT];
-    GLuint vao, vbo[VBOCOUNT];
+    GLuint vao, vbo;
     vec2s size, pos;
 } Sprite;
 

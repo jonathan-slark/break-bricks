@@ -16,10 +16,10 @@ char* util_load(const char* filename) {
     long l = ftell(fp);
     if (l < 0)
 	main_term(EXIT_FAILURE, "Error on getting size of file %s.\n", filename);
-    size_t size = (size_t)l;
+    size_t size = (size_t) l;
     rewind(fp);
 
-    char* src = (char*)malloc((size + 1) * sizeof(char));
+    char* src = (char*) malloc((size + 1) * sizeof(char));
     if (fread(src, sizeof(char), size, fp) < size)
 	main_term(EXIT_FAILURE, "Error reading file %s.\n", filename);
     src[size] = '\0';
