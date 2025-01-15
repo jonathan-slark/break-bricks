@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 #pragma shader_stage(vertex)
 
 layout (location = 0) in vec2 pos;

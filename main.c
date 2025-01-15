@@ -34,8 +34,8 @@ const unsigned        SCR_HEIGHT     = 1080;
 static const unsigned SCR_RED_BITS   = 8;
 static const unsigned SCR_GREEN_BITS = 8;
 static const unsigned SCR_BLUE_BITS  = 8;
-static const unsigned OPENGL_MAJOR   = 3;
-static const unsigned OPENGL_MINOR   = 3;
+static const unsigned OPENGL_MAJOR   = 4;
+static const unsigned OPENGL_MINOR   = 6;
 
 // Variables
 static GLFWwindow* window = NULL;
@@ -120,9 +120,6 @@ void createwindow(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-#endif // __APPLE__
 #ifndef NDEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif // !NDEBUG

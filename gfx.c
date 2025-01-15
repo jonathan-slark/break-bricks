@@ -2,7 +2,6 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  * TODO:
- * OpenGL 2.0 / GLSL 1.10
  * Scale to resolution?
  */
 
@@ -23,9 +22,6 @@
 
 // Macros
 #define NORMALISE(x, extent) (((x) + 0.5f) / (extent))
-
-// Types
-enum { Verts, TexVerts };
 
 // Function prototypes
 #ifndef NDEBUG
@@ -184,15 +180,14 @@ void gfx_init(void) {
     gfx_resize(SCR_WIDTH, SCR_HEIGHT);
 
 #ifndef NDEBUG
-    if (GLAD_GL_ARB_debug_output) {
-        GLint flags = 0;
-        glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-        if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-            glDebugMessageCallbackARB(gl_debug_output, NULL);
-            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE,
-		    0, NULL, GL_TRUE);
-        }
+    int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(gl_debug_output, NULL);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
+		GL_TRUE);
     }
 #endif // !NDEBUG
 
