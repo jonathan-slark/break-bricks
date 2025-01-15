@@ -20,9 +20,10 @@ void   gfx_resize(int width, int height);
 
 /* Sprite sheet */
 GLuint gfx_ss_load(const char* name);
-void   gfx_ss_unload(GLuint id);
-void   gfx_ss_use(GLuint id);
+void   gfx_ss_unload(GLuint object);
+void   gfx_ss_use(GLuint object, int id);
 
 void   gfx_sprite_init(Sprite* s);
 void   gfx_sprite_term(const Sprite* s);
+void   gfx_sprite_begin(void);
 void   gfx_sprite_draw(const Sprite* s);

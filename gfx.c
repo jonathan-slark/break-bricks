@@ -218,9 +218,9 @@ GLuint gfx_ss_load(const char* name) {
     if (!data)
 	main_term(EXIT_FAILURE, "Could not texload image %s\n.", name);
 
-    GLuint id = 0;
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
+    GLuint object = 0;
+    glGenTextures(1, &object);
+    glBindTexture(GL_TEXTURE_2D, object);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
 		 GL_UNSIGNED_BYTE, (const void*)data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -230,17 +230,17 @@ GLuint gfx_ss_load(const char* name) {
 
     stbi_image_free(data);
 
-    return id;
+    return object;
 }
 
-void gfx_ss_unload(GLuint id) {
-    glDeleteTextures(1, &id);
+void gfx_ss_unload(GLuint object) {
+    glDeleteTextures(1, &object);
 }
 
-void gfx_ss_use(GLuint id) {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, id);
-    shader_set_int(program, UNIFORM_TEX, 0);
+void gfx_ss_use(GLuint object, int id) {
+    glActiveTexture(GL_TEXTURE0 + id);
+    glBindTexture(GL_TEXTURE_2D, object);
+    shader_set_int(program, UNIFORM_TEX, id);
 }
 
 // https://stackoverflow.com/q/40574677
@@ -275,6 +275,10 @@ void gfx_sprite_init(Sprite* s) {
 void gfx_sprite_term(const Sprite* s) {
     glDeleteVertexArrays(1, &s->vao);
     glDeleteBuffers(1, &s->vbo);
+}
+
+void gfx_sprite_begin(void) {
+    shader_use(program);
 }
 
 vec3s make_vec3s(vec2s xy, float z) {

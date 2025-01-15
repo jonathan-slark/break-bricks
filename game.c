@@ -518,10 +518,12 @@ void leveldraw(void) {
 }
 
 void game_render(void) {
-    gfx_ss_use(bg);
+    gfx_sprite_begin();
+
+    gfx_ss_use(bg, 0);
     gfx_sprite_draw(&bgsprite);
 
-    gfx_ss_use(spritesheet);
+    gfx_ss_use(spritesheet, 1);
     leveldraw();
     gfx_sprite_draw(&ball.sprite);
     gfx_sprite_draw(&paddle);
