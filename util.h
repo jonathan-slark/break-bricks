@@ -8,5 +8,5 @@
 #define MAX(x, y)          ((x) > (y) ? (x) : (y))
 #define MIN(x, y)          ((x) < (y) ? (x) : (y))
 
-char* util_load(const char* filename);
-void  util_unload(char* src);
+char* util_load(const char* file);
+void  util_unload(char* data);

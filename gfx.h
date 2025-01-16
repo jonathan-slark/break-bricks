@@ -3,27 +3,40 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
-#define INDCOUNT   2  /* Number of indices per vertex */
-#define VERTCOUNT  4  /* Number of vertices per sprite */
+#define INDCOUNT   2  // Number of indices per vertex
+#define VERTCOUNT  4  // Number of vertices per sprite
 #define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
 
+// Data pushed to shader, per vertex
 typedef struct {
-    /* texverts are in screen coords */
-    unsigned texverts[ARRAYCOUNT];
-    GLuint vao, vbo;
-    vec2s size, pos;
-} Sprite;
+    GLfloat pos[INDCOUNT];
+    GLfloat texcoord[INDCOUNT];
+} Vert;
 
-void   gfx_init(void);
-void   gfx_term(void);
-void   gfx_resize(int width, int height);
+typedef struct {
+    GLuint id;
+    int width, height;
+} Tex;
 
-/* Sprite sheet */
-GLuint gfx_ss_load(const char* name);
-void   gfx_ss_unload(GLuint object);
-void   gfx_ss_use(GLuint object, int id);
+typedef struct {
+    // Vertex buffer data
+    GLuint   vao, vbo;
+    unsigned count;
+    unsigned cap;
+    Vert*    verts;
 
-void   gfx_sprite_init(Sprite* s);
-void   gfx_sprite_term(const Sprite* s);
-void   gfx_sprite_begin(void);
-void   gfx_sprite_draw(const Sprite* s);
+    // Uniforms
+    GLuint tex;
+} Renderer;
+
+void     gfx_init(void);
+void     gfx_term(void);
+void     gfx_resize(int width, int height);
+
+Tex      gfx_tex_load(const char* file);
+void     gfx_tex_unload(Tex tex);
+
+Renderer gfx_render_create(size_t cap, Tex tex);
+void     gfx_render_delete(Renderer* r);
+void     gfx_render_flush(Renderer* r);
+void     gfx_render_push(Renderer* r, Sprite* s);

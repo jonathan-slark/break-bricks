@@ -11,6 +11,12 @@ detection used in the guide was over the top, for this type of game. So, most
 of the game code is my own, with collision resolution based on an excellent
 article I found (see below).
 
+Some inspiration has been taken from:
+<https://duriansoftware.com/joe/an-intro-to-modern-opengl.-table-of-contents>
+
+Also:
+<https://jasonliang.js.org/batch-renderer.html>
+
 The game only runs at 1080p but uses the refresh rate of the desktop on the
 main monitor. If the main monitor is already running at 1080p the game runs in
 a borderless window. The game logic isn't tied to frame rate so it will play

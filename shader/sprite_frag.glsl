@@ -3,7 +3,6 @@
 
 in vec2 fragcoords;
 out vec4 outcol;
-
 uniform sampler2D tex;
 
 void main()

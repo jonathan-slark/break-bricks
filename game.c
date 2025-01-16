@@ -13,9 +13,9 @@ bool is_aabb_collision(Sprite* s1, Sprite* s2) {
  * the bricks are in a grid and the paddle doesn't move on the y-axis.
  *
  * TODO:
- * Different resolutions?
- * One sprite per texture.
+ * Different resolutions.
  * Use circle for ball and paddle collision detection.
+ * Spritesheet struct.
  */
 
 #define GLFW_INCLUDE_NONE
@@ -91,14 +91,18 @@ static vec2s getbrickdistance(Sprite* s, unsigned hitcount,
 static bool isoob(Sprite* s, vec2s newpos);
 static void moveball(double frametime);
 static bool iswincondition(void);
-static void leveldraw(void);
+
+// Constants
+static const size_t sprite_cap = 25 * VERTCOUNT;
+static const size_t bg_cap     = 1  * VERTCOUNT;
 
 // Variables
-static Brick* bricks = NULL;
-static Ball ball = {};
-static Sprite paddle = {};
-static GLuint spritesheet = 0, bg = 0;
-static Sprite bgsprite = {};
+static Brick* bricks;
+static Ball ball;
+static Sprite paddle;
+static Tex tex_sprite, tex_bg;
+static Renderer r_sprite, r_bg;
+static Sprite bg;
 static unsigned level = 1;
 static ma_sound** sounds;
 static bool ispaused = false;
@@ -108,14 +112,13 @@ static bool ispaused = false;
 
 // Function implementations
 
-void initsprite(Sprite* s, float width, float height, float x,
-		float y, const unsigned* verts, size_t size) {
+void initsprite(Sprite* s, float width, float height, float x, float y,
+	const unsigned* verts, size_t size) {
+    s->pos.x  = x;
+    s->pos.y  = y;
+    s->size.u = width;
+    s->size.v = height;
     memcpy(s->texverts, verts, size);
-    s->size.x = width;
-    s->size.y = height;
-    s->pos.x = x;
-    s->pos.y = y;
-    gfx_sprite_init(s);
 }
 
 void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
@@ -207,9 +210,9 @@ void game_load(void) {
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
 
-    spritesheet = gfx_ss_load(SPRITE_SHEET);
-    bg = gfx_ss_load(BACKGROUND);
-    initsprite(&bgsprite, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, BG_VERTS,
+    tex_sprite = gfx_tex_load(SPRITE_SHEET);
+    tex_bg     = gfx_tex_load(BACKGROUND);
+    initsprite(&bg, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, BG_VERTS,
 	       sizeof(BG_VERTS));
 
     sounds = (ma_sound**) malloc((SoundWin + 1) * sizeof(ma_sound*));
@@ -222,11 +225,12 @@ void game_load(void) {
     levelload(level);
     initpaddle();
     initball();
+
+    r_sprite = gfx_render_create(sprite_cap, tex_sprite);
+    r_bg     = gfx_render_create(bg_cap,     tex_bg);
 }
 
 void resetlevel(void) {
-    gfx_sprite_term(&ball.sprite);
-    gfx_sprite_term(&paddle);
     levelunload();
 
     levelload(level);
@@ -235,25 +239,19 @@ void resetlevel(void) {
 }
 
 void levelunload(void) {
-    for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
-	if (bricks[i].isactive) {
-	    gfx_sprite_term(&bricks[i].sprite);
-	}
-    }
-
     free(bricks);
 }
 
 void game_unload(void) {
+    gfx_render_delete(&r_bg);
+    gfx_render_delete(&r_sprite);
     aud_sound_unload(sounds[SoundBrick]);
     aud_sound_unload(sounds[SoundDeath]);
     aud_sound_unload(sounds[SoundWin]);
     free(sounds);
-    gfx_sprite_term(&ball.sprite);
-    gfx_sprite_term(&paddle);
     levelunload();
-    gfx_ss_unload(bg);
-    gfx_ss_unload(spritesheet);
+    gfx_tex_unload(tex_bg);
+    gfx_tex_unload(tex_sprite);
     gfx_term();
     aud_term();
 }
@@ -511,20 +509,18 @@ void game_update(double frametime) {
 
 void leveldraw(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
-	if (bricks[i].isactive && !bricks[i].isdestroyed) {
-	    gfx_sprite_draw(&bricks[i].sprite);
-	}
+        if (bricks[i].isactive && !bricks[i].isdestroyed) {
+	    gfx_render_push(&r_sprite, &bricks[i].sprite);
+        }
     }
 }
 
 void game_render(void) {
-    gfx_sprite_begin();
+    gfx_render_push(&r_bg, &bg);
+    gfx_render_flush(&r_bg);
 
-    gfx_ss_use(bg, 0);
-    gfx_sprite_draw(&bgsprite);
-
-    gfx_ss_use(spritesheet, 1);
     leveldraw();
-    gfx_sprite_draw(&ball.sprite);
-    gfx_sprite_draw(&paddle);
+    gfx_render_push(&r_sprite, &ball.sprite);
+    gfx_render_push(&r_sprite, &paddle);
+    gfx_render_flush(&r_sprite);
 }

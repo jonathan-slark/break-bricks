@@ -4,8 +4,7 @@
  */
 
 typedef struct {
-    double x;
-    double y;
+    double x, y;
 } Mousepos;
 
 extern const unsigned SCR_WIDTH;

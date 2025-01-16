@@ -3,13 +3,17 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+typedef struct {
+    vec2s pos, size;
+    unsigned texverts[8];
+} Sprite;
+
 void game_load(void);
 void game_unload(void);
 void game_keydown(int key);
 void game_keyup(int key);
 void game_buttondown(int button);
 void game_buttonup(int button);
-void game_pause(double frametime);
 void game_input(double frametime);
 void game_update(double frametime);
 void game_render(void);
