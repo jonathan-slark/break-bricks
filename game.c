@@ -93,15 +93,15 @@ static void moveball(double frametime);
 static bool iswincondition(void);
 
 // Constants
-static const size_t sprite_cap = 25 * VERTCOUNT;
-static const size_t bg_cap     = 1  * VERTCOUNT;
+static const size_t sprite_cap = 25 * 6;
+static const size_t bg_cap     = 1  * 6;
 
 // Variables
 static Brick* bricks;
 static Ball ball;
 static Sprite paddle;
 static Tex tex_sprite, tex_bg;
-static Renderer r_sprite, r_bg;
+static Renderer render_sprite, render_bg;
 static Sprite bg;
 static unsigned level = 1;
 static ma_sound** sounds;
@@ -226,8 +226,8 @@ void game_load(void) {
     initpaddle();
     initball();
 
-    r_sprite = gfx_render_create(sprite_cap, tex_sprite);
-    r_bg     = gfx_render_create(bg_cap,     tex_bg);
+    render_sprite = gfx_render_create(sprite_cap, tex_sprite);
+    render_bg     = gfx_render_create(bg_cap,     tex_bg);
 }
 
 void resetlevel(void) {
@@ -243,8 +243,8 @@ void levelunload(void) {
 }
 
 void game_unload(void) {
-    gfx_render_delete(&r_bg);
-    gfx_render_delete(&r_sprite);
+    gfx_render_delete(&render_bg);
+    gfx_render_delete(&render_sprite);
     aud_sound_unload(sounds[SoundBrick]);
     aud_sound_unload(sounds[SoundDeath]);
     aud_sound_unload(sounds[SoundWin]);
@@ -510,17 +510,17 @@ void game_update(double frametime) {
 void leveldraw(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
         if (bricks[i].isactive && !bricks[i].isdestroyed) {
-	    gfx_render_push(&r_sprite, &bricks[i].sprite);
+	    gfx_render_push(&render_sprite, &bricks[i].sprite);
         }
     }
 }
 
 void game_render(void) {
-    gfx_render_push(&r_bg, &bg);
-    gfx_render_flush(&r_bg);
+    gfx_render_push(&render_bg, &bg);
+    gfx_render_flush(&render_bg);
 
     leveldraw();
-    gfx_render_push(&r_sprite, &ball.sprite);
-    gfx_render_push(&r_sprite, &paddle);
-    gfx_render_flush(&r_sprite);
+    gfx_render_push(&render_sprite, &ball.sprite);
+    gfx_render_push(&render_sprite, &paddle);
+    gfx_render_flush(&render_sprite);
 }

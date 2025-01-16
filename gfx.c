@@ -193,18 +193,20 @@ void gfx_resize(int width, int height) {
 Tex gfx_tex_load(const char* name) {
     Tex tex;
     int chan;
-    unsigned char* data = stbi_load(name, &tex.width, &tex.height, &chan, 0);
+    void* data = stbi_load(name, &tex.width, &tex.height, &chan, 0);
     if (!data)
 	main_term(EXIT_FAILURE, "Could not texload image %s\n.", name);
 
     glGenTextures(1, &tex.id);
     glBindTexture(GL_TEXTURE_2D, tex.id);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex.width, tex.height, 0,
-	    GL_RGBA, GL_UNSIGNED_BYTE, (const void*) data);
+	    GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     stbi_image_free(data);
 
@@ -216,7 +218,7 @@ void gfx_tex_unload(Tex tex) {
 }
 
 Renderer gfx_render_create(size_t cap, Tex tex) {
-    assert(!(cap % VERTCOUNT));
+    assert(!(cap % 6));
 
     Renderer r;
 
@@ -255,7 +257,7 @@ void gfx_render_flush(Renderer* r) {
     }
 
     shader_use(program);
-    shader_set_int(program,   UNIFORM_TEX,  r->tex);
+    shader_set_int(program,   UNIFORM_TEX,  0);
     shader_set_mat4s(program, UNIFORM_PROJ, proj);
 
     glActiveTexture(GL_TEXTURE0);
@@ -265,7 +267,7 @@ void gfx_render_flush(Renderer* r) {
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vert) * r->count, r->verts);
 
     glBindVertexArray(r->vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, r->count);
+    glDrawArrays(GL_TRIANGLES, 0, r->count);
 
     r->count = 0;
 }
@@ -287,20 +289,21 @@ void gfx_render_push(Renderer* r, Sprite* s) {
     float texverts[ARRAYCOUNT];
     normalise(s->texverts, ARRAYCOUNT, SCR_WIDTH, SCR_HEIGHT, texverts);
 
-    r->verts[r->count++] = (Vert) {
-	.pos      = { s->pos.x,             s->pos.y },
-	.texcoord = { texverts[0],          texverts[1] }
-    };
-    r->verts[r->count++] = (Vert) {
-	.pos      = { s->pos.x + s->size.u, s->pos.y },
-	.texcoord = { texverts[2],          texverts[3] }
-    };
-    r->verts[r->count++] = (Vert) {
-	.pos      = { s->pos.x,             s->pos.y + s->size.v },
-	.texcoord = { texverts[4],          texverts[5] }
-    };
-    r->verts[r->count++] = (Vert) {
-	.pos      = { s->pos.x + s->size.u, s->pos.y + s->size.v},
-	.texcoord = { texverts[6],          texverts[7] }
-    };
+    float x1 = s->pos.x;
+    float y1 = s->pos.y;
+    float x2 = s->pos.x + s->size.u;
+    float y2 = s->pos.y + s->size.v;
+
+    float u1 = texverts[0];
+    float v1 = texverts[1];
+    float u2 = texverts[6];
+    float v2 = texverts[7];
+
+    r->verts[r->count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
+    r->verts[r->count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
+    r->verts[r->count++] = (Vert) { .pos = { x1, y2 }, .texcoord = { u1, v2 } };
+
+    r->verts[r->count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
+    r->verts[r->count++] = (Vert) { .pos = { x2, y1 }, .texcoord = { u2, v1 } };
+    r->verts[r->count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
 }
