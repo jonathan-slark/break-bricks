@@ -4,6 +4,7 @@
  */
 
 #define MINIAUDIO_IMPLEMENTATION
+#include <cglm/struct.h>
 #include <miniaudio.h>
 
 #include "main.h"

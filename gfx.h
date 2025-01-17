@@ -19,7 +19,7 @@ typedef struct {
 typedef struct {
     GLuint   name;
     unsigned unit;
-    int      width, height;
+    vec2s    size;
 } Tex;
 
 typedef struct {
@@ -47,7 +47,7 @@ void     gfx_render_begin(Renderer* r);
 void     gfx_render_quad(Renderer* r, const Quad* q);
 void     gfx_render_end(Renderer* r);
 
-Quad     gfx_quad_create(unsigned x, unsigned y, unsigned w, unsigned h,
-         unsigned tx, unsigned ty, Tex t);
-void     gfx_quad_move(Quad *q, unsigned x, unsigned y, unsigned w,
-         unsigned h);
+Quad     gfx_quad_create(vec2s pos, vec2s size, vec2s tex_offset, Tex t);
+vec2s    gfx_quad_pos(Quad* q);
+vec2s    gfx_quad_size(Quad* q);
+void     gfx_quad_move(Quad* q, vec2s v);

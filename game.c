@@ -2,21 +2,11 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
- * A typical AAAB collision detection function, for reference:
-bool is_aabb_collision(Sprite* s1, Sprite* s2) {
-    return s1->pos.x < s2->pos.x + s2->size.x &&
-	   s1->pos.x + s1->size.x > s2->pos.x &&
-	   s1->pos.y < s2->pos.y + s2->size.y &&
-	   s1->pos.y + s1->size.y > s2->pos.y;
-}
- * We don't use this as can simplify the detection: the walls are one sided,
- * the bricks are in a grid and the paddle doesn't move on the y-axis.
- *
  * TODO:
  * Different resolutions.
  * Use circle for ball and paddle collision detection.
- * Spritesheet struct.
- * Sprite file?
+ * Quadsheet struct.
+ * Quad file?
  */
 
 #define GLFW_INCLUDE_NONE
@@ -43,11 +33,6 @@ bool is_aabb_collision(Sprite* s1, Sprite* s2) {
 enum { SoundBrick, SoundDeath, SoundMusic, SoundWin };
 
 typedef struct {
-    vec2s pos, size;
-    Quad quad;
-} Sprite;
-
-typedef struct {
     int key;
     void (*func)(void);
 } Key;
@@ -60,20 +45,17 @@ typedef struct {
 typedef struct {
     bool isstuck;
     vec2s vel;
-    Sprite sprite;
+    Quad quad;
 } Ball;
 
 typedef struct {
     bool isactive;
     bool issolid;
     bool isdestroyed;
-    Sprite sprite;
+    Quad quad;
 } Brick;
 
 // Function prototypes
-static void initsprite(Sprite* s, unsigned x, unsigned y, unsigned w, unsigned h,
-	unsigned tx, unsigned ty, Tex t);
-static void movesprite(Sprite* s);
 static void initbrick(Brick* brick, char id, unsigned col, unsigned row);
 static unsigned readbricks(const char* lvl);
 static void resetlevel(void);
@@ -85,31 +67,31 @@ static unsigned random(unsigned min, unsigned max);
 static void releaseball(void);
 static void quit(void);
 static void pause(void);
-static bool iswallcollision(Sprite* s, vec2s newpos);
-static vec2s getwalldistance(Sprite* s);
-static void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle);
-static bool ispaddlecollision(Sprite* s, vec2s newpos);
-static vec2s getaabbdistance(Sprite* s1, Sprite* s2);
+static bool iswallcollision(Quad* q, vec2s newpos);
+static vec2s getwalldistance(Quad* q);
+static void bounce(Quad* q, vec2s vel, vec2s dist, bool ispaddle);
+static bool ispaddlecollision(Quad* q, vec2s newpos);
+static vec2s getaabbdistance(Quad* q1, Quad* q2);
 static unsigned getbrickindex(float x, float y);
-static unsigned brickcollisioncount(Sprite* s, vec2s newpos,
+static unsigned brickcollisioncount(Quad* q, vec2s newpos,
 	unsigned hitbricks[4]);
-static vec2s getbrickdistance(Sprite* s, unsigned hitcount,
+static vec2s getbrickdistance(Quad* q, unsigned hitcount,
 	unsigned hitbricks[4]);
-static bool isoob(Sprite* s, vec2s newpos);
+static bool isoob(Quad* q, vec2s newpos);
 static void moveball(double frametime);
 static bool iswincondition(void);
 
 // Constants
-static const size_t sprite_count = 200;
+static const size_t quad_count = 200;
 static const size_t bg_count     = 1;
 
 // Variables
 static Brick* bricks;
 static Ball ball;
-static Sprite paddle;
-static Tex tex_sprite, tex_bg;
-static Renderer render_sprite, render_bg;
-static Sprite bg;
+static Quad paddle;
+static Tex tex_quad, tex_bg;
+static Renderer render_quad, render_bg;
+static Quad bg;
 static unsigned level = 1;
 static ma_sound** sounds;
 static bool ispaused = false;
@@ -118,17 +100,6 @@ static bool ispaused = false;
 #include "config.h"
 
 // Function implementations
-
-void initsprite(Sprite* s, unsigned x, unsigned y, unsigned w, unsigned h,
-	unsigned tx, unsigned ty, Tex t) {
-    s->pos  = (vec2s) {{ x, y }};
-    s->size = (vec2s) {{ w, h }};
-    s->quad = gfx_quad_create(x, y, w, h, tx, ty, t);
-}
-
-void movesprite(Sprite* s) {
-    gfx_quad_move(&s->quad, s->pos.x, s->pos.y, s->size.u, s->size.v);
-}
 
 void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
     bool solid = (!isdigit(id));
@@ -142,10 +113,11 @@ void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
     brick->issolid = solid;
     brick->isdestroyed = 0;
 
-    float x = col * BRICK_WIDTH  + WALL_WIDTH;
-    float y = row * BRICK_HEIGHT + WALL_WIDTH;
-    initsprite(&brick->sprite, x, y, BRICK_WIDTH, BRICK_HEIGHT,
-	    BRICK_OFFSETS[i][0], BRICK_OFFSETS[i][1], tex_sprite);
+    vec2s pos = {{
+	WALL_WIDTH + col * BRICK_SIZE.s,
+	WALL_WIDTH + row * BRICK_SIZE.t
+    }};
+    brick->quad = gfx_quad_create(pos, BRICK_SIZE, BRICK_OFFSETS[i], tex_quad);
 }
 
 unsigned readbricks(const char* lvl) {
@@ -196,18 +168,17 @@ void levelload(unsigned num) {
 
 void initball(void) {
     ball.isstuck = 1;
-    float x = paddle.pos.x + paddle.size.x / 2.0f - BALL_WIDTH / 2.0f;
-    float y = paddle.pos.y - BALL_HEIGHT;
-    initsprite(&ball.sprite, x, y, BALL_WIDTH, BALL_HEIGHT, BALL_OFFSETS[0],
-	    BALL_OFFSETS[1], tex_sprite);
+    vec2s pos = {{
+	gfx_quad_pos(&paddle).x + gfx_quad_size(&paddle).x / 2.0f - BALL_SIZE.s / 2.0f,
+	gfx_quad_pos(&paddle).y - BALL_SIZE.t
+    }};
+    ball.quad = gfx_quad_create(pos, BALL_SIZE, BALL_OFFSET, tex_quad);
 }
 
 void initpaddle(void) {
-    Mousepos mousepos = main_getmousepos();
-    float x = mousepos.x;
-    float y = SCR_HEIGHT - PADDLE_HEIGHT;
-    initsprite(&paddle, x, y, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_OFFSETS[0],
-	    PADDLE_OFFSETS[1], tex_sprite);
+    vec2s mousepos = main_getmousepos();
+    vec2s pos = {{ mousepos.x, SCR_HEIGHT - PADDLE_SIZE.t }};
+    paddle = gfx_quad_create(pos, PADDLE_SIZE, PADDLE_OFFSET, tex_quad);
 }
 
 void game_load(void) {
@@ -219,10 +190,11 @@ void game_load(void) {
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
 
-    tex_sprite = gfx_tex_load(SPRITE_SHEET);
-    tex_bg     = gfx_tex_load(BACKGROUND);
-    initsprite(&bg, 0, 1, SCR_WIDTH, SCR_HEIGHT, BG_OFFSETS[0], BG_OFFSETS[1],
-	    tex_bg);
+    tex_quad = gfx_tex_load(SPRITE_SHEET);
+    tex_bg   = gfx_tex_load(BACKGROUND);
+
+    vec2s pos = {{ 0, 0 }};
+    bg = gfx_quad_create(pos, tex_bg.size, pos, tex_bg);
 
     sounds = (ma_sound**) malloc((SoundWin + 1) * sizeof(ma_sound*));
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK, false);
@@ -235,8 +207,8 @@ void game_load(void) {
     initpaddle();
     initball();
 
-    render_sprite = gfx_render_create(sprite_count, tex_sprite);
-    render_bg     = gfx_render_create(bg_count,     tex_bg);
+    render_quad = gfx_render_create(quad_count, tex_quad);
+    render_bg   = gfx_render_create(bg_count,   tex_bg);
 }
 
 void resetlevel(void) {
@@ -253,14 +225,14 @@ void levelunload(void) {
 
 void game_unload(void) {
     gfx_render_delete(&render_bg);
-    gfx_render_delete(&render_sprite);
+    gfx_render_delete(&render_quad);
     aud_sound_unload(sounds[SoundBrick]);
     aud_sound_unload(sounds[SoundDeath]);
     aud_sound_unload(sounds[SoundWin]);
     free(sounds);
     levelunload();
     gfx_tex_unload(tex_bg);
-    gfx_tex_unload(tex_sprite);
+    gfx_tex_unload(tex_quad);
     gfx_term();
     aud_term();
 }
@@ -313,16 +285,17 @@ void pause(void) {
 
 void game_input([[maybe_unused]] double frametime) {
     if (!ispaused) {
-	Mousepos mousepos = main_getmousepos();
+	vec2s mousepos = main_getmousepos();
 	mousepos.x = CLAMP(mousepos.x, WALL_WIDTH,
-		SCR_WIDTH - paddle.size.x - WALL_WIDTH);
-	paddle.pos.x = mousepos.x;
-	movesprite(&paddle);
+		SCR_WIDTH - gfx_quad_size(&paddle).x - WALL_WIDTH);
+	vec2s newpos = (vec2s) {{ mousepos.x, 0 }};
+	gfx_quad_move(&paddle, newpos);
 
 	if (ball.isstuck) {
-	    ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
-		ball.sprite.size.x / 2.0f;
-	    movesprite(&ball.sprite);
+	    vec2s newpos = (vec2s) {{ gfx_quad_pos(&paddle).x +
+		gfx_quad_size(&paddle).x / 2.0f -
+		    gfx_quad_size(&ball.quad).x / 2.0f, 0 }};
+	    gfx_quad_move(&ball.quad, newpos);
 	}
 
 	// Don't allow cursor to move away from paddle
@@ -330,20 +303,20 @@ void game_input([[maybe_unused]] double frametime) {
     }
 }
 
-bool iswallcollision(Sprite* s, vec2s newpos) {
+bool iswallcollision(Quad* q, vec2s newpos) {
     return newpos.x < WALL_WIDTH ||
-	   newpos.x > SCR_WIDTH - WALL_WIDTH - s->size.x ||
+	   newpos.x > SCR_WIDTH - WALL_WIDTH - gfx_quad_pos(q).x ||
 	   newpos.y < WALL_WIDTH;
 }
 
-vec2s getwalldistance(Sprite* s) {
-    float left = s->pos.x - WALL_WIDTH;
-    float right = SCR_WIDTH - WALL_WIDTH - s->size.x - s->pos.x;
-    float top = s->pos.y - WALL_WIDTH;
+vec2s getwalldistance(Quad* q) {
+    float left  = gfx_quad_pos(q).x - WALL_WIDTH;
+    float right = SCR_WIDTH - WALL_WIDTH - gfx_quad_pos(q).x - gfx_quad_pos(q).x;
+    float top   = gfx_quad_pos(q).y - WALL_WIDTH;
     return (vec2s) {{ left < right ? left : right, top }};
 }
 
-void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
+void bounce(Quad* q, vec2s vel, vec2s dist, bool ispaddle) {
     // Calculate which axis will hit first
     float timex = vel.x != 0.0f ? fabs(dist.x / vel.x) : 0.0f;
     float timey = vel.y != 0.0f ? fabs(dist.y / vel.y) : 0.0f;
@@ -351,7 +324,7 @@ void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
 
     // Move ball to the point of the collision
     vel = glms_vec2_scale(vel, mintime);
-    s->pos = glms_vec2_add(s->pos, vel);
+    gfx_quad_move(q, vel);
 
     // Finally, bounce the ball
     if (timex == timey) {
@@ -362,9 +335,9 @@ void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
     } else {
 	// Adjust horizontal velocity based on distance from the paddles centre
 	if (ispaddle) {
-	    float centre = paddle.pos.x + paddle.size.x / 2.0f;
-	    float dist = (s->pos.x + s->size.x / 2.0f) - centre;
-	    float percent = dist / (paddle.size.x / 2.0f);
+	    float centre = gfx_quad_pos(&paddle).x + gfx_quad_size(&paddle).x / 2.0f;
+	    float dist = (gfx_quad_pos(q).x + gfx_quad_pos(q).x / 2.0f) - centre;
+	    float percent = dist / (gfx_quad_size(&paddle).x / 2.0f);
 	    ball.vel.x = percent * BALL_BOUNCE_STR;
 	    ball.vel.y = -ball.vel.y;
 	    ball.vel = glms_vec2_normalize(ball.vel);
@@ -374,26 +347,27 @@ void bounce(Sprite* s, vec2s vel, vec2s dist, bool ispaddle) {
     }
 }
 
-bool ispaddlecollision(Sprite* s, vec2s newpos) {
-    return newpos.y > SCR_HEIGHT - paddle.size.y - s->size.y &&
+bool ispaddlecollision(Quad* q, vec2s newpos) {
+    return newpos.y > SCR_HEIGHT - gfx_quad_size(&paddle).y - gfx_quad_pos(q).y &&
 	   newpos.y < SCR_HEIGHT &&
-	   newpos.x < paddle.pos.x + paddle.size.x &&
-	   newpos.x + s->size.x > paddle.pos.x;
+	   newpos.x < gfx_quad_pos(&paddle).x + gfx_quad_size(&paddle).x &&
+	   newpos.x + gfx_quad_pos(q).x > gfx_quad_pos(&paddle).x;
 }
 
-vec2s getaabbdistance(Sprite* s1, Sprite* s2) {
+vec2s getaabbdistance(Quad* q1, Quad* q2) {
     vec2s dist = {};
-    float s1x = s1->pos.x, s1y = s1->pos.y, s2x = s2->pos.x, s2y = s2->pos.y;
+    float s1x = gfx_quad_pos(q1).x, s1y = gfx_quad_pos(q1).y,
+	  s2x = gfx_quad_pos(q2).x, s2y = gfx_quad_pos(q2).y;
 
     if (s1x < s2x) {
-	dist.x = s2x - (s1x + s1->size.x);
+	dist.x = s2x - (s1x + gfx_quad_size(q1).x);
     } else if (s1x > s2x) {
-	dist.x = s1x - (s2x + s2->size.x);
+	dist.x = s1x - (s2x + gfx_quad_size(q2).x);
     }
     if (s1y < s2y) {
-	dist.y = s2y - (s1y + s1->size.y);
+	dist.y = s2y - (s1y + gfx_quad_size(q1).y);
     } else if (s1y > s2y) {
-	dist.y = s1y - (s2y + s2->size.y);
+	dist.y = s1y - (s2y + gfx_quad_size(q2).y);
     }
 
     return dist;
@@ -401,22 +375,22 @@ vec2s getaabbdistance(Sprite* s1, Sprite* s2) {
 
 // Bricks are in a grid and don't move so we can get the index from a position
 unsigned getbrickindex(float x, float y) {
-    unsigned col = (x - WALL_WIDTH) / BRICK_WIDTH;
-    unsigned row = (y - WALL_WIDTH) / BRICK_HEIGHT;
+    unsigned col = (x - WALL_WIDTH) / BRICK_SIZE.s;
+    unsigned row = (y - WALL_WIDTH) / BRICK_SIZE.t;
     return col + row * BRICK_COLS;
 }
 
 // Check if any of the four corners of the ball hit a brick
-unsigned brickcollisioncount(Sprite* s, vec2s newpos, unsigned hitbricks[4]) {
+unsigned brickcollisioncount(Quad* q, vec2s newpos, unsigned hitbricks[4]) {
     unsigned indices[4];
     unsigned hitbrickcount = 0;
 
     // Is the ball within the brick area?
-    if (newpos.y < WALL_WIDTH + BRICK_ROWS * BRICK_HEIGHT) {
+    if (newpos.y < WALL_WIDTH + BRICK_ROWS * BRICK_SIZE.t) {
 	indices[0] = getbrickindex(newpos.x, newpos.y);
-	indices[1] = getbrickindex(newpos.x + s->size.x, newpos.y);
-	indices[2] = getbrickindex(newpos.x, newpos.y + s->size.y);
-	indices[3] = getbrickindex(newpos.x + s->size.x, newpos.y + s->size.y);
+	indices[1] = getbrickindex(newpos.x + gfx_quad_pos(q).x, newpos.y);
+	indices[2] = getbrickindex(newpos.x, newpos.y + gfx_quad_pos(q).y);
+	indices[3] = getbrickindex(newpos.x + gfx_quad_pos(q).x, newpos.y + gfx_quad_pos(q).y);
 	for (unsigned i = 0; i < 4; i++) {
 	    // Corners of the ball may evaluate to indices outside the boundary
 	    unsigned j = indices[i];
@@ -431,13 +405,13 @@ unsigned brickcollisioncount(Sprite* s, vec2s newpos, unsigned hitbricks[4]) {
 }
 
 // Find the distance to the closest brick and destroy it, if applicable
-vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
+vec2s getbrickdistance(Quad* q, unsigned hitcount, unsigned hitbricks[4]) {
     float mindist = FLT_MAX;
     unsigned mini = 0;
     vec2s minv = {};
 
     for (unsigned i = 0; i < hitcount; i++) {
-	vec2s v = getaabbdistance(s, &bricks[hitbricks[i]].sprite);
+	vec2s v = getaabbdistance(q, &bricks[hitbricks[i]].quad);
 	if (v.x < mindist && v.x < v.y) {
 	    minv = v;
 	    mindist = v.x;
@@ -458,32 +432,32 @@ vec2s getbrickdistance(Sprite* s, unsigned hitcount, unsigned hitbricks[4]) {
     return minv;
 }
 
-bool isoob(Sprite* s, vec2s newpos) {
-    return newpos.y + s->size.x > SCR_HEIGHT;
+bool isoob(Quad* q, vec2s newpos) {
+    return newpos.y + gfx_quad_pos(q).x > SCR_HEIGHT;
 }
 
 void moveball(double frametime) {
-    Sprite* s = &ball.sprite;
-    vec2s vel = glms_vec2_scale(ball.vel, BALL_MOVE * frametime);
-    vec2s newpos = glms_vec2_add(s->pos, vel);
+    Quad* q      = &ball.quad;
+    vec2s vel    = glms_vec2_scale(ball.vel, BALL_MOVE * frametime);
+    vec2s newpos = glms_vec2_add(gfx_quad_pos(q), vel);
 
-    if (isoob(s, newpos)) {
+    if (isoob(q, newpos)) {
 	aud_sound_play(AUD_DEATH);
 	resetlevel();
-    } else if (iswallcollision(s, newpos)) {
-	vec2s dist = getwalldistance(s);
-	bounce(s, vel, dist, false);
-    } else if (ispaddlecollision(s, newpos)) {
-	vec2s dist = getaabbdistance(s, &paddle);
-	bounce(s, vel, dist, true);
+    } else if (iswallcollision(q, newpos)) {
+	vec2s dist = getwalldistance(q);
+	bounce(q, vel, dist, false);
+    } else if (ispaddlecollision(q, newpos)) {
+	vec2s dist = getaabbdistance(q, &paddle);
+	bounce(q, vel, dist, true);
     } else {
 	unsigned hitbricks[4];
-	unsigned hitcount = brickcollisioncount(s, newpos, hitbricks);
+	unsigned hitcount = brickcollisioncount(q, newpos, hitbricks);
 	if (hitcount > 0) {
-	    vec2s dist = getbrickdistance(s, hitcount, hitbricks);
-	    bounce(s, vel, dist, false);
+	    vec2s dist = getbrickdistance(q, hitcount, hitbricks);
+	    bounce(q, vel, dist, false);
 	} else {
-	    s->pos = newpos;
+	    gfx_quad_move(q, vel);
 	}
     }
 }
@@ -522,19 +496,19 @@ void game_update(double frametime) {
 void leveldraw(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
         if (bricks[i].isactive && !bricks[i].isdestroyed) {
-	    gfx_render_quad(&render_sprite, &bricks[i].sprite.quad);
+	    gfx_render_quad(&render_quad, &bricks[i].quad);
         }
     }
 }
 
 void game_render(void) {
     gfx_render_begin(&render_bg);
-    gfx_render_quad(&render_bg, &bg.quad);
+    gfx_render_quad(&render_bg, &bg);
     gfx_render_end(&render_bg);
 
-    gfx_render_begin(&render_sprite);
+    gfx_render_begin(&render_quad);
     leveldraw();
-    gfx_render_quad(&render_sprite, &ball.sprite.quad);
-    gfx_render_quad(&render_sprite, &paddle.quad);
-    gfx_render_end(&render_sprite);
+    gfx_render_quad(&render_quad, &ball.quad);
+    gfx_render_quad(&render_quad, &paddle);
+    gfx_render_end(&render_quad);
 }

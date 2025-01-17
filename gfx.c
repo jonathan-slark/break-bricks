@@ -216,8 +216,7 @@ Tex gfx_tex_load(const char* file) {
     return (Tex) {
 	.name   = name,
 	.unit   = unit++,
-	.width  = width,
-	.height = height
+	.size   = (vec2s) {{ width, height }}
     };
 }
 
@@ -311,17 +310,16 @@ void gfx_render_quad(Renderer* r, const Quad* q) {
 }
 
 // Pre-caculate the vertices needed for a textured quad
-Quad gfx_quad_create(unsigned x, unsigned y, unsigned w, unsigned h,
-	unsigned tx, unsigned ty, Tex t) {
-    float x1 = x;
-    float y1 = y;
-    float x2 = x + w;
-    float y2 = y + h;
+Quad gfx_quad_create(vec2s pos, vec2s size, vec2s tex_offset, Tex t) {
+    float x1 = pos.x;
+    float y1 = pos.y;
+    float x2 = pos.x + size.s;
+    float y2 = pos.y + size.t;
 
-    float u1 = NORMALISE(tx,     t.width);
-    float v1 = NORMALISE(ty,     t.height);
-    float u2 = NORMALISE(tx + w, t.width);
-    float v2 = NORMALISE(ty + h, t.height);
+    float u1 = NORMALISE(tex_offset.x,          t.size.s);
+    float v1 = NORMALISE(tex_offset.y,          t.size.t);
+    float u2 = NORMALISE(tex_offset.x + size.s, t.size.s);
+    float v2 = NORMALISE(tex_offset.y + size.y, t.size.t);
 
     return (Quad) {
 	{
@@ -333,14 +331,19 @@ Quad gfx_quad_create(unsigned x, unsigned y, unsigned w, unsigned h,
     };
 }
 
-void gfx_quad_move(Quad *q, unsigned x, unsigned y, unsigned w, unsigned h) {
-    float x1 = x;
-    float y1 = y;
-    float x2 = x + w;
-    float y2 = y + h;
+vec2s gfx_quad_pos(Quad* q) {
+    return q->verts[0].pos;
+}
 
-    q->verts[0].pos = (vec2s) {{ x1, y1 }};
-    q->verts[1].pos = (vec2s) {{ x2, y1 }};
-    q->verts[2].pos = (vec2s) {{ x2, y2 }};
-    q->verts[3].pos = (vec2s) {{ x1, y2 }};
+vec2s gfx_quad_size(Quad* q) {
+    return (vec2s) {{
+        q->verts[0].pos.x - q->verts[2].pos.x,
+        q->verts[0].pos.y - q->verts[2].pos.y
+    }};
+}
+
+void gfx_quad_move(Quad* q, vec2s v) {
+    for (size_t i = 0; i < VERT_COUNT; i++) {
+	q->verts[i].pos = glms_vec2_add(q->verts[i].pos, v);
+    }
 }

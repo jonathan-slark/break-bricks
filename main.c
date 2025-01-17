@@ -86,13 +86,13 @@ void keycallback([[maybe_unused]] GLFWwindow* window, int key,
     }
 }
 
-Mousepos main_getmousepos(void) {
-    Mousepos mousepos;
-    glfwGetCursorPos(window, &mousepos.x, &mousepos.y);
-    return mousepos;
+vec2s main_getmousepos(void) {
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    return (vec2s) {{ x, y }};
 }
 
-void main_setmousepos(Mousepos mousepos) {
+void main_setmousepos(vec2s mousepos) {
     glfwSetCursorPos(window, mousepos.x, mousepos.y);
 }
 
