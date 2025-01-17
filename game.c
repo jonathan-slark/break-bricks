@@ -93,7 +93,7 @@ static void moveball(double frametime);
 static bool iswincondition(void);
 
 // Constants
-static const size_t sprite_count = 25;
+static const size_t sprite_count = 200;
 static const size_t bg_count     = 1;
 
 // Variables

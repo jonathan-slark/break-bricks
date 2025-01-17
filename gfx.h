@@ -14,7 +14,8 @@ typedef struct {
 } Vert;
 
 typedef struct {
-    GLuint id;
+    GLuint   name;
+    unsigned unit;
     int width, height;
 } Tex;
 
@@ -26,8 +27,7 @@ typedef struct {
     Vert*     verts;
     GLushort* indices;
 
-    // Uniforms
-    GLuint tex;
+    Tex tex;
 } Renderer;
 
 void     gfx_init(void);

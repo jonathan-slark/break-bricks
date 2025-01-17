@@ -62,6 +62,7 @@ static GLushort quad_indices[] = { 0, 1, 2, 0, 2, 3 };
 
 // Variables
 Shader shader;
+GLenum unit = 0;
 
 // Function declarations
 
@@ -179,6 +180,7 @@ void gfx_init(void) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     shader = shader_load(SHADER_VERT, SHADER_FRAG);
+    shader_use(shader);
     gfx_resize(SCR_WIDTH, SCR_HEIGHT);
 }
 
@@ -191,35 +193,40 @@ void gfx_resize(int width, int height) {
 
     // Using origin top left to match coords typically used with images
     mat4s proj = glms_ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-    shader_use(shader);
     shader_set_proj(shader, proj);
 }
 
-Tex gfx_tex_load(const char* name) {
-    Tex tex;
-    int chan;
-    void* data = stbi_load(name, &tex.width, &tex.height, &chan, 0);
+Tex gfx_tex_load(const char* file) {
+    int width, height, chan;
+    void* data = stbi_load(file, &width, &height, &chan, 0);
     if (!data)
-	main_term(EXIT_FAILURE, "Could not texload image %s\n.", name);
+	main_term(EXIT_FAILURE, "Could not texload image %s\n.", file);
 
-    glGenTextures(1, &tex.id);
-    glBindTexture(GL_TEXTURE_2D, tex.id);
+    GLuint name;
+    glGenTextures(1, &name);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, name);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex.width, tex.height, 0,
-	    GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA,
+	    GL_UNSIGNED_BYTE, data);
 
     stbi_image_free(data);
 
-    return tex;
+    return (Tex) {
+	.name   = name,
+	.unit   = unit++,
+	.width  = width,
+	.height = height
+    };
 }
 
 void gfx_tex_unload(Tex tex) {
-    glDeleteTextures(1, &tex.id);
+    glDeleteTextures(1, &tex.name);
 }
 
 Renderer gfx_render_create(size_t count, Tex tex) {
@@ -257,25 +264,21 @@ Renderer gfx_render_create(size_t count, Tex tex) {
 
     r.vert_count = 0;
     r.verts = (Vert*) malloc(sizeof(Vert) * r.vert_max);
-    r.tex = tex.id;
+    r.tex = tex;
 
     return r;
 }
 
 void gfx_render_delete(Renderer* r) {
-    free(r->indices);
     free(r->verts);
+    free(r->indices);
     glDeleteBuffers(1, &r->ebo);
     glDeleteBuffers(1, &r->vbo);
     glDeleteVertexArrays(1, &r->vao);
 }
 
 void gfx_render_begin(Renderer* r) {
-    shader_use(shader);
-    shader_set_tex(shader, 0);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, r->tex);
+    shader_set_tex(shader, r->tex.unit);
 }
 
 void flush(Renderer* r) {
@@ -309,6 +312,9 @@ void normalise(const unsigned* vin, unsigned count, unsigned width,
 
 void gfx_render_sprite(Renderer* r, Sprite* s) {
     if (r->vert_count == r->vert_max) {
+#ifndef NDEBUG
+	fprintf(stderr, "%s\n", "Warning: flushed full vertex cache.");
+#endif // !NDEBUG
 	flush(r);
     }
 
