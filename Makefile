@@ -22,7 +22,7 @@ $(BIN): $(OBJ)
 
 aud.o: aud.c main.h aud.h
 game.o: game.c main.h aud.h game.h gfx.h util.h config.h
-gfx.o: gfx.c gfx.h main.h util.h
+gfx.o: gfx.c game.h gfx.h main.h util.h
 main.o: main.c main.h game.h gfx.h
 util.o: util.c main.h util.h
 

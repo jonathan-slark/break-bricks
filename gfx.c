@@ -25,6 +25,13 @@
 // Macros
 #define NORMALISE(x, extent) (((x) + 0.5f) / (extent))
 
+// Types
+typedef struct {
+    GLuint program;
+    GLint  loc_proj;
+    GLint  loc_tex;
+} Shader;
+
 // Function prototypes
 #ifndef NDEBUG
 static bool   is_member(const unsigned array[], size_t size, unsigned value);
@@ -33,11 +40,11 @@ static void GLAPIENTRY gl_debug_output(GLenum source, GLenum type, GLuint id,
 	const void* userparam);
 #endif // !NDEBUG
 static GLint  shader_create(GLenum type, const GLchar* src);
-static GLuint shader_load(const char* vertex, const char* fragment);
-static void   shader_unload(GLuint program);
-static void   shader_use(GLuint program);
-static void   shader_set_int(GLuint program, const char* name, GLint val);
-static void   shader_set_mat4s(GLuint program, const char* name, mat4s val);
+static Shader shader_load(const char* vertex, const char* fragment);
+static void   shader_unload(Shader shader);
+static void   shader_use(Shader shader);
+static void   shader_set_proj(Shader shader, mat4s proj);
+static void   shader_set_tex(Shader shader, GLint tex);
 static void   normalise(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
 
@@ -51,10 +58,10 @@ static const char   SHADER_VERT[]   = "shader/sprite_vert.glsl";
 static const char   SHADER_FRAG[]   = "shader/sprite_frag.glsl";
 static const GLchar UNIFORM_PROJ[]  = "proj";
 static const GLchar UNIFORM_TEX[]   = "tex";
+static GLushort quad_indices[] = { 0, 1, 2, 0, 2, 3 };
 
 // Variables
-static GLuint program;
-static mat4s proj;
+Shader shader;
 
 // Function declarations
 
@@ -109,7 +116,7 @@ GLint shader_create(GLenum type, const GLchar* src) {
     return shader;
 }
 
-GLuint shader_load(const char* vertex, const char* fragment) {
+Shader shader_load(const char* vertex, const char* fragment) {
     GLchar* vsrc = (GLchar*) util_load(vertex);
     GLchar* fsrc = (GLchar*) util_load(fragment);
     GLuint v = shader_create(GL_VERTEX_SHADER, vsrc);
@@ -132,34 +139,30 @@ GLuint shader_load(const char* vertex, const char* fragment) {
 	main_term(EXIT_FAILURE, "Could not link shaders.\n");
     }
 
-    return program;
+    return (Shader) {
+	.program  = program,
+	.loc_proj = glGetUniformLocation(program, UNIFORM_PROJ),
+	.loc_tex  = glGetUniformLocation(program, UNIFORM_TEX)
+    };
 }
 
-void shader_unload(GLuint program) {
-    glDeleteProgram(program);
+void shader_unload(Shader shader) {
+    glDeleteProgram(shader.program);
 }
 
-void shader_use(GLuint program) {
-    glUseProgram(program);
+void shader_use(Shader shader) {
+    glUseProgram(shader.program);
 }
 
-void shader_set_int(GLuint program, const char* name, GLint val) {
-    GLint loc = glGetUniformLocation(program, name);
-    if (loc == -1)
-	fprintf(stderr, "Could not get uniform location.\n");
-    glUniform1i(loc, val);
+void shader_set_proj(Shader shader, mat4s proj) {
+    glUniformMatrix4fv(shader.loc_proj, 1, GL_FALSE, proj.raw[0]);
 }
 
-void shader_set_mat4s(GLuint program, const char* name, mat4s val) {
-    GLint loc = glGetUniformLocation(program, name);
-    if (loc == -1)
-	fprintf(stderr, "Could not get uniform location.\n");
-    glUniformMatrix4fv(loc, 1, GL_FALSE, val.raw[0]);
+void shader_set_tex(Shader shader, GLint tex) {
+    glUniform1i(shader.loc_tex, tex);
 }
 
 void gfx_init(void) {
-    gfx_resize(SCR_WIDTH, SCR_HEIGHT);
-
 #ifndef NDEBUG
     int flags;
     glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
@@ -175,18 +178,21 @@ void gfx_init(void) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    program = shader_load(SHADER_VERT, SHADER_FRAG);
+    shader = shader_load(SHADER_VERT, SHADER_FRAG);
+    gfx_resize(SCR_WIDTH, SCR_HEIGHT);
 }
 
 void gfx_term(void) {
-    shader_unload(program);
+    shader_unload(shader);
 }
 
 void gfx_resize(int width, int height) {
     glViewport(0, 0, width, height);
 
     // Using origin top left to match coords typically used with images
-    proj = glms_ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+    mat4s proj = glms_ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+    shader_use(shader);
+    shader_set_proj(shader, proj);
 }
 
 Tex gfx_tex_load(const char* name) {
@@ -219,16 +225,14 @@ void gfx_tex_unload(Tex tex) {
 Renderer gfx_render_create(size_t count, Tex tex) {
 
     Renderer r;
+    r.vert_max    = count * VERTCOUNT;
+    size_t index_count = count * COUNT(quad_indices);
 
-    unsigned indices[] = {
-	0, 1, 2,
-	0, 2, 3
-    };
-    size_t index_count = count * COUNT(indices);
-    r.indices = (unsigned*) malloc(sizeof(unsigned) * index_count);
+    // Pre-calculate the entire index buffer
+    r.indices = (GLushort*) malloc(sizeof(GLushort) * index_count);
     for (size_t i = 0; i < index_count; i++) {
-	r.indices[i] = i / COUNT(indices) * VERTCOUNT +
-	    indices[i % COUNT(indices)];
+	r.indices[i] = i / COUNT(quad_indices) * VERTCOUNT +
+	    quad_indices[i % COUNT(quad_indices)];
     }
 
     glGenVertexArrays(1, &r.vao);
@@ -236,13 +240,12 @@ Renderer gfx_render_create(size_t count, Tex tex) {
 
     glGenBuffers(1, &r.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, r.vbo);
-    size_t vertex_count = count * VERTCOUNT;
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vert) * vertex_count, NULL,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vert) * r.vert_max, NULL,
 	    GL_DYNAMIC_DRAW);
 
     glGenBuffers(1, &r.ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned) * index_count,
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * index_count,
 	    r.indices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
@@ -253,9 +256,8 @@ Renderer gfx_render_create(size_t count, Tex tex) {
     glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
 	    (void*) offsetof(Vert, texcoord));
 
-    r.count = 0;
-    r.cap = vertex_count;
-    r.verts = (Vert*) malloc(sizeof(Vert) * vertex_count);
+    r.vert_count = 0;
+    r.verts = (Vert*) malloc(sizeof(Vert) * r.vert_max);
     r.tex = tex.id;
 
     return r;
@@ -270,24 +272,25 @@ void gfx_render_delete(Renderer* r) {
 }
 
 void gfx_render_flush(Renderer* r) {
-    if (!r->count) {
+    if (!r->vert_count) {
         return;
     }
 
-    shader_use(program);
-    shader_set_int(program,   UNIFORM_TEX,  0);
-    shader_set_mat4s(program, UNIFORM_PROJ, proj);
+    shader_use(shader);
+    shader_set_tex(shader, 0);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, r->tex);
 
     glBindBuffer(GL_ARRAY_BUFFER, r->vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vert) * r->count, r->verts);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vert) * r->vert_count,
+	    r->verts);
 
     glBindVertexArray(r->vao);
-    glDrawElements(GL_TRIANGLES, r->count / VERTCOUNT * 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, r->vert_count / VERTCOUNT *
+	    COUNT(quad_indices), GL_UNSIGNED_SHORT, 0);
 
-    r->count = 0;
+    r->vert_count = 0;
 }
 
 // https://stackoverflow.com/q/40574677
@@ -300,7 +303,7 @@ void normalise(const unsigned* vin, unsigned count, unsigned width,
 }
 
 void gfx_render_push(Renderer* r, Sprite* s) {
-    if (r->count == r->cap) {
+    if (r->vert_count == r->vert_max) {
 	gfx_render_flush(r);
     }
 
@@ -317,8 +320,8 @@ void gfx_render_push(Renderer* r, Sprite* s) {
     float u2 = texverts[6];
     float v2 = texverts[7];
 
-    r->verts[r->count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
-    r->verts[r->count++] = (Vert) { .pos = { x2, y1 }, .texcoord = { u2, v1 } };
-    r->verts[r->count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
-    r->verts[r->count++] = (Vert) { .pos = { x1, y2 }, .texcoord = { u1, v2 } };
+    r->verts[r->vert_count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
+    r->verts[r->vert_count++] = (Vert) { .pos = { x2, y1 }, .texcoord = { u2, v1 } };
+    r->verts[r->vert_count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
+    r->verts[r->vert_count++] = (Vert) { .pos = { x1, y2 }, .texcoord = { u1, v2 } };
 }

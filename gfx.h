@@ -21,10 +21,10 @@ typedef struct {
 typedef struct {
     // Vertex buffer data
     GLuint    vao, vbo, ebo;
-    unsigned  count;
-    unsigned  cap;
+    size_t    vert_count;
+    size_t    vert_max;
     Vert*     verts;
-    unsigned* indices;
+    GLushort* indices;
 
     // Uniforms
     GLuint tex;
