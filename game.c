@@ -16,6 +16,7 @@ bool is_aabb_collision(Sprite* s1, Sprite* s2) {
  * Different resolutions.
  * Use circle for ball and paddle collision detection.
  * Spritesheet struct.
+ * Sprite file?
  */
 
 #define GLFW_INCLUDE_NONE
@@ -42,6 +43,11 @@ bool is_aabb_collision(Sprite* s1, Sprite* s2) {
 enum { SoundBrick, SoundDeath, SoundMusic, SoundWin };
 
 typedef struct {
+    vec2s pos, size;
+    Quad quad;
+} Sprite;
+
+typedef struct {
     int key;
     void (*func)(void);
 } Key;
@@ -65,8 +71,9 @@ typedef struct {
 } Brick;
 
 // Function prototypes
-static void initsprite(Sprite* s, float width, float height, float x,
-	float y, const unsigned* verts, size_t size);
+static void initsprite(Sprite* s, unsigned x, unsigned y, unsigned w, unsigned h,
+	unsigned tx, unsigned ty, Tex t);
+static void movesprite(Sprite* s);
 static void initbrick(Brick* brick, char id, unsigned col, unsigned row);
 static unsigned readbricks(const char* lvl);
 static void resetlevel(void);
@@ -112,13 +119,15 @@ static bool ispaused = false;
 
 // Function implementations
 
-void initsprite(Sprite* s, float width, float height, float x, float y,
-	const unsigned* verts, size_t size) {
-    s->pos.x  = x;
-    s->pos.y  = y;
-    s->size.u = width;
-    s->size.v = height;
-    memcpy(s->texverts, verts, size);
+void initsprite(Sprite* s, unsigned x, unsigned y, unsigned w, unsigned h,
+	unsigned tx, unsigned ty, Tex t) {
+    s->pos  = (vec2s) {{ x, y }};
+    s->size = (vec2s) {{ w, h }};
+    s->quad = gfx_quad_create(x, y, w, h, tx, ty, t);
+}
+
+void movesprite(Sprite* s) {
+    gfx_quad_move(&s->quad, s->pos.x, s->pos.y, s->size.u, s->size.v);
 }
 
 void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
@@ -135,8 +144,8 @@ void initbrick(Brick* brick, char id, unsigned col, unsigned row) {
 
     float x = col * BRICK_WIDTH  + WALL_WIDTH;
     float y = row * BRICK_HEIGHT + WALL_WIDTH;
-    initsprite(&brick->sprite, BRICK_WIDTH, BRICK_HEIGHT, x, y, BRICK_VERTS[i],
-	       sizeof(BRICK_VERTS[i]));
+    initsprite(&brick->sprite, x, y, BRICK_WIDTH, BRICK_HEIGHT,
+	    BRICK_OFFSETS[i][0], BRICK_OFFSETS[i][1], tex_sprite);
 }
 
 unsigned readbricks(const char* lvl) {
@@ -189,16 +198,16 @@ void initball(void) {
     ball.isstuck = 1;
     float x = paddle.pos.x + paddle.size.x / 2.0f - BALL_WIDTH / 2.0f;
     float y = paddle.pos.y - BALL_HEIGHT;
-    initsprite(&ball.sprite, BALL_WIDTH, BALL_HEIGHT, x, y, BALL_VERTS,
-	       sizeof(BALL_VERTS));
+    initsprite(&ball.sprite, x, y, BALL_WIDTH, BALL_HEIGHT, BALL_OFFSETS[0],
+	    BALL_OFFSETS[1], tex_sprite);
 }
 
 void initpaddle(void) {
     Mousepos mousepos = main_getmousepos();
     float x = mousepos.x;
     float y = SCR_HEIGHT - PADDLE_HEIGHT;
-    initsprite(&paddle, PADDLE_WIDTH, PADDLE_HEIGHT, x, y, PADDLE_VERTS,
-	       sizeof(PADDLE_VERTS));
+    initsprite(&paddle, x, y, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_OFFSETS[0],
+	    PADDLE_OFFSETS[1], tex_sprite);
 }
 
 void game_load(void) {
@@ -212,8 +221,8 @@ void game_load(void) {
 
     tex_sprite = gfx_tex_load(SPRITE_SHEET);
     tex_bg     = gfx_tex_load(BACKGROUND);
-    initsprite(&bg, SCR_WIDTH, SCR_HEIGHT, 0.0f, 0.0f, BG_VERTS,
-	       sizeof(BG_VERTS));
+    initsprite(&bg, 0, 1, SCR_WIDTH, SCR_HEIGHT, BG_OFFSETS[0], BG_OFFSETS[1],
+	    tex_bg);
 
     sounds = (ma_sound**) malloc((SoundWin + 1) * sizeof(ma_sound*));
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK, false);
@@ -308,10 +317,13 @@ void game_input([[maybe_unused]] double frametime) {
 	mousepos.x = CLAMP(mousepos.x, WALL_WIDTH,
 		SCR_WIDTH - paddle.size.x - WALL_WIDTH);
 	paddle.pos.x = mousepos.x;
+	movesprite(&paddle);
 
-	if (ball.isstuck)
+	if (ball.isstuck) {
 	    ball.sprite.pos.x = paddle.pos.x + paddle.size.x / 2.0f -
 		ball.sprite.size.x / 2.0f;
+	    movesprite(&ball.sprite);
+	}
 
 	// Don't allow cursor to move away from paddle
 	main_setmousepos(mousepos);
@@ -510,19 +522,19 @@ void game_update(double frametime) {
 void leveldraw(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
         if (bricks[i].isactive && !bricks[i].isdestroyed) {
-	    gfx_render_sprite(&render_sprite, &bricks[i].sprite);
+	    gfx_render_quad(&render_sprite, &bricks[i].sprite.quad);
         }
     }
 }
 
 void game_render(void) {
     gfx_render_begin(&render_bg);
-    gfx_render_sprite(&render_bg, &bg);
+    gfx_render_quad(&render_bg, &bg.quad);
     gfx_render_end(&render_bg);
 
     gfx_render_begin(&render_sprite);
     leveldraw();
-    gfx_render_sprite(&render_sprite, &ball.sprite);
-    gfx_render_sprite(&render_sprite, &paddle);
+    gfx_render_quad(&render_sprite, &ball.sprite.quad);
+    gfx_render_quad(&render_sprite, &paddle.quad);
     gfx_render_end(&render_sprite);
 }

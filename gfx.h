@@ -3,20 +3,23 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
-#define INDCOUNT   2  // Number of indices per vertex
-#define VERTCOUNT  4  // Number of vertices per sprite
-#define ARRAYCOUNT (INDCOUNT * VERTCOUNT)
+#define IND_COUNT  2  // Number of indices per vertex
+#define VERT_COUNT 4  // Number of vertices per quad
 
-// Data pushed to shader, per vertex
 typedef struct {
-    GLfloat pos[INDCOUNT];
-    GLfloat texcoord[INDCOUNT];
+    vec2s pos;
+    vec2s texcoord;
 } Vert;
+
+// Textured quad
+typedef struct {
+    Vert verts[VERT_COUNT];
+} Quad;
 
 typedef struct {
     GLuint   name;
     unsigned unit;
-    int width, height;
+    int      width, height;
 } Tex;
 
 typedef struct {
@@ -27,6 +30,7 @@ typedef struct {
     Vert*     verts;
     GLushort* indices;
 
+    // One texture per renderer to minimise state changes
     Tex tex;
 } Renderer;
 
@@ -40,5 +44,10 @@ void     gfx_tex_unload(Tex tex);
 Renderer gfx_render_create(size_t count, Tex tex);
 void     gfx_render_delete(Renderer* r);
 void     gfx_render_begin(Renderer* r);
-void     gfx_render_sprite(Renderer* r, Sprite* s);
+void     gfx_render_quad(Renderer* r, const Quad* q);
 void     gfx_render_end(Renderer* r);
+
+Quad     gfx_quad_create(unsigned x, unsigned y, unsigned w, unsigned h,
+         unsigned tx, unsigned ty, Tex t);
+void     gfx_quad_move(Quad *q, unsigned x, unsigned y, unsigned w,
+         unsigned h);

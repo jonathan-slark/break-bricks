@@ -1,9 +1,7 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO:
- * Scale to resolution.
- * Normalise texverts once and using texture width etc, not screen width.
+ * TODO: Scale to resolution.
  */
 
 #define GLFW_INCLUDE_NONE
@@ -16,12 +14,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "game.h"
 #include "gfx.h"
 #include "main.h"
 #include "util.h"
 
 // Macros
+// https://stackoverflow.com/q/40574677
 #define NORMALISE(x, extent) (((x) + 0.5f) / (extent))
 
 // Types
@@ -45,8 +43,6 @@ static void   shader_use(Shader shader);
 static void   shader_set_proj(Shader shader, mat4s proj);
 static void   shader_set_tex(Shader shader, GLint tex);
 static void   flush(Renderer* r);
-static void   normalise(const unsigned* vin, unsigned count, unsigned width,
-	unsigned height, float* vout);
 
 // Constants
 #ifndef NDEBUG
@@ -54,11 +50,11 @@ static const unsigned LOG_IGNORE[] = {
     131185, // Buffer info
 };
 #endif // !NDEBUG
-static const char   SHADER_VERT[]   = "shader/sprite_vert.glsl";
-static const char   SHADER_FRAG[]   = "shader/sprite_frag.glsl";
-static const GLchar UNIFORM_PROJ[]  = "proj";
-static const GLchar UNIFORM_TEX[]   = "tex";
-static GLushort quad_indices[] = { 0, 1, 2, 0, 2, 3 };
+static const char   SHADER_VERT[]    = "shader/sprite_vert.glsl";
+static const char   SHADER_FRAG[]    = "shader/sprite_frag.glsl";
+static const GLchar UNIFORM_PROJ[]   = "proj";
+static const GLchar UNIFORM_TEX[]    = "tex";
+static const GLushort quad_indices[] = { 0, 1, 2, 0, 2, 3 };
 
 // Variables
 Shader shader;
@@ -231,13 +227,13 @@ void gfx_tex_unload(Tex tex) {
 
 Renderer gfx_render_create(size_t count, Tex tex) {
     Renderer r;
-    r.vert_max = count * VERTCOUNT;
+    r.vert_max = count * VERT_COUNT;
     size_t index_count = count * COUNT(quad_indices);
 
     // Pre-calculate the entire index buffer
     r.indices = (GLushort*) malloc(sizeof(GLushort) * index_count);
     for (size_t i = 0; i < index_count; i++) {
-	r.indices[i] = i / COUNT(quad_indices) * VERTCOUNT +
+	r.indices[i] = i / COUNT(quad_indices) * VERT_COUNT +
 	    quad_indices[i % COUNT(quad_indices)];
     }
 
@@ -255,11 +251,11 @@ Renderer gfx_render_create(size_t count, Tex tex) {
 	    r.indices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
+    glVertexAttribPointer(0, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
 	    (void*) offsetof(Vert, pos));
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, INDCOUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
+    glVertexAttribPointer(1, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
 	    (void*) offsetof(Vert, texcoord));
 
     r.vert_count = 0;
@@ -291,7 +287,7 @@ void flush(Renderer* r) {
 	    r->verts);
 
     glBindVertexArray(r->vao);
-    glDrawElements(GL_TRIANGLES, r->vert_count / VERTCOUNT *
+    glDrawElements(GL_TRIANGLES, r->vert_count / VERT_COUNT *
 	    COUNT(quad_indices), GL_UNSIGNED_SHORT, 0);
 
     r->vert_count = 0;
@@ -301,16 +297,7 @@ void gfx_render_end(Renderer* r) {
     flush(r);
 }
 
-// https://stackoverflow.com/q/40574677
-void normalise(const unsigned* vin, unsigned count, unsigned width,
-       unsigned height, float* vout) {
-    for (unsigned i = 0; i < count; i += INDCOUNT) {
-       vout[i]     = NORMALISE(vin[i],     width);
-       vout[i + 1] = NORMALISE(vin[i + 1], height);
-    }
-}
-
-void gfx_render_sprite(Renderer* r, Sprite* s) {
+void gfx_render_quad(Renderer* r, const Quad* q) {
     if (r->vert_count == r->vert_max) {
 #ifndef NDEBUG
 	fprintf(stderr, "%s\n", "Warning: flushed full vertex cache.");
@@ -318,21 +305,42 @@ void gfx_render_sprite(Renderer* r, Sprite* s) {
 	flush(r);
     }
 
-    float texverts[ARRAYCOUNT];
-    normalise(s->texverts, ARRAYCOUNT, SCR_WIDTH, SCR_HEIGHT, texverts);
+    for (size_t i = 0; i < VERT_COUNT; i++) {
+	r->verts[r->vert_count++] = q->verts[i];
+    }
+}
 
-    float x1 = s->pos.x;
-    float y1 = s->pos.y;
-    float x2 = s->pos.x + s->size.u;
-    float y2 = s->pos.y + s->size.v;
+// Pre-caculate the vertices needed for a textured quad
+Quad gfx_quad_create(unsigned x, unsigned y, unsigned w, unsigned h,
+	unsigned tx, unsigned ty, Tex t) {
+    float x1 = x;
+    float y1 = y;
+    float x2 = x + w;
+    float y2 = y + h;
 
-    float u1 = texverts[0];
-    float v1 = texverts[1];
-    float u2 = texverts[6];
-    float v2 = texverts[7];
+    float u1 = NORMALISE(tx,     t.width);
+    float v1 = NORMALISE(ty,     t.height);
+    float u2 = NORMALISE(tx + w, t.width);
+    float v2 = NORMALISE(ty + h, t.height);
 
-    r->verts[r->vert_count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
-    r->verts[r->vert_count++] = (Vert) { .pos = { x2, y1 }, .texcoord = { u2, v1 } };
-    r->verts[r->vert_count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
-    r->verts[r->vert_count++] = (Vert) { .pos = { x1, y2 }, .texcoord = { u1, v2 } };
+    return (Quad) {
+	{
+	    { {{ x1, y1 }}, {{ u1, v1 }} },
+	    { {{ x2, y1 }}, {{ u2, v1 }} },
+	    { {{ x2, y2 }}, {{ u2, v2 }} },
+	    { {{ x1, y2 }}, {{ u1, v2 }} }
+	}
+    };
+}
+
+void gfx_quad_move(Quad *q, unsigned x, unsigned y, unsigned w, unsigned h) {
+    float x1 = x;
+    float y1 = y;
+    float x2 = x + w;
+    float y2 = y + h;
+
+    q->verts[0].pos = (vec2s) {{ x1, y1 }};
+    q->verts[1].pos = (vec2s) {{ x2, y1 }};
+    q->verts[2].pos = (vec2s) {{ x2, y2 }};
+    q->verts[3].pos = (vec2s) {{ x1, y2 }};
 }

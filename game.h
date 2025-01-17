@@ -3,11 +3,6 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
-typedef struct {
-    vec2s pos, size;
-    unsigned texverts[8];
-} Sprite;
-
 void game_load(void);
 void game_unload(void);
 void game_keydown(int key);
