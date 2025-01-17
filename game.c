@@ -93,8 +93,8 @@ static void moveball(double frametime);
 static bool iswincondition(void);
 
 // Constants
-static const size_t sprite_cap = 25 * 6;
-static const size_t bg_cap     = 1  * 6;
+static const size_t sprite_count = 25;
+static const size_t bg_count     = 1;
 
 // Variables
 static Brick* bricks;
@@ -226,8 +226,8 @@ void game_load(void) {
     initpaddle();
     initball();
 
-    render_sprite = gfx_render_create(sprite_cap, tex_sprite);
-    render_bg     = gfx_render_create(bg_cap,     tex_bg);
+    render_sprite = gfx_render_create(sprite_count, tex_sprite);
+    render_bg     = gfx_render_create(bg_count,     tex_bg);
 }
 
 void resetlevel(void) {

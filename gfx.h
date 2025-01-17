@@ -20,10 +20,11 @@ typedef struct {
 
 typedef struct {
     // Vertex buffer data
-    GLuint   vao, vbo;
-    unsigned count;
-    unsigned cap;
-    Vert*    verts;
+    GLuint    vao, vbo, ebo;
+    unsigned  count;
+    unsigned  cap;
+    Vert*     verts;
+    unsigned* indices;
 
     // Uniforms
     GLuint tex;
@@ -36,7 +37,7 @@ void     gfx_resize(int width, int height);
 Tex      gfx_tex_load(const char* file);
 void     gfx_tex_unload(Tex tex);
 
-Renderer gfx_render_create(size_t cap, Tex tex);
+Renderer gfx_render_create(size_t count, Tex tex);
 void     gfx_render_delete(Renderer* r);
 void     gfx_render_flush(Renderer* r);
 void     gfx_render_push(Renderer* r, Sprite* s);

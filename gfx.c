@@ -9,7 +9,6 @@
 
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
-#include <assert.h>
 #include <ctype.h>
 #include <cglm/struct.h>
 #include <glad.h>
@@ -217,17 +216,34 @@ void gfx_tex_unload(Tex tex) {
     glDeleteTextures(1, &tex.id);
 }
 
-Renderer gfx_render_create(size_t cap, Tex tex) {
-    assert(!(cap % 6));
+Renderer gfx_render_create(size_t count, Tex tex) {
 
     Renderer r;
+
+    unsigned indices[] = {
+	0, 1, 2,
+	0, 2, 3
+    };
+    size_t index_count = count * COUNT(indices);
+    r.indices = (unsigned*) malloc(sizeof(unsigned) * index_count);
+    for (size_t i = 0; i < index_count; i++) {
+	r.indices[i] = i / COUNT(indices) * VERTCOUNT +
+	    indices[i % COUNT(indices)];
+    }
 
     glGenVertexArrays(1, &r.vao);
     glBindVertexArray(r.vao);
 
     glGenBuffers(1, &r.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, r.vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vert) * cap, NULL, GL_DYNAMIC_DRAW);
+    size_t vertex_count = count * VERTCOUNT;
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vert) * vertex_count, NULL,
+	    GL_DYNAMIC_DRAW);
+
+    glGenBuffers(1, &r.ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned) * index_count,
+	    r.indices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, INDCOUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
@@ -238,15 +254,17 @@ Renderer gfx_render_create(size_t cap, Tex tex) {
 	    (void*) offsetof(Vert, texcoord));
 
     r.count = 0;
-    r.cap = cap;
-    r.verts = (Vert*) malloc(sizeof(Vert) * cap);
+    r.cap = vertex_count;
+    r.verts = (Vert*) malloc(sizeof(Vert) * vertex_count);
     r.tex = tex.id;
 
     return r;
 }
 
 void gfx_render_delete(Renderer* r) {
+    free(r->indices);
     free(r->verts);
+    glDeleteBuffers(1, &r->ebo);
     glDeleteBuffers(1, &r->vbo);
     glDeleteVertexArrays(1, &r->vao);
 }
@@ -267,7 +285,7 @@ void gfx_render_flush(Renderer* r) {
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vert) * r->count, r->verts);
 
     glBindVertexArray(r->vao);
-    glDrawArrays(GL_TRIANGLES, 0, r->count);
+    glDrawElements(GL_TRIANGLES, r->count / VERTCOUNT * 6, GL_UNSIGNED_INT, 0);
 
     r->count = 0;
 }
@@ -300,10 +318,7 @@ void gfx_render_push(Renderer* r, Sprite* s) {
     float v2 = texverts[7];
 
     r->verts[r->count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
-    r->verts[r->count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
-    r->verts[r->count++] = (Vert) { .pos = { x1, y2 }, .texcoord = { u1, v2 } };
-
-    r->verts[r->count++] = (Vert) { .pos = { x1, y1 }, .texcoord = { u1, v1 } };
     r->verts[r->count++] = (Vert) { .pos = { x2, y1 }, .texcoord = { u2, v1 } };
     r->verts[r->count++] = (Vert) { .pos = { x2, y2 }, .texcoord = { u2, v2 } };
+    r->verts[r->count++] = (Vert) { .pos = { x1, y2 }, .texcoord = { u1, v2 } };
 }
