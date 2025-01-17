@@ -510,17 +510,19 @@ void game_update(double frametime) {
 void leveldraw(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
         if (bricks[i].isactive && !bricks[i].isdestroyed) {
-	    gfx_render_push(&render_sprite, &bricks[i].sprite);
+	    gfx_render_sprite(&render_sprite, &bricks[i].sprite);
         }
     }
 }
 
 void game_render(void) {
-    gfx_render_push(&render_bg, &bg);
-    gfx_render_flush(&render_bg);
+    gfx_render_begin(&render_bg);
+    gfx_render_sprite(&render_bg, &bg);
+    gfx_render_end(&render_bg);
 
+    gfx_render_begin(&render_sprite);
     leveldraw();
-    gfx_render_push(&render_sprite, &ball.sprite);
-    gfx_render_push(&render_sprite, &paddle);
-    gfx_render_flush(&render_sprite);
+    gfx_render_sprite(&render_sprite, &ball.sprite);
+    gfx_render_sprite(&render_sprite, &paddle);
+    gfx_render_end(&render_sprite);
 }

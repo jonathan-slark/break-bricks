@@ -39,5 +39,6 @@ void     gfx_tex_unload(Tex tex);
 
 Renderer gfx_render_create(size_t count, Tex tex);
 void     gfx_render_delete(Renderer* r);
-void     gfx_render_flush(Renderer* r);
-void     gfx_render_push(Renderer* r, Sprite* s);
+void     gfx_render_begin(Renderer* r);
+void     gfx_render_sprite(Renderer* r, Sprite* s);
+void     gfx_render_end(Renderer* r);

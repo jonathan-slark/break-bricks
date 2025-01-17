@@ -21,6 +21,10 @@ void aud_init(float vol) {
     ma_engine_set_volume(&engine, vol);
 }
 
+void aud_term(void) {
+    ma_engine_uninit(&engine);
+}
+
 // Preload sound
 // https://github.com/mackron/miniaudio/issues/249
 ma_sound* aud_sound_load(const char* file, bool islooping) {
@@ -47,10 +51,7 @@ void aud_sound_play(const char* file) {
     ma_engine_play_sound(&engine, file, NULL);
 }
 
+// Start a looping sound
 void aud_sound_start(ma_sound* sound) {
     ma_sound_start(sound);
-}
-
-void aud_term(void) {
-    ma_engine_uninit(&engine);
 }

@@ -3,7 +3,6 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  * TODO:
  * Scale to resolution.
- * Store uniform locations.
  * Normalise texverts once and using texture width etc, not screen width.
  */
 
@@ -45,6 +44,7 @@ static void   shader_unload(Shader shader);
 static void   shader_use(Shader shader);
 static void   shader_set_proj(Shader shader, mat4s proj);
 static void   shader_set_tex(Shader shader, GLint tex);
+static void   flush(Renderer* r);
 static void   normalise(const unsigned* vin, unsigned count, unsigned width,
 	unsigned height, float* vout);
 
@@ -223,9 +223,8 @@ void gfx_tex_unload(Tex tex) {
 }
 
 Renderer gfx_render_create(size_t count, Tex tex) {
-
     Renderer r;
-    r.vert_max    = count * VERTCOUNT;
+    r.vert_max = count * VERTCOUNT;
     size_t index_count = count * COUNT(quad_indices);
 
     // Pre-calculate the entire index buffer
@@ -271,16 +270,18 @@ void gfx_render_delete(Renderer* r) {
     glDeleteVertexArrays(1, &r->vao);
 }
 
-void gfx_render_flush(Renderer* r) {
-    if (!r->vert_count) {
-        return;
-    }
-
+void gfx_render_begin(Renderer* r) {
     shader_use(shader);
     shader_set_tex(shader, 0);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, r->tex);
+}
+
+void flush(Renderer* r) {
+    if (!r->vert_count) {
+        return;
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, r->vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vert) * r->vert_count,
@@ -293,6 +294,10 @@ void gfx_render_flush(Renderer* r) {
     r->vert_count = 0;
 }
 
+void gfx_render_end(Renderer* r) {
+    flush(r);
+}
+
 // https://stackoverflow.com/q/40574677
 void normalise(const unsigned* vin, unsigned count, unsigned width,
        unsigned height, float* vout) {
@@ -302,9 +307,9 @@ void normalise(const unsigned* vin, unsigned count, unsigned width,
     }
 }
 
-void gfx_render_push(Renderer* r, Sprite* s) {
+void gfx_render_sprite(Renderer* r, Sprite* s) {
     if (r->vert_count == r->vert_max) {
-	gfx_render_flush(r);
+	flush(r);
     }
 
     float texverts[ARRAYCOUNT];
