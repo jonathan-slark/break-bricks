@@ -3,6 +3,8 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#include <miniaudio.h>
+
 void      aud_init(float vol);
 void      aud_term(void);
 

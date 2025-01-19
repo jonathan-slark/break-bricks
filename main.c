@@ -13,9 +13,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "main.h"
 #include "game.h"
 #include "gfx.h"
+#include "main.h"
 
 // Function declarations
 static void errorcallback(int err, const char* desc);
@@ -38,7 +38,7 @@ static const unsigned OPENGL_MAJOR   = 4;
 static const unsigned OPENGL_MINOR   = 6;
 
 // Variables
-static GLFWwindow* window = NULL;
+static GLFWwindow* window;
 static bool minimised = false;
 
 // Function implementations
@@ -63,7 +63,7 @@ void main_term(int status, const char* fmt, ...) {
     glfwTerminate();
 
     if (fmt) {
-	va_list ap = NULL;
+	va_list ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);

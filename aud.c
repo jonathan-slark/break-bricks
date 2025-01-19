@@ -4,11 +4,10 @@
  */
 
 #define MINIAUDIO_IMPLEMENTATION
-#include <cglm/struct.h>
 #include <miniaudio.h>
 
-#include "main.h"
 #include "aud.h"
+#include "main.h"
 
 // Variables
 ma_engine engine;

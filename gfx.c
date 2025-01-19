@@ -6,7 +6,6 @@
 
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
-#include <ctype.h>
 #include <cglm/struct.h>
 #include <glad.h>
 #include <stb/stb_image.h>
@@ -36,12 +35,14 @@ static void GLAPIENTRY gl_debug_output(GLenum source, GLenum type, GLuint id,
 	GLenum severity, GLsizei length, const GLchar* message,
 	const void* userparam);
 #endif // !NDEBUG
-static GLint  shader_create(GLenum type, const GLchar* src);
+static GLint  shader_compile(GLenum type, const GLchar* src);
 static Shader shader_load(const char* vertex, const char* fragment);
 static void   shader_unload(Shader shader);
 static void   shader_use(Shader shader);
 static void   shader_set_proj(Shader shader, mat4s proj);
 static void   shader_set_tex(Shader shader, GLint tex);
+static Tex    tex_load(const char* file);
+static void   tex_unload(Tex tex);
 static void   flush(Renderer* r);
 
 // Constants
@@ -50,8 +51,8 @@ static const unsigned LOG_IGNORE[] = {
     131185, // Buffer info
 };
 #endif // !NDEBUG
-static const char   SHADER_VERT[]    = "shader/sprite_vert.glsl";
-static const char   SHADER_FRAG[]    = "shader/sprite_frag.glsl";
+static const char   SHADER_VERT[]    = "shader/quad_vert.glsl";
+static const char   SHADER_FRAG[]    = "shader/quad_frag.glsl";
 static const GLchar UNIFORM_PROJ[]   = "proj";
 static const GLchar UNIFORM_TEX[]    = "tex";
 static const GLushort quad_indices[] = { 0, 1, 2, 0, 2, 3 };
@@ -78,6 +79,7 @@ void GLAPIENTRY gl_debug_output([[maybe_unused]] GLenum source,
 	[[maybe_unused]] GLenum type, GLuint id,
 	[[maybe_unused]] GLenum severity, [[maybe_unused]] GLsizei length,
 	const GLchar* message, [[maybe_unused]] const void* userparam) {
+
     if (is_member(LOG_IGNORE, sizeof(LOG_IGNORE), id))
         return;
 
@@ -88,6 +90,7 @@ void GLAPIENTRY gl_debug_output([[maybe_unused]] GLenum source,
 
 void show_log(GLuint object, PFNGLGETSHADERIVPROC proc_param,
 	PFNGLGETSHADERINFOLOGPROC proc_log) {
+
     GLint len;
     proc_param(object, GL_INFO_LOG_LENGTH, &len);
     if (len) {
@@ -98,7 +101,7 @@ void show_log(GLuint object, PFNGLGETSHADERIVPROC proc_param,
     }
 }
 
-GLint shader_create(GLenum type, const GLchar* src) {
+GLint shader_compile(GLenum type, const GLchar* src) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &src, NULL);
     glCompileShader(shader);
@@ -116,8 +119,8 @@ GLint shader_create(GLenum type, const GLchar* src) {
 Shader shader_load(const char* vertex, const char* fragment) {
     GLchar* vsrc = (GLchar*) util_load(vertex);
     GLchar* fsrc = (GLchar*) util_load(fragment);
-    GLuint v = shader_create(GL_VERTEX_SHADER, vsrc);
-    GLuint f = shader_create(GL_FRAGMENT_SHADER, fsrc);
+    GLuint v = shader_compile(GL_VERTEX_SHADER, vsrc);
+    GLuint f = shader_compile(GL_FRAGMENT_SHADER, fsrc);
     util_unload(vsrc);
     util_unload(fsrc);
 
@@ -192,7 +195,7 @@ void gfx_resize(int width, int height) {
     shader_set_proj(shader, proj);
 }
 
-Tex gfx_tex_load(const char* file) {
+Tex tex_load(const char* file) {
     int width, height, chan;
     void* data = stbi_load(file, &width, &height, &chan, 0);
     if (!data)
@@ -214,17 +217,17 @@ Tex gfx_tex_load(const char* file) {
     stbi_image_free(data);
 
     return (Tex) {
-	.name   = name,
-	.unit   = unit++,
-	.size   = (vec2s) {{ width, height }}
+	.name = name,
+	.unit = unit++,
+	.size = (vec2s) {{ width, height }}
     };
 }
 
-void gfx_tex_unload(Tex tex) {
+void tex_unload(Tex tex) {
     glDeleteTextures(1, &tex.name);
 }
 
-Renderer gfx_render_create(size_t count, Tex tex) {
+Renderer gfx_render_create(size_t count, const char* file) {
     Renderer r;
     r.vert_max = count * VERT_COUNT;
     size_t index_count = count * COUNT(quad_indices);
@@ -259,12 +262,13 @@ Renderer gfx_render_create(size_t count, Tex tex) {
 
     r.vert_count = 0;
     r.verts = (Vert*) malloc(sizeof(Vert) * r.vert_max);
-    r.tex = tex;
+    r.tex = tex_load(file);
 
     return r;
 }
 
 void gfx_render_delete(Renderer* r) {
+    tex_unload(r->tex);
     free(r->verts);
     free(r->indices);
     glDeleteBuffers(1, &r->ebo);
@@ -310,39 +314,37 @@ void gfx_render_quad(Renderer* r, const Quad* q) {
 }
 
 // Pre-caculate the vertices needed for a textured quad
-Quad gfx_quad_create(vec2s pos, vec2s size, vec2s tex_offset, Tex t) {
+Quad gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset) {
+    Quad q;
+
+    gfx_quad_setpos(&q, pos, size);
+
+    float u1 = NORMALISE(tex_offset.x,          r->tex.size.s);
+    float v1 = NORMALISE(tex_offset.y,          r->tex.size.t);
+    float u2 = NORMALISE(tex_offset.x + size.s, r->tex.size.s);
+    float v2 = NORMALISE(tex_offset.y + size.y, r->tex.size.t);
+
+    q.verts[0].texcoord = (vec2s) {{ u1, v1 }};
+    q.verts[1].texcoord = (vec2s) {{ u2, v1 }};
+    q.verts[2].texcoord = (vec2s) {{ u2, v2 }};
+    q.verts[3].texcoord = (vec2s) {{ u1, v2 }};
+
+    return q;
+}
+
+void gfx_quad_setpos(Quad* q, vec2s pos, vec2s size) {
     float x1 = pos.x;
     float y1 = pos.y;
     float x2 = pos.x + size.s;
     float y2 = pos.y + size.t;
 
-    float u1 = NORMALISE(tex_offset.x,          t.size.s);
-    float v1 = NORMALISE(tex_offset.y,          t.size.t);
-    float u2 = NORMALISE(tex_offset.x + size.s, t.size.s);
-    float v2 = NORMALISE(tex_offset.y + size.y, t.size.t);
-
-    return (Quad) {
-	{
-	    { {{ x1, y1 }}, {{ u1, v1 }} },
-	    { {{ x2, y1 }}, {{ u2, v1 }} },
-	    { {{ x2, y2 }}, {{ u2, v2 }} },
-	    { {{ x1, y2 }}, {{ u1, v2 }} }
-	}
-    };
+    q->verts[0].pos = (vec2s) {{ x1, y1 }};
+    q->verts[1].pos = (vec2s) {{ x2, y1 }};
+    q->verts[2].pos = (vec2s) {{ x2, y2 }};
+    q->verts[3].pos = (vec2s) {{ x1, y2 }};
 }
 
-vec2s gfx_quad_pos(Quad* q) {
-    return q->verts[0].pos;
-}
-
-vec2s gfx_quad_size(Quad* q) {
-    return (vec2s) {{
-        q->verts[0].pos.x - q->verts[2].pos.x,
-        q->verts[0].pos.y - q->verts[2].pos.y
-    }};
-}
-
-void gfx_quad_move(Quad* q, vec2s v) {
+void gfx_quad_add(Quad* q, vec2s v) {
     for (size_t i = 0; i < VERT_COUNT; i++) {
 	q->verts[i].pos = glms_vec2_add(q->verts[i].pos, v);
     }

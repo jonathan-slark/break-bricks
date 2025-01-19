@@ -3,6 +3,10 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#undef GLAD_GL_IMPLEMENTATION
+#include <cglm/struct.h>
+#include <glad.h>
+
 #define IND_COUNT  2  // Number of indices per vertex
 #define VERT_COUNT 4  // Number of vertices per quad
 
@@ -11,7 +15,6 @@ typedef struct {
     vec2s texcoord;
 } Vert;
 
-// Textured quad
 typedef struct {
     Vert verts[VERT_COUNT];
 } Quad;
@@ -38,16 +41,12 @@ void     gfx_init(void);
 void     gfx_term(void);
 void     gfx_resize(int width, int height);
 
-Tex      gfx_tex_load(const char* file);
-void     gfx_tex_unload(Tex tex);
-
-Renderer gfx_render_create(size_t count, Tex tex);
+Renderer gfx_render_create(size_t count, const char* file);
 void     gfx_render_delete(Renderer* r);
 void     gfx_render_begin(Renderer* r);
 void     gfx_render_quad(Renderer* r, const Quad* q);
 void     gfx_render_end(Renderer* r);
 
-Quad     gfx_quad_create(vec2s pos, vec2s size, vec2s tex_offset, Tex t);
-vec2s    gfx_quad_pos(Quad* q);
-vec2s    gfx_quad_size(Quad* q);
-void     gfx_quad_move(Quad* q, vec2s v);
+Quad     gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset);
+void     gfx_quad_setpos(Quad* q, vec2s pos, vec2s size);
+void     gfx_quad_add(Quad* q, vec2s v);

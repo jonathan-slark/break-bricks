@@ -3,6 +3,8 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#include <cglm/struct.h>
+
 extern const unsigned SCR_WIDTH;
 extern const unsigned SCR_HEIGHT;
 
