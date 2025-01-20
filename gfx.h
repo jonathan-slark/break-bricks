@@ -12,7 +12,7 @@
 
 typedef struct {
     vec2s pos;
-    vec2s texcoord;
+    vec2s tex_coord;
 } Vert;
 
 typedef struct {
@@ -20,9 +20,9 @@ typedef struct {
 } Quad;
 
 typedef struct {
-    GLuint   name;
-    unsigned unit;
-    vec2s    size;
+    GLuint name;
+    GLenum unit;
+    vec2s  size;
 } Tex;
 
 typedef struct {
@@ -48,5 +48,5 @@ void     gfx_render_quad(Renderer* r, const Quad* q);
 void     gfx_render_end(Renderer* r);
 
 Quad     gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset);
-void     gfx_quad_setpos(Quad* q, vec2s pos, vec2s size);
-void     gfx_quad_add(Quad* q, vec2s v);
+void     gfx_quad_set_pos(Quad* q, vec2s pos, vec2s size);
+void     gfx_quad_add_vec(Quad* q, vec2s v);

@@ -10,5 +10,5 @@ extern const unsigned SCR_HEIGHT;
 
 void  main_term(int status, const char* fmt, ...);
 void  main_quit(void);
-vec2s main_getmousepos(void);
-void  main_setmousepos(vec2s mousepos);
+vec2s main_get_mouse_pos(void);
+void  main_set_mouse_pos(vec2s pos);

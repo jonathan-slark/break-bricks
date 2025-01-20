@@ -4,6 +4,7 @@
  * TODO: Scale to resolution.
  */
 
+#define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
 #include <cglm/struct.h>
@@ -106,9 +107,9 @@ GLint shader_compile(GLenum type, const GLchar* src) {
     glShaderSource(shader, 1, &src, NULL);
     glCompileShader(shader);
 
-    GLint iscompiled = false;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &iscompiled);
-    if (!iscompiled) {
+    GLint is_compiled = false;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+    if (!is_compiled) {
 	show_log(shader, glGetShaderiv, glGetShaderInfoLog);
 	glDeleteShader(shader);
 	main_term(EXIT_FAILURE, "Could not texload shader.\n");
@@ -131,9 +132,9 @@ Shader shader_load(const char* vertex, const char* fragment) {
     glDeleteShader(v);
     glDeleteShader(f);
 
-    GLint islinked = false;
-    glGetProgramiv(program, GL_LINK_STATUS, &islinked);
-    if (!islinked) {
+    GLint is_linked = false;
+    glGetProgramiv(program, GL_LINK_STATUS, &is_linked);
+    if (!is_linked) {
 	show_log(program, glGetProgramiv, glGetProgramInfoLog);
 	glDeleteProgram(program);
 	main_term(EXIT_FAILURE, "Could not link shaders.\n");
@@ -167,11 +168,10 @@ void gfx_init(void) {
     int flags;
     glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
     if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-	glEnable(GL_DEBUG_OUTPUT);
-	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	glDebugMessageCallback(gl_debug_output, NULL);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL,
-		GL_TRUE);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+	glDebugMessageCallbackARB(gl_debug_output, NULL);
+	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
+		NULL, GL_TRUE);
     }
 #endif // !NDEBUG
 
@@ -258,7 +258,7 @@ Renderer gfx_render_create(size_t count, const char* file) {
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
-	    (void*) offsetof(Vert, texcoord));
+	    (void*) offsetof(Vert, tex_coord));
 
     r.vert_count = 0;
     r.verts = (Vert*) malloc(sizeof(Vert) * r.vert_max);
@@ -269,8 +269,8 @@ Renderer gfx_render_create(size_t count, const char* file) {
 
 void gfx_render_delete(Renderer* r) {
     tex_unload(r->tex);
-    free(r->verts);
-    free(r->indices);
+    if (r->verts)   free(r->verts);
+    if (r->indices) free(r->indices);
     glDeleteBuffers(1, &r->ebo);
     glDeleteBuffers(1, &r->vbo);
     glDeleteVertexArrays(1, &r->vao);
@@ -317,22 +317,22 @@ void gfx_render_quad(Renderer* r, const Quad* q) {
 Quad gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset) {
     Quad q;
 
-    gfx_quad_setpos(&q, pos, size);
+    gfx_quad_set_pos(&q, pos, size);
 
     float u1 = NORMALISE(tex_offset.x,          r->tex.size.s);
     float v1 = NORMALISE(tex_offset.y,          r->tex.size.t);
     float u2 = NORMALISE(tex_offset.x + size.s, r->tex.size.s);
     float v2 = NORMALISE(tex_offset.y + size.y, r->tex.size.t);
 
-    q.verts[0].texcoord = (vec2s) {{ u1, v1 }};
-    q.verts[1].texcoord = (vec2s) {{ u2, v1 }};
-    q.verts[2].texcoord = (vec2s) {{ u2, v2 }};
-    q.verts[3].texcoord = (vec2s) {{ u1, v2 }};
+    q.verts[0].tex_coord = (vec2s) {{ u1, v1 }};
+    q.verts[1].tex_coord = (vec2s) {{ u2, v1 }};
+    q.verts[2].tex_coord = (vec2s) {{ u2, v2 }};
+    q.verts[3].tex_coord = (vec2s) {{ u1, v2 }};
 
     return q;
 }
 
-void gfx_quad_setpos(Quad* q, vec2s pos, vec2s size) {
+void gfx_quad_set_pos(Quad* q, vec2s pos, vec2s size) {
     float x1 = pos.x;
     float y1 = pos.y;
     float x2 = pos.x + size.s;
@@ -344,7 +344,7 @@ void gfx_quad_setpos(Quad* q, vec2s pos, vec2s size) {
     q->verts[3].pos = (vec2s) {{ x1, y2 }};
 }
 
-void gfx_quad_add(Quad* q, vec2s v) {
+void gfx_quad_add_vec(Quad* q, vec2s v) {
     for (size_t i = 0; i < VERT_COUNT; i++) {
 	q->verts[i].pos = glms_vec2_add(q->verts[i].pos, v);
     }

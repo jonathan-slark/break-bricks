@@ -1,4 +1,4 @@
-#version 460 core
+#version 330 core
 #pragma shader_stage(fragment)
 
 in vec2 fragcoords;
