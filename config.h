@@ -23,12 +23,12 @@ static const unsigned BG_WALL   = 32; // Walls left, top and right
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 
-static const vec2s PADDLE_SIZE    = {{ 126, 26 }};
-static const vec2s PADDLE_OFFSET  = {{ 384, 0 }};
+static const vec2s PADDLE_SIZE       = {{ 126, 26 }};
+static const vec2s PADDLE_OFFSET     = {{ 384, 0 }};
 // Collision detection: the paddle is a pill shape
-static const vec3s PADDLE_CIRCLE1 = {{ 13,  13, 13 }};
-static const vec3s PADDLE_CIRCLE2 = {{ 113, 13, 13 }};
-static const vec2s PADDLE_AABB[]  = { {{ 13, 0 }}, {{ 113, 25 }} };
+static const vec2s PADDLE_CIRCLE1POS = {{ 13,  13 }};
+static const vec2s PADDLE_CIRCLE2POS = {{ 113, 13 }};
+static const vec2s PADDLE_AABB[]     = { {{ 13, 0 }}, {{ 113, 25 }} };
 
 static const vec2s    BALL_SIZE       = {{ 28, 28 }};
 static const vec2s    BALL_OFFSET     = {{ 510, 0 }};
