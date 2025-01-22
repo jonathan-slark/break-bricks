@@ -15,6 +15,20 @@ static const char     LEVEL_FOLDER[] = "level";
 static const unsigned LEVEL_COUNT    = 2;
 static const unsigned CR_COUNT = 2; // How many times per frame to run collision resolution
 
+static const float       AUD_VOL     = 0.2; // Volume 0 - 1
+static const char        AUD_BRICK[] = "sfx/brick.wav";
+static const char        AUD_DEATH[] = "sfx/death.wav";
+static const char        AUD_WIN[]   = "sfx/win.wav";
+static const char* const AUD_MUSIC[] = {
+    "music/HoliznaCC0 - 2nd Dimension.mp3",
+    "music/HoliznaCC0 - Astroids.mp3",
+    "music/HoliznaCC0 - In The End.mp3",
+    "music/HoliznaCC0 - Pixel Party.mp3",
+    "music/HoliznaCC0 - Scroller.mp3",
+    "music/HoliznaCC0 - Space Castle.mp3",
+    "music/HoliznaCC0 - Where It's Safe.mp3"
+};
+
 static const char     BG_FILE[] = "gfx/background.png";
 static const vec2s    BG_SIZE   = {{ 1920, 1080 }};
 static const vec2s    BG_OFFSET = {{ 0, 0 }};

@@ -2,16 +2,12 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
- * TODO:
- * Different resolutions.
- * Use circle for ball and paddle collision detection.
  */
 
 #define CGLM_PRINT_COLOR       ""
 #define CGLM_PRINT_COLOR_RESET ""
 #define GLFW_INCLUDE_NONE
 #include <cglm/struct.h>
-#include <cglm/struct/aabb2d.h>
 #include <ctype.h>
 #include <float.h>
 #include <glad.h>
@@ -31,6 +27,7 @@
 
 // Types
 
+enum { SoundBrick, SoundDeath, SoundWin, SoundCount };
 enum { StateMenu, StateRun, StatePause, StateWon } state = StateRun;
 
 typedef struct {
@@ -103,6 +100,7 @@ static vec2s get_aabb_dist(Sprite* s1, Sprite* s2);
 static unsigned get_brick_index(float x, float y);
 static unsigned get_brick_hits(Sprite* bs, vec2s newpos, unsigned brick_hits[VERT_COUNT]);
 static vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]);
+static bool is_won(void);
 static void ball_move(Ball* b, Sprite* s, double frame_time);
 
 // Requires above types and functions
@@ -114,12 +112,16 @@ static const unsigned sprite_count = 200;
 // Variables
 static Screen bg;
 static Sprites sprites;
-static unsigned level = 1;
+static unsigned level = 1, track = 0;
+static ma_sound** sounds;
+static ma_sound** music;
+static ma_sound* playing;
 
 // Function implementations
 
 #ifndef NDEBUG
 
+// ASCII art breakout anyone?
 void brick_print(unsigned count, unsigned brick_hits[VERT_COUNT]) {
     for (unsigned row = 0; row < BRICK_ROWS; row++) {
 	for (unsigned col = 0; col < BRICK_COLS; col++) {
@@ -205,9 +207,7 @@ void level_read(const char* data) {
             }
         } else if (c == 'x') {
             // No brick
-            sprites.bricks[count].is_active = false;
-            sprites.bricks[count].is_solid = false;
-            sprites.bricks[count++].is_destroyed = false;
+            sprites.bricks[count++].is_active = false;
             col++;
         } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
             brick_init(&sprites.bricks[count++], c, col, row);
@@ -240,13 +240,21 @@ void level_load(unsigned num) {
     util_unload(data);
 }
 
-void game_load(void) {
-    gfx_init();
+void music_load() {
+    size_t count = COUNT(AUD_MUSIC);
+    music = (ma_sound**) malloc(count * sizeof(ma_sound*));
+    for (size_t i = 0; i < count; i++) {
+	aud_sound_load(AUD_MUSIC[i]);
+    }
+}
 
+void game_load(void) {
     // Decent random seed: https://stackoverflow.com/q/58150771
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
+
+    gfx_init();
 
     bg.render = gfx_render_create(1, BG_FILE);
     bg.quad   = gfx_quad_create(&bg.render, BG_OFFSET, BG_SIZE, BG_OFFSET);
@@ -255,6 +263,14 @@ void game_load(void) {
     paddle_init(&sprites.paddle.sprite);
     ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
     level_load(level);
+
+    aud_init(AUD_VOL);
+    sounds = (ma_sound**) malloc(SoundCount * sizeof(ma_sound*));
+    sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
+    sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
+    sounds[SoundWin]   = aud_sound_load(AUD_WIN);
+    music_load();
+    playing = aud_sound_play(AUD_MUSIC[track]);
 
     state = StateRun;
 }
@@ -270,7 +286,25 @@ void level_reset(void) {
     level_load(level);
 }
 
+void music_unload(void) {
+    if (!music) return;
+
+    for (size_t i = 0; i < COUNT(AUD_MUSIC); i ++) {
+	aud_sound_unload(music[i]);
+    }
+    free(music);
+}
+
 void game_unload(void) {
+    music_unload();
+    if (sounds) {
+	for (unsigned i = 0; i < SoundCount; i++) {
+	    if (sounds[i]) aud_sound_unload(sounds[i]);
+	}
+	free(sounds);
+    }
+    aud_term();
+
     level_unload();
     gfx_render_delete(&sprites.render);
     gfx_render_delete(&bg.render);
@@ -511,6 +545,7 @@ vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT])
     Brick* b = &sprites.bricks[i];
     if (!b->is_solid) {
         b->is_destroyed = true;
+        aud_sound_play(AUD_BRICK);
     }
 
     return dist_min;
@@ -522,6 +557,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     vec2s newpos = glms_vec2_add(bs->pos, vel);
 
     if (is_oob(bs, newpos)) {
+	aud_sound_play(AUD_DEATH);
 	level_reset();
     } else if (is_wall_hit(bs, newpos)) {
         vec2s dist = get_wall_dist(bs);
@@ -544,6 +580,15 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     }
 }
 
+bool is_won(void) {
+    for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
+	Brick* b = &sprites.bricks[i];
+        if (b->is_active && !b->is_solid && !b->is_destroyed) return false;
+    }
+
+    return true;
+}
+
 void game_update(double frame_time) {
     switch(state) {
     case StateRun:
@@ -556,6 +601,17 @@ void game_update(double frame_time) {
 	    }
 	    // Account for rounding errors
 	    ball_move(b, &b->sprite, frame_time - cr_time * (CR_COUNT - 1));
+
+	    if (is_won()) {
+		aud_sound_play(AUD_WIN);
+		if (++level > LEVEL_COUNT) level = 1;
+		level_reset();
+	    }
+	}
+
+	if (!ma_sound_is_playing(playing)) {
+	    track = (track + 1) % COUNT(AUD_MUSIC);
+	    playing = aud_sound_play(AUD_MUSIC[track]);
 	}
     default:
 	// VOID

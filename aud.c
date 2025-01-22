@@ -46,6 +46,8 @@ void aud_sound_unload(ma_sound *sound) {
 }
 
 // Will use cached sound data and not actually load sound again
-void aud_sound_play(const char* file) {
-    ma_engine_play_sound(&engine, file, NULL);
+ma_sound* aud_sound_play(const char* file) {
+    ma_sound* sound = aud_sound_load(file);
+    ma_sound_start(sound);
+    return sound;
 }

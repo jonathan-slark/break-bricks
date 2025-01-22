@@ -1,7 +1,6 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- * TODO: Scale to resolution.
  */
 
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
