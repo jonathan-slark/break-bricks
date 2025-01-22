@@ -7,6 +7,8 @@
  * Use circle for ball and paddle collision detection.
  */
 
+#define CGLM_PRINT_COLOR       ""
+#define CGLM_PRINT_COLOR_RESET ""
 #define GLFW_INCLUDE_NONE
 #include <cglm/struct.h>
 #include <cglm/struct/aabb2d.h>
@@ -93,15 +95,14 @@ static void pause(void);
 static unsigned random(unsigned min, unsigned max);
 static void ball_release(void);
 static vec2s get_wall_dist(Sprite* s);
-static void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist,
-	bool is_paddle);
+static void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle);
 static bool is_wall_hit(Sprite* s, vec2s newpos);
 static bool is_oob(Sprite* s, vec2s newpos);
 static bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos);
 static vec2s get_aabb_dist(Sprite* s1, Sprite* s2);
 static unsigned get_brick_index(float x, float y);
-static unsigned get_brick_hits(Sprite* bs, vec2s newpos,
-	unsigned brick_hits[VERT_COUNT]);
+static unsigned get_brick_hits(Sprite* bs, vec2s newpos, unsigned brick_hits[VERT_COUNT]);
+static vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]);
 static void ball_move(Ball* b, Sprite* s, double frame_time);
 
 // Requires above types and functions
@@ -117,11 +118,52 @@ static unsigned level = 1;
 
 // Function implementations
 
+#ifndef NDEBUG
+
+void brick_print(unsigned count, unsigned brick_hits[VERT_COUNT]) {
+    for (unsigned row = 0; row < BRICK_ROWS; row++) {
+	for (unsigned col = 0; col < BRICK_COLS; col++) {
+	    unsigned i = row * BRICK_COLS + col;
+
+	    bool hit = false;
+	    for (unsigned j = 0; j < count; j++) {
+		if (brick_hits[j] == i) {
+		    fputc('!', stderr);
+		    fputc(' ', stderr);
+		    hit = true;
+		    break;
+		}
+	    }
+	    if (hit) continue;
+
+	    Brick* b = &sprites.bricks[i];
+	    char c;
+	    if (b->is_active) {
+		if (b->is_destroyed) {
+		    c = 'x';
+		} else {
+		    c = 'o';
+		};
+	    } else {
+		c = '_';
+	    }
+	    fputc(c, stderr);
+	    fputc(' ', stderr);
+	}
+	fputc('\n', stderr);
+    }
+    fputc('\n', stderr);
+}
+
+#endif
+
 void paddle_init(Sprite* ps) {
     vec2s mouse_pos = main_get_mouse_pos();
-    vec2s pos = {{ mouse_pos.x, SCR_HEIGHT - PADDLE_SIZE.t }};
-    ps->quad = gfx_quad_create(&sprites.render, pos, PADDLE_SIZE,
-	    PADDLE_OFFSET);
+    vec2s pos = {{
+	mouse_pos.x,
+	SCR_HEIGHT - PADDLE_SIZE.t
+    }};
+    ps->quad = gfx_quad_create(&sprites.render, pos, PADDLE_SIZE, PADDLE_OFFSET);
     ps->size = PADDLE_SIZE;
 }
 
@@ -148,8 +190,8 @@ void brick_init(Brick* b, char id, unsigned col, unsigned row) {
         BG_WALL + col * BRICK_SIZE.s,
         BG_WALL + row * BRICK_SIZE.t
     }};
-    b->sprite.quad = gfx_quad_create(&sprites.render, pos, BRICK_SIZE,
-	    BRICK_OFFSETS[i]);
+    b->sprite.quad = gfx_quad_create(&sprites.render, pos, BRICK_SIZE, BRICK_OFFSETS[i]);
+    b->sprite.size = BRICK_SIZE;
 }
 
 void level_read(const char* data) {
@@ -163,7 +205,9 @@ void level_read(const char* data) {
             }
         } else if (c == 'x') {
             // No brick
-            sprites.bricks[count++].is_active = false;
+            sprites.bricks[count].is_active = false;
+            sprites.bricks[count].is_solid = false;
+            sprites.bricks[count++].is_destroyed = false;
             col++;
         } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
             brick_init(&sprites.bricks[count++], c, col, row);
@@ -302,7 +346,10 @@ void game_input([[maybe_unused]] double frame_time) {
 		BG_WALL,
 		SCR_WIDTH - ps->size.s - BG_WALL
 	);
-	vec2s newpos = (vec2s) {{ mouse_pos.x, ps->pos.y }};
+	vec2s newpos = (vec2s) {{
+	    mouse_pos.x,
+	    ps->pos.y
+	}};
 	gfx_quad_set_pos(&ps->quad, newpos, ps->size);
 
         if (sprites.ball.is_stuck) {
@@ -325,7 +372,10 @@ vec2s get_wall_dist(Sprite* s) {
     float left  = s->pos.x - BG_WALL;
     float right = SCR_WIDTH - BG_WALL - s->size.s - s->pos.x;
     float top   = s->pos.y - BG_WALL;
-    return (vec2s) {{ left < right ? left : right, top }};
+    return (vec2s) {{
+	left < right ? left : right,
+	top
+    }};
 }
 
 void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle) {
@@ -337,7 +387,6 @@ void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle) {
     // Move ball to the point of the collision
     vel = glms_vec2_scale(vel, time_min);
     gfx_quad_add_vec(&bs->quad, vel);
-    glms_vec2_print(bs->pos, stderr);
 
     // Finally, bounce the ball
     if (time_x == time_y) {
@@ -380,25 +429,25 @@ bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos) {
 }
 
 vec2s get_aabb_dist(Sprite* s1, Sprite* s2) {
-    vec2s dist;
+    vec2s dist = {};
     float s1x = s1->pos.x;
     float s1y = s1->pos.y;
     float s2x = s2->pos.x;
     float s2y = s2->pos.y;
 
     if (s1x < s2x) {
-        dist.x = s2x - (s1x + s1->size.x);
+        dist.s = s2x - (s1x + s1->size.s);
     } else if (s1x > s2x) {
-        dist.x = s1x - (s2x + s2->size.x);
+        dist.s = s1x - (s2x + s2->size.s);
     } else {
-	dist.x = 0.0f;
+	dist.s = 0.0f;
     }
     if (s1y < s2y) {
-        dist.y = s2y - (s1y + s1->size.y);
+        dist.t = s2y - (s1y + s1->size.t);
     } else if (s1y > s2y) {
-        dist.y = s1y - (s2y + s2->size.y);
+        dist.t = s1y - (s2y + s2->size.t);
     } else {
-	dist.y = 0.0f;
+	dist.t = 0.0f;
     }
 
     return dist;
@@ -406,31 +455,31 @@ vec2s get_aabb_dist(Sprite* s1, Sprite* s2) {
 
 // Bricks are in a grid and don't move so we can get the index from a position
 unsigned get_brick_index(float x, float y) {
-    unsigned col = (x - WALL_WIDTH) / BRICK_WIDTH;
-    unsigned row = (y - WALL_WIDTH) / BRICK_HEIGHT;
+    unsigned col = (x - BG_WALL) / BRICK_SIZE.s;
+    unsigned row = (y - BG_WALL) / BRICK_SIZE.t;
     return col + row * BRICK_COLS;
 }
 
 // Check if any of the four corners of the ball hit a brick
-unsigned get_brick_hits(Sprite* bs, vec2s newpos,
-	unsigned brick_hits[VERT_COUNT]) {
-
+unsigned get_brick_hits(Sprite* s, vec2s newpos, unsigned brick_hits[VERT_COUNT]) {
     unsigned indices[VERT_COUNT];
     unsigned count = 0;
 
     // Is the ball within the brick area?
-    if (newpos.y < BG_WALL + BRICK_ROWS * BRICK_HEIGHT) {
+    if (newpos.y < BG_WALL + BRICK_ROWS * BRICK_SIZE.t) {
 	// Get the brick index for each corner of the ball
         indices[0] = get_brick_index(newpos.x, newpos.y);
-        indices[1] = get_brick_index(newpos.x + bs->size.x, newpos.y);
-        indices[2] = get_brick_index(newpos.x, newpos.y + s->size.y);
-        indices[3] = get_brick_index(newpos.x + bs->size.x, newpos.y + bs->size.y);
+        indices[1] = get_brick_index(newpos.x + s->size.s, newpos.y);
+        indices[2] = get_brick_index(newpos.x, newpos.y + s->size.t);
+        indices[3] = get_brick_index(newpos.x + s->size.s, newpos.y + s->size.t);
         for (unsigned i = 0; i < VERT_COUNT; i++) {
-            // Corners of the ball may evaluate to indices outside the boundary
             unsigned j = indices[i];
-            if (j < BRICK_ROWS * BRICK_COLS && bricks[j].isactive &&
-                    !bricks[j].isdestroyed) {
-                hitbricks[count++] = j;
+	    // Corners of ball may evaluate to indices outside ball area
+            if (j < BRICK_ROWS * BRICK_COLS) {
+		Brick* b = &sprites.bricks[j];
+		if (b->is_active && !b->is_destroyed) {
+		    brick_hits[count++] = j;
+		}
             }
         }
     }
@@ -438,9 +487,38 @@ unsigned get_brick_hits(Sprite* bs, vec2s newpos,
     return count;
 }
 
+// Find the distance to the closest brick and destroy it, if applicable
+vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]) {
+    float closest = FLT_MAX;
+    unsigned brick = 0;
+    vec2s dist_min = {};
+
+    for (unsigned i = 0; i < count; i++) {
+	Sprite* brick_sprite = &sprites.bricks[brick_hits[i]].sprite;
+        vec2s dist = get_aabb_dist(s, brick_sprite);
+        if (dist.s < closest && dist.s < dist.t) {
+            dist_min = dist;
+            closest  = dist.s;
+            brick    = i;
+        } else if (dist.t < closest) {
+            dist_min = dist;
+            closest  = dist.t;
+            brick    = i;
+        }
+    }
+
+    unsigned i = brick_hits[brick];
+    Brick* b = &sprites.bricks[i];
+    if (!b->is_solid) {
+        b->is_destroyed = true;
+    }
+
+    return dist_min;
+}
+
 void ball_move(Ball* b, Sprite* bs, double frame_time) {
-    Sprite* ps = &sprites.paddle.sprite;
-    vec2s vel = glms_vec2_scale(b->vel, BALL_SPEED * frame_time);
+    Sprite* ps   = &sprites.paddle.sprite;
+    vec2s vel    = glms_vec2_scale(b->vel, BALL_SPEED * frame_time);
     vec2s newpos = glms_vec2_add(bs->pos, vel);
 
     if (is_oob(bs, newpos)) {
@@ -455,8 +533,11 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
         unsigned brick_hits[VERT_COUNT];
         unsigned count = get_brick_hits(bs, newpos, brick_hits);
         if (count > 0) {
+#ifndef NDEBUG
+	    brick_print(count, brick_hits);
+#endif
             vec2s dist = get_brick_dist(bs, count, brick_hits);
-            bounce(s, vel, dist, false);
+            bounce(b, bs, vel, dist, false);
         } else {
 	    gfx_quad_set_pos(&bs->quad, newpos, bs->size);
         }
@@ -483,8 +564,9 @@ void game_update(double frame_time) {
 
 void level_render(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
-        if (sprites.bricks[i].is_active && !sprites.bricks[i].is_destroyed) {
-            gfx_render_quad(&sprites.render, &sprites.bricks[i].sprite.quad);
+	Brick* b = &sprites.bricks[i];
+        if (b->is_active && !b->is_destroyed) {
+            gfx_render_quad(&sprites.render, &b->sprite.quad);
         }
     }
 }

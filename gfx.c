@@ -33,8 +33,7 @@ typedef struct {
 #ifndef NDEBUG
 static bool   is_member(const unsigned array[], size_t size, unsigned value);
 static void GLAPIENTRY gl_debug_output(GLenum source, GLenum type, GLuint id,
-	GLenum severity, GLsizei length, const GLchar* message,
-	const void* userparam);
+    GLenum severity, GLsizei length, const GLchar* message, const void* userparam);
 #endif // !NDEBUG
 static GLint  shader_compile(GLenum type, const GLchar* src);
 static Shader shader_load(const char* vertex, const char* fragment);
@@ -76,11 +75,15 @@ bool is_member(const unsigned array[], size_t size, unsigned value) {
     return false;
 }
 
-void GLAPIENTRY gl_debug_output([[maybe_unused]] GLenum source,
-	[[maybe_unused]] GLenum type, GLuint id,
-	[[maybe_unused]] GLenum severity, [[maybe_unused]] GLsizei length,
-	const GLchar* message, [[maybe_unused]] const void* userparam) {
-
+void GLAPIENTRY gl_debug_output(
+    [[maybe_unused]] GLenum source,
+    [[maybe_unused]] GLenum type,
+    GLuint id,
+    [[maybe_unused]] GLenum severity,
+    [[maybe_unused]] GLsizei length,
+    const GLchar* message,
+    [[maybe_unused]] const void* userparam
+) {
     if (is_member(LOG_IGNORE, sizeof(LOG_IGNORE), id))
         return;
 
@@ -89,9 +92,7 @@ void GLAPIENTRY gl_debug_output([[maybe_unused]] GLenum source,
 
 #endif // !NDEBUG
 
-void show_log(GLuint object, PFNGLGETSHADERIVPROC proc_param,
-	PFNGLGETSHADERINFOLOGPROC proc_log) {
-
+void show_log(GLuint object, PFNGLGETSHADERIVPROC proc_param, PFNGLGETSHADERINFOLOGPROC proc_log) {
     GLint len;
     proc_param(object, GL_INFO_LOG_LENGTH, &len);
     if (len) {
@@ -170,8 +171,7 @@ void gfx_init(void) {
     if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 	glDebugMessageCallbackARB(gl_debug_output, NULL);
-	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
-		NULL, GL_TRUE);
+	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     }
 #endif // !NDEBUG
 
@@ -198,8 +198,9 @@ void gfx_resize(int width, int height) {
 Tex tex_load(const char* file) {
     int width, height, chan;
     void* data = stbi_load(file, &width, &height, &chan, 0);
-    if (!data)
+    if (!data) {
 	main_term(EXIT_FAILURE, "Could not texload image %s\n.", file);
+    }
 
     GLuint name;
     glGenTextures(1, &name);
@@ -211,8 +212,7 @@ Tex tex_load(const char* file) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA,
-	    GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     stbi_image_free(data);
 
@@ -230,13 +230,13 @@ void tex_unload(Tex tex) {
 Renderer gfx_render_create(size_t count, const char* file) {
     Renderer r;
     r.vert_max = count * VERT_COUNT;
-    size_t index_count = count * COUNT(quad_indices);
+    size_t qi_count = COUNT(quad_indices);
+    size_t index_count = count * qi_count;
 
     // Pre-calculate the entire index buffer
     r.indices = (GLushort*) malloc(sizeof(GLushort) * index_count);
     for (size_t i = 0; i < index_count; i++) {
-	r.indices[i] = i / COUNT(quad_indices) * VERT_COUNT +
-	    quad_indices[i % COUNT(quad_indices)];
+	r.indices[i] = i / qi_count * VERT_COUNT + quad_indices[i % qi_count];
     }
 
     glGenVertexArrays(1, &r.vao);
@@ -290,8 +290,8 @@ void flush(Renderer* r) {
 	    r->verts);
 
     glBindVertexArray(r->vao);
-    glDrawElements(GL_TRIANGLES, r->vert_count / VERT_COUNT *
-	    COUNT(quad_indices), GL_UNSIGNED_SHORT, 0);
+    GLsizei count = r->vert_count / VERT_COUNT * COUNT(quad_indices);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
 
     r->vert_count = 0;
 }

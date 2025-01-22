@@ -20,10 +20,8 @@
 // Function declarations
 static void error_callback(int err, const char* desc);
 static void init(void);
-static void key_callback(GLFWwindow* window, int key, int scancode, int action,
-			int mods);
-static void mouse_callback(GLFWwindow* window, int button, int action,
-	int mods);
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+static void mouse_callback(GLFWwindow* window, int button, int action, int mods);
 static void resize_callback(GLFWwindow* window, int width, int height);
 static void create_window(void);
 
@@ -76,9 +74,13 @@ void main_quit(void) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void key_callback([[maybe_unused]] GLFWwindow* window, int key,
-	[[maybe_unused]] int scancode, int action,
-	[[maybe_unused]] int mods) {
+void key_callback(
+    [[maybe_unused]] GLFWwindow* window,
+    int key,
+    [[maybe_unused]] int scancode,
+    int action,
+    [[maybe_unused]] int mods
+) {
     if (action == GLFW_PRESS) {
 	game_key_down(key);
     } else if (action == GLFW_RELEASE) {
@@ -96,8 +98,12 @@ void main_set_mouse_pos(vec2s pos) {
     glfwSetCursorPos(window, pos.x, pos.y);
 }
 
-void mouse_callback([[maybe_unused]] GLFWwindow* window, int button, int action,
-	[[maybe_unused]] int mods) {
+void mouse_callback(
+    [[maybe_unused]] GLFWwindow* window,
+    int button,
+    int action,
+    [[maybe_unused]] int mods
+) {
     if (action == GLFW_PRESS) {
 	game_button_down(button);
     } else if (action == GLFW_RELEASE) {
@@ -105,8 +111,7 @@ void mouse_callback([[maybe_unused]] GLFWwindow* window, int button, int action,
     }
 }
 
-void resize_callback([[maybe_unused]] GLFWwindow* window, int width,
-		    int height) {
+void resize_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
     if (!width || !height) {
 	is_minimised = true;
     } else {
@@ -134,8 +139,9 @@ void create_window(void) {
     glfwWindowHint(GLFW_BLUE_BITS, SCR_BLUE_BITS);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, NULL)))
+    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, NULL))) {
 	main_term(EXIT_FAILURE, NULL);
+    }
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (glfwRawMouseMotionSupported()) {
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
@@ -145,8 +151,9 @@ void create_window(void) {
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
-    if (!ver)
+    if (!ver) {
         main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
+    }
 
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_callback);

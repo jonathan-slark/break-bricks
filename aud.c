@@ -31,9 +31,9 @@ ma_sound* aud_sound_load(const char* file) {
     ma_sound* sound = (ma_sound*) malloc(sizeof(ma_sound));
 
     // Load and decode now to avoid overhead during game play
-    if (ma_sound_init_from_file(&engine, file, MA_SOUND_FLAG_DECODE |
-		MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION, NULL,
-		NULL, sound) != MA_SUCCESS) {
+    if (ma_sound_init_from_file(&engine, file,
+	    MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION,
+	    NULL, NULL, sound) != MA_SUCCESS) {
 	main_term(EXIT_FAILURE, "Unable to load sound %s.\n", file);
     }
 

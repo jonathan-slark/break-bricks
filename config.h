@@ -13,8 +13,7 @@ static const Button BUTTONS[] = {
 
 static const char     LEVEL_FOLDER[] = "level";
 static const unsigned LEVEL_COUNT    = 2;
-// How many times per frame to run collision resolution
-static const unsigned CR_COUNT = 2;
+static const unsigned CR_COUNT = 2; // How many times per frame to run collision resolution
 
 static const char     BG_FILE[] = "gfx/background.png";
 static const vec2s    BG_SIZE   = {{ 1920, 1080 }};
@@ -25,14 +24,10 @@ static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 
 static const vec2s PADDLE_SIZE       = {{ 126, 26 }};
 static const vec2s PADDLE_OFFSET     = {{ 384, 0 }};
-// Collision detection: the paddle is a pill shape
-static const vec2s PADDLE_CIRCLE1POS = {{ 13,  13 }};
-static const vec2s PADDLE_CIRCLE2POS = {{ 113, 13 }};
-static const vec2s PADDLE_AABB[]     = { {{ 13, 0 }}, {{ 113, 25 }} };
 
 static const vec2s    BALL_SIZE       = {{ 28, 28 }};
 static const vec2s    BALL_OFFSET     = {{ 510, 0 }};
-static const unsigned BALL_SPEED      = 750; // Pixesl per second
+static const unsigned BALL_SPEED      = 750;  // Pixels per second
 static const float    BALL_BOUNCE_STR = 1.5f; // Strength of deflect off paddle
 // Choose a random release vector for the ball
 static const vec2s    BALL_RELEASE[] = {
@@ -40,7 +35,7 @@ static const vec2s    BALL_RELEASE[] = {
     {{  0.5f, -0.5f }}
 };
 
-static const vec2s    BRICK_SIZE  = {{ 64,  32 }};
+static const vec2s    BRICK_SIZE  = {{ 64, 32 }};
 static const unsigned BRICK_COLS  = 29;
 static const unsigned BRICK_ROWS  = 12;
 static const unsigned BRICK_TYPES = 6; // Number of brick colours

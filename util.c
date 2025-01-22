@@ -9,24 +9,29 @@ static const char READONLY[] = "r";
 
 char* util_load(const char* file) {
     FILE* fp = fopen(file, READONLY);
-    if (!fp)
+    if (!fp) {
 	main_term(EXIT_FAILURE, "Could not open file %s.\n", file);
+    }
 
-    if (fseek(fp, 0L, SEEK_END) != 0)
+    if (fseek(fp, 0L, SEEK_END) != 0) {
 	main_term(EXIT_FAILURE, "Error on seeking file %s.\n", file);
+    }
     long l = ftell(fp);
-    if (l < 0)
+    if (l < 0) {
 	main_term(EXIT_FAILURE, "Error on getting size of file %s.\n", file);
+    }
     size_t size = (size_t) l;
     rewind(fp);
 
     char* src = (char*) malloc((size + 1) * sizeof(char));
-    if (fread(src, sizeof(char), size, fp) < size)
+    if (fread(src, sizeof(char), size, fp) < size) {
 	main_term(EXIT_FAILURE, "Error reading file %s.\n", file);
+    }
     src[size] = '\0';
 
-    if (fclose(fp) == EOF)
+    if (fclose(fp) == EOF) {
 	main_term(EXIT_FAILURE, "Error on closing file %s.\n", file);
+    }
 
     return src;
 }
