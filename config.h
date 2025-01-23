@@ -29,17 +29,16 @@ static const char* const AUD_MUSIC[] = {
     "music/HoliznaCC0 - Where It's Safe.mp3"
 };
 
-static const char     FONT_FILE[] = "font/JupiteroidRegular.ttf";
-static const unsigned FONT_HEIGHT = 64;
+static const char     FONT_FILE[]  = "font/JupiteroidRegular.ttf";
+static const unsigned FONT_HEIGHT  = 64;
+static const vec2s    SCORE_POS    = {{ 0, 0 }};
+static const vec3s    SCORE_COLOUR = {{ 1.0f, 1.0f, 1.0f }};
+static const char     SCORE_FMT[]  = "%06u";
 
 static const char     BG_FILE[] = "gfx/background.png";
 static const vec2s    BG_SIZE   = {{ 1920, 1080 }};
 static const vec2s    BG_OFFSET = {{ 0, 0 }};
 static const unsigned BG_WALL   = 32; // Walls left, top and right
-
-/*
- * Sprites
- */
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 
@@ -61,16 +60,16 @@ static const unsigned BRICK_COLS  = 29;
 static const unsigned BRICK_ROWS  = 12;
 static const unsigned BRICK_TYPES = 6; // Number of brick colours
 static const vec2s    BRICK_OFFSETS[] = {
-    {{ 0,   0  }}, // blue, breakable, id = 0
-    {{ 64,  0  }}, // green, breakable, id = 1
-    {{ 128, 0  }}, // orange, breakable, id = 2
-    {{ 192, 0  }}, // purple, breakable, id = 3
-    {{ 256, 0  }}, // red, breakable, id = 4
-    {{ 320, 0  }}, // yellow, breakable, id = 5
-    {{ 0,   32 }}, // blue, unbreakable, id = a
-    {{ 64,  32 }}, // green, unbreakable, id = b
+    {{ 0,   0  }}, // blue,   breakable,   id = 0
+    {{ 64,  0  }}, // green,  breakable,   id = 1
+    {{ 128, 0  }}, // orange, breakable,   id = 2
+    {{ 192, 0  }}, // purple, breakable,   id = 3
+    {{ 256, 0  }}, // red,    breakable,   id = 4
+    {{ 320, 0  }}, // yellow, breakable,   id = 5
+    {{ 0,   32 }}, // blue,   unbreakable, id = a
+    {{ 64,  32 }}, // green,  unbreakable, id = b
     {{ 128, 32 }}, // orange, unbreakable, id = c
     {{ 192, 32 }}, // purple, unbreakable, id = d
-    {{ 256, 32 }}, // red, unbreakable, id = e
+    {{ 256, 32 }}, // red,    unbreakable, id = e
     {{ 320, 32 }}  // yellow, unbreakable, id = f
 };

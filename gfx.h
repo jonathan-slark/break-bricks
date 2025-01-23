@@ -10,6 +10,14 @@
 #define IND_COUNT  2  // Number of indices per vertex
 #define VERT_COUNT 4  // Number of vertices per quad
 
+// Graphics subsystem
+
+void gfx_init(void);
+void gfx_term(void);
+void gfx_resize(int width, int height);
+
+// Quad renderer
+
 typedef struct {
     vec2s pos;
     vec2s tex_coord;
@@ -37,15 +45,6 @@ typedef struct {
     Tex tex;
 } Renderer;
 
-typedef struct {
-    Renderer render;
-    Quad*    quads;
-} Font;
-
-void     gfx_init(void);
-void     gfx_term(void);
-void     gfx_resize(int width, int height);
-
 Renderer gfx_render_create(size_t count, const char* file);
 void     gfx_render_delete(Renderer* r);
 void     gfx_render_begin(Renderer* r);
@@ -56,6 +55,22 @@ Quad     gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset);
 void     gfx_quad_set_pos(Quad* q, vec2s pos, vec2s size);
 void     gfx_quad_add_vec(Quad* q, vec2s v);
 
-Font     gfx_font_create(unsigned height, const char* file);
-void     gfx_font_printf(Font* f, const char* fmt, ...);
-void     gfx_font_delete(Font* f);
+// Font renderer
+
+typedef struct {
+    vec2s size;
+    vec2s offset;
+    float xadvance;
+    Quad quad;
+} Glyph;
+
+typedef struct {
+    Renderer render;
+    Glyph*   glyphs;
+} Font;
+
+Font gfx_font_create(unsigned height, const char* file);
+void gfx_font_delete(Font* f);
+void gfx_font_begin(Font* f);
+void gfx_font_printf(Font* f, vec2s pos, vec3s colour, const char* fmt, ...);
+void gfx_font_end(Font* f);

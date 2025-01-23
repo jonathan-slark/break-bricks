@@ -1,6 +1,8 @@
 /*
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
+ * TODO: keep track of current shader to minimise state changes
+ * TODO: shaders have different uniforms
  */
 
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
@@ -11,6 +13,7 @@
 #endif // !NDEBUG
 #define STB_RECT_PACK_IMPLEMENTATION
 #define STB_TRUETYPE_IMPLEMENTATION
+#define STBTT_STATIC
 #include <cglm/struct.h>
 #include <glad.h>
 #include <stb/stb_image.h>
@@ -36,6 +39,7 @@ typedef struct {
     GLuint program;
     GLint  loc_proj;
     GLint  loc_tex;
+    GLint  loc_col;
 } Shader;
 
 // Function prototypes
@@ -50,6 +54,7 @@ static void   shader_unload(Shader shader);
 static void   shader_use(Shader shader);
 static void   shader_set_proj(Shader shader, mat4s proj);
 static void   shader_set_tex(Shader shader, GLint tex);
+static void   shader_set_colour(Shader shader, vec3s colour);
 static Tex    tex_load(const char* file);
 static void   tex_unload(Tex tex);
 static void   flush(Renderer* r);
@@ -60,14 +65,20 @@ static const unsigned LOG_IGNORE[] = {
     131185, // Buffer info
 };
 #endif // !NDEBUG
-static const char   SHADER_VERT[]    = "shader/quad_vert.glsl";
-static const char   SHADER_FRAG[]    = "shader/quad_frag.glsl";
-static const GLchar UNIFORM_PROJ[]   = "proj";
-static const GLchar UNIFORM_TEX[]    = "tex";
-static const GLushort quad_indices[] = { 0, 1, 2, 0, 2, 3 };
+static const char     SHADER_QUAD_VERT[] = "shader/quad_vert.glsl";
+static const char     SHADER_QUAD_FRAG[] = "shader/quad_frag.glsl";
+static const char     SHADER_FONT_FRAG[] = "shader/font_frag.glsl";
+static const GLchar   UNIFORM_PROJ[]     = "proj";
+static const GLchar   UNIFORM_TEX[]      = "tex";
+static const GLchar   UNIFORM_COL[]   = "col";
+static const GLushort QUAD_INDICES[]     = { 0, 1, 2, 0, 2, 3 };
+static const unsigned ASCII_FIRST        = 32;
+static const unsigned ASCII_LAST         = 126;
+static const unsigned ASCII_COUNT        = ASCII_LAST + 1 - ASCII_FIRST;
+static const unsigned FONT_QUAD_COUNT    = 100; // Max amount of letter quads
 
 // Variables
-Shader shader;
+Shader shader_quad, shader_font;
 GLenum unit = 0;
 
 // Function declarations
@@ -153,7 +164,8 @@ Shader shader_load(const char* vertex, const char* fragment) {
     return (Shader) {
 	.program  = program,
 	.loc_proj = glGetUniformLocation(program, UNIFORM_PROJ),
-	.loc_tex  = glGetUniformLocation(program, UNIFORM_TEX)
+	.loc_tex  = glGetUniformLocation(program, UNIFORM_TEX),
+	.loc_col  = glGetUniformLocation(program, UNIFORM_COL)
     };
 }
 
@@ -173,6 +185,10 @@ void shader_set_tex(Shader shader, GLint tex) {
     glUniform1i(shader.loc_tex, tex);
 }
 
+void shader_set_colour(Shader shader, vec3s col) {
+    glUniform3f(shader.loc_col, col.r, col.g, col.b);
+}
+
 void gfx_init(void) {
 #ifndef NDEBUG
     int flags;
@@ -187,13 +203,13 @@ void gfx_init(void) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    shader = shader_load(SHADER_VERT, SHADER_FRAG);
-    shader_use(shader);
+    shader_quad = shader_load(SHADER_QUAD_VERT, SHADER_QUAD_FRAG);
+    shader_font = shader_load(SHADER_QUAD_VERT, SHADER_FONT_FRAG); // Uses same vert shader
     gfx_resize(SCR_WIDTH, SCR_HEIGHT);
 }
 
 void gfx_term(void) {
-    shader_unload(shader);
+    shader_unload(shader_quad);
 }
 
 void gfx_resize(int width, int height) {
@@ -201,7 +217,10 @@ void gfx_resize(int width, int height) {
 
     // Using origin top left to match coords typically used with images
     mat4s proj = glms_ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-    shader_set_proj(shader, proj);
+    shader_use(shader_quad);
+    shader_set_proj(shader_quad, proj);
+    shader_use(shader_font);
+    shader_set_proj(shader_font, proj);
 }
 
 Tex tex_load(const char* file) {
@@ -236,16 +255,16 @@ void tex_unload(Tex tex) {
     glDeleteTextures(1, &tex.name);
 }
 
-Renderer gfx_render_create(size_t count, const char* file) {
+Renderer render_create(size_t count) {
     Renderer r;
     r.vert_max = count * VERT_COUNT;
-    size_t qi_count = COUNT(quad_indices);
+    size_t qi_count = COUNT(QUAD_INDICES);
     size_t index_count = count * qi_count;
 
     // Pre-calculate the entire index buffer
     r.indices = (GLushort*) malloc(sizeof(GLushort) * index_count);
     for (size_t i = 0; i < index_count; i++) {
-	r.indices[i] = i / qi_count * VERT_COUNT + quad_indices[i % qi_count];
+	r.indices[i] = i / qi_count * VERT_COUNT + QUAD_INDICES[i % qi_count];
     }
 
     glGenVertexArrays(1, &r.vao);
@@ -271,8 +290,13 @@ Renderer gfx_render_create(size_t count, const char* file) {
 
     r.vert_count = 0;
     r.verts = (Vert*) malloc(sizeof(Vert) * r.vert_max);
-    r.tex = tex_load(file);
 
+    return r;
+}
+
+Renderer gfx_render_create(size_t count, const char* file) {
+    Renderer r = render_create(count);
+    r.tex = tex_load(file);
     return r;
 }
 
@@ -286,7 +310,8 @@ void gfx_render_delete(Renderer* r) {
 }
 
 void gfx_render_begin(Renderer* r) {
-    shader_set_tex(shader, r->tex.unit);
+    shader_use(shader_quad);
+    shader_set_tex(shader_quad, r->tex.unit);
 }
 
 void flush(Renderer* r) {
@@ -299,7 +324,7 @@ void flush(Renderer* r) {
 	    r->verts);
 
     glBindVertexArray(r->vao);
-    GLsizei count = r->vert_count / VERT_COUNT * COUNT(quad_indices);
+    GLsizei count = r->vert_count / VERT_COUNT * COUNT(QUAD_INDICES);
     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
 
     r->vert_count = 0;
@@ -359,10 +384,6 @@ void gfx_quad_add_vec(Quad* q, vec2s v) {
     }
 }
 
-static const unsigned ASCII_FIRST = 32;
-static const unsigned ASCII_LAST  = 126;
-static const unsigned ASCII_COUNT = ASCII_LAST + 1 - ASCII_FIRST;
-
 Font gfx_font_create(unsigned height, const char* file) {
     unsigned char* data = (unsigned char*) util_load(file, READ_ONLY_BIN);
     if (stbtt_GetNumberOfFonts(data) < 0) {
@@ -404,17 +425,67 @@ Font gfx_font_create(unsigned height, const char* file) {
     free(bitmap);
 
     Font f;
-    Tex t = (Tex) {
+    f.render = render_create(FONT_QUAD_COUNT);
+    f.render.tex = (Tex) {
 	.name = name,
 	.unit = unit++,
 	.size = {{ SCR_WIDTH, SCR_HEIGHT }}
     };
 
+    // Convert to our glyph/quad system
+    f.glyphs = (Glyph*) malloc(ASCII_COUNT * sizeof(Glyph));
+    for (unsigned i = 0; i < ASCII_COUNT; i++) {
+	float x1 = 0.0f;
+	float y1 = 0.0f;
+	float x2 = chars[i].x1 - chars[i].x0;
+	float y2 = chars[i].y1 - chars[i].y0;
+	float u1 = quads[i].s0;
+	float v1 = quads[i].t0;
+	float u2 = quads[i].s1;
+	float v2 = quads[i].t1;
+	f.glyphs[i].quad = (Quad) {
+	    {
+		{ {{ x1, y1 }}, {{ u1, v1 }} },
+		{ {{ x2, y1 }}, {{ u2, v1 }} },
+		{ {{ x2, y2 }}, {{ u2, v2 }} },
+		{ {{ x1, y2 }}, {{ u1, v2 }} }
+	    }
+	};
+
+	f.glyphs[i].size     = (vec2s) {{ x2, y2 }};
+	f.glyphs[i].offset   = (vec2s) {{ chars[i].xoff, chars[i].yoff }};
+	f.glyphs[i].xadvance = chars[i].xadvance;
+    };
+
     return f;
 }
 
-void gfx_font_printf(Font* f, const char* fmt, ...) {
+void gfx_font_delete(Font* f) {
+    if (f->glyphs) free(f->glyphs);
+    gfx_render_delete(&f->render);
 }
 
-void gfx_font_delete(Font* f) {
+void gfx_font_begin(Font* f) {
+    shader_use(shader_font);
+    shader_set_tex(shader_font, f->render.tex.unit);
+}
+
+void gfx_font_printf(Font* f, [[maybe_unused]] vec2s pos, vec3s colour, [[maybe_unused]] const char* fmt, ...) {
+    char test[] = "The quick brown fox jumped over the lazy dog.";
+    shader_set_colour(shader_font, colour);
+
+    for (unsigned i = 0; i < sizeof test - 1; i++) {
+	Glyph *g = &f->glyphs[test[i] - ASCII_FIRST];
+	vec2s glyph_pos = (vec2s) {{
+	    pos.x + g->offset.x,
+	    pos.y + g->offset.y + 40
+	}};
+	gfx_quad_set_pos(&g->quad, glyph_pos, g->size);
+	gfx_render_quad(&f->render, &g->quad);
+	pos.x += g->xadvance;
+    }
+}
+
+void gfx_font_end(Font* f) {
+    flush(&f->render);
 }

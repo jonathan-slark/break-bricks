@@ -107,7 +107,7 @@ static void ball_move(Ball* b, Sprite* s, double frame_time);
 #include "config.h"
 
 // Constants
-static const unsigned sprite_count = 200;
+static const unsigned SPRITE_COUNT = 200;
 
 // Variables
 static Screen bg;
@@ -116,6 +116,8 @@ static unsigned level = 1, track = 0;
 static ma_sound** sounds;
 static ma_sound** music;
 static ma_sound* playing;
+static Font font;
+static unsigned score = 0;
 
 // Function implementations
 
@@ -259,10 +261,12 @@ void game_load(void) {
     bg.render = gfx_render_create(1, BG_FILE);
     bg.quad   = gfx_quad_create(&bg.render, BG_OFFSET, BG_SIZE, BG_OFFSET);
 
-    sprites.render = gfx_render_create(sprite_count, SPRITE_SHEET);
+    sprites.render = gfx_render_create(SPRITE_COUNT, SPRITE_SHEET);
     paddle_init(&sprites.paddle.sprite);
     ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
     level_load(level);
+
+    font = gfx_font_create(FONT_HEIGHT, FONT_FILE);
 
     aud_init(AUD_VOL);
     sounds = (ma_sound**) malloc(SoundCount * sizeof(ma_sound*));
@@ -271,8 +275,6 @@ void game_load(void) {
     sounds[SoundWin]   = aud_sound_load(AUD_WIN);
     //music_load();
     playing = aud_sound_play(AUD_MUSIC[track]);
-
-    gfx_font_create(FONT_HEIGHT, FONT_FILE);
 
     state = StateRun;
 }
@@ -307,6 +309,7 @@ void game_unload(void) {
     }
     aud_term();
 
+    gfx_font_delete(&font);
     level_unload();
     gfx_render_delete(&sprites.render);
     gfx_render_delete(&bg.render);
@@ -572,7 +575,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
         unsigned count = get_brick_hits(bs, newpos, brick_hits);
         if (count > 0) {
 #ifndef NDEBUG
-	    brick_print(count, brick_hits);
+	    //brick_print(count, brick_hits);
 #endif
             vec2s dist = get_brick_dist(bs, count, brick_hits);
             bounce(b, bs, vel, dist, false);
@@ -639,4 +642,8 @@ void game_render(void) {
     gfx_render_quad(&sprites.render, &sprites.paddle.sprite.quad);
     gfx_render_quad(&sprites.render, &sprites.ball.sprite.quad);
     gfx_render_end(&sprites.render);
+
+    gfx_font_begin(&font);
+    gfx_font_printf(&font, SCORE_POS, SCORE_COLOUR, SCORE_FMT, score);
+    gfx_font_end(&font);
 }
