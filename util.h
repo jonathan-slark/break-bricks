@@ -8,5 +8,8 @@
 #define MAX(x, y)          ((x) > (y) ? (x) : (y))
 #define MIN(x, y)          ((x) < (y) ? (x) : (y))
 
-char* util_load(const char* file);
+static const char READ_ONLY_TEXT[] = "r";
+static const char READ_ONLY_BIN[]  = "rb";
+
+char* util_load(const char* file, const char* mode);
 void  util_unload(char* data);

@@ -5,10 +5,9 @@
 #include "main.h"
 #include "util.h"
 
-static const char READONLY[] = "r";
-
-char* util_load(const char* file) {
-    FILE* fp = fopen(file, READONLY);
+// Have separate char and uint8_t loaders?
+char* util_load(const char* file, const char* mode) {
+    FILE* fp = fopen(file, mode);
     if (!fp) {
 	main_term(EXIT_FAILURE, "Could not open file %s.\n", file);
     }

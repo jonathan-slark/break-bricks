@@ -232,7 +232,7 @@ void level_load(unsigned num) {
     int sz = snprintf(NULL, 0, fmt, LEVEL_FOLDER, num);
     char file[sz + 1];
     snprintf(file, sizeof file, fmt, LEVEL_FOLDER, num);
-    char* data = util_load(file);
+    char* data = util_load(file, READ_ONLY_TEXT);
 
     sprites.bricks = (Brick*) malloc(BRICK_COLS * BRICK_ROWS * sizeof(Brick));
     level_read(data);
@@ -269,8 +269,10 @@ void game_load(void) {
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
     sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
     sounds[SoundWin]   = aud_sound_load(AUD_WIN);
-    music_load();
+    //music_load();
     playing = aud_sound_play(AUD_MUSIC[track]);
+
+    gfx_font_create(FONT_HEIGHT, FONT_FILE);
 
     state = StateRun;
 }

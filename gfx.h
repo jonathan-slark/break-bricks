@@ -37,6 +37,11 @@ typedef struct {
     Tex tex;
 } Renderer;
 
+typedef struct {
+    Renderer render;
+    Quad*    quads;
+} Font;
+
 void     gfx_init(void);
 void     gfx_term(void);
 void     gfx_resize(int width, int height);
@@ -50,3 +55,7 @@ void     gfx_render_end(Renderer* r);
 Quad     gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset);
 void     gfx_quad_set_pos(Quad* q, vec2s pos, vec2s size);
 void     gfx_quad_add_vec(Quad* q, vec2s v);
+
+Font     gfx_font_create(unsigned height, const char* file);
+void     gfx_font_printf(Font* f, const char* fmt, ...);
+void     gfx_font_delete(Font* f);

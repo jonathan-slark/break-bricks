@@ -29,10 +29,17 @@ static const char* const AUD_MUSIC[] = {
     "music/HoliznaCC0 - Where It's Safe.mp3"
 };
 
+static const char     FONT_FILE[] = "font/JupiteroidRegular.ttf";
+static const unsigned FONT_HEIGHT = 64;
+
 static const char     BG_FILE[] = "gfx/background.png";
 static const vec2s    BG_SIZE   = {{ 1920, 1080 }};
 static const vec2s    BG_OFFSET = {{ 0, 0 }};
 static const unsigned BG_WALL   = 32; // Walls left, top and right
+
+/*
+ * Sprites
+ */
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 

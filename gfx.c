@@ -6,9 +6,19 @@
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
+#ifndef NDEBUG
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif // !NDEBUG
+#define STB_RECT_PACK_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
 #include <cglm/struct.h>
 #include <glad.h>
 #include <stb/stb_image.h>
+#ifndef NDEBUG
+#include <stb/stb_image_write.h>
+#endif // !NDEBUG
+#include <stb/stb_rect_pack.h>
+#include <stb/stb_truetype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,8 +128,8 @@ GLint shader_compile(GLenum type, const GLchar* src) {
 }
 
 Shader shader_load(const char* vertex, const char* fragment) {
-    GLchar* vsrc = (GLchar*) util_load(vertex);
-    GLchar* fsrc = (GLchar*) util_load(fragment);
+    GLchar* vsrc = (GLchar*) util_load(vertex, READ_ONLY_TEXT);
+    GLchar* fsrc = (GLchar*) util_load(fragment, READ_ONLY_TEXT);
     GLuint v = shader_compile(GL_VERTEX_SHADER, vsrc);
     GLuint f = shader_compile(GL_FRAGMENT_SHADER, fsrc);
     util_unload(vsrc);
@@ -347,4 +357,64 @@ void gfx_quad_add_vec(Quad* q, vec2s v) {
     for (size_t i = 0; i < VERT_COUNT; i++) {
 	q->verts[i].pos = glms_vec2_add(q->verts[i].pos, v);
     }
+}
+
+static const unsigned ASCII_FIRST = 32;
+static const unsigned ASCII_LAST  = 126;
+static const unsigned ASCII_COUNT = ASCII_LAST + 1 - ASCII_FIRST;
+
+Font gfx_font_create(unsigned height, const char* file) {
+    unsigned char* data = (unsigned char*) util_load(file, READ_ONLY_BIN);
+    if (stbtt_GetNumberOfFonts(data) < 0) {
+	main_term(EXIT_FAILURE, "Loaded font does not contain valid data:\n%s\n", file);
+    }
+
+    unsigned char* bitmap = (unsigned char*) malloc(SCR_WIDTH * SCR_HEIGHT * sizeof(unsigned char));
+
+    stbtt_packedchar   chars[ASCII_COUNT];
+    stbtt_aligned_quad quads[ASCII_COUNT];
+    stbtt_pack_context ctx;
+    if (!stbtt_PackBegin(&ctx, bitmap, SCR_WIDTH, SCR_HEIGHT, 0, 1, NULL)) {
+	main_term(EXIT_FAILURE, "stbtt_PackBegin failed.\n");
+    }
+    stbtt_PackFontRange(&ctx, data, 0, height, ASCII_FIRST, ASCII_COUNT, chars);
+    stbtt_PackEnd(&ctx);
+
+    util_unload((char*) data);
+
+    for (unsigned i = 0; i < ASCII_COUNT; i++) {
+	float x = 0.0f, y = 0.0f;
+	stbtt_GetPackedQuad(chars, SCR_WIDTH, SCR_HEIGHT, i, &x, &y, &quads[i], 0);
+    }
+
+#ifndef NDEBUG
+    stbi_write_png("font.png", SCR_WIDTH, SCR_HEIGHT, 1, (void*) bitmap, SCR_WIDTH);
+#endif // !NDEBUG
+
+    GLuint name;
+    glGenTextures(1, &name);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, name);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+
+    free(bitmap);
+
+    Font f;
+    Tex t = (Tex) {
+	.name = name,
+	.unit = unit++,
+	.size = {{ SCR_WIDTH, SCR_HEIGHT }}
+    };
+
+    return f;
+}
+
+void gfx_font_printf(Font* f, const char* fmt, ...) {
+}
+
+void gfx_font_delete(Font* f) {
 }
