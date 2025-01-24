@@ -424,13 +424,19 @@ void gfx_font_begin(Font* f) {
     shader_set_tex(shader_font, f->render.tex.unit);
 }
 
-void gfx_font_printf(Font* f, vec2s pos, vec3s colour, [[maybe_unused]] const char* fmt, ...) {
-    char test[] = "The quick brown fox jumped over the lazy dog.";
-    shader_set_colour(shader_font, colour);
+void gfx_font_printf(Font* f, vec2s pos, vec3s colour, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int sz = vsnprintf(NULL, 0, fmt, ap);
+    char text[sz + 1];
+    vsnprintf(text, sizeof text, fmt, ap);
+    va_end(ap);
 
-    for (unsigned i = 0; i < sizeof test - 1; i++) {
+    shader_set_colour(shader_font, colour);
+    for (unsigned i = 0; i < sizeof text - 1; i++) {
 	stbtt_aligned_quad quad;
-	stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, test[i] - ASCII_FIRST, &pos.x, &pos.y, &quad, 0);
+	int j = text[i] - ASCII_FIRST;
+	stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, j, &pos.x, &pos.y, &quad, 0);
 	float x1 = quad.x0; float y1 = quad.y0;
 	float u1 = quad.s0; float v1 = quad.t0;
 	float x2 = quad.x1; float y2 = quad.y1;
