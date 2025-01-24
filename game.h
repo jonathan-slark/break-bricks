@@ -3,6 +3,7 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+void game_loading(void);
 void game_load(void);
 void game_unload(void);
 void game_key_down(int key);

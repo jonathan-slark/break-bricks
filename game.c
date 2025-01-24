@@ -2,6 +2,7 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
+ * TODO: Ball can get stuck in corner.
  */
 
 #define CGLM_PRINT_COLOR       ""
@@ -28,7 +29,7 @@
 // Types
 
 enum { SoundBrick, SoundDeath, SoundWin, SoundCount };
-enum { StateMenu, StateRun, StatePause, StateWon } state = StateRun;
+enum { StateLoading, StateMenu, StateRun, StatePause, StateWon } state = StateLoading;
 
 typedef struct {
     int key;
@@ -78,6 +79,12 @@ typedef struct {
     Renderer render;
 } Sprites;
 
+typedef struct {
+    vec2s pos;
+    vec3s col;
+    char* fmt;
+} Text;
+
 // Function prototypes
 
 static void paddle_init(Sprite* ps);
@@ -90,7 +97,7 @@ static void level_reset(void);
 static void quit(void);
 static void pause(void);
 static unsigned random(unsigned min, unsigned max);
-static void ball_release(void);
+static void click(void);
 static vec2s get_wall_dist(Sprite* s);
 static void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle);
 static bool is_wall_hit(Sprite* s, vec2s newpos);
@@ -110,7 +117,7 @@ static void ball_move(Ball* b, Sprite* s, double frame_time);
 static const unsigned SPRITE_COUNT = 200;
 
 // Variables
-static Screen bg;
+static Screen loading, bg;
 static Sprites sprites;
 static unsigned level = 1, track = 0;
 static ma_sound** sounds;
@@ -191,8 +198,8 @@ void brick_init(Brick* b, char id, unsigned col, unsigned row) {
     b->is_destroyed = false;
 
     vec2s pos = {{
-        BG_WALL + col * BRICK_SIZE.s,
-        BG_WALL + row * BRICK_SIZE.t
+        BG_WALL_LEFT + col * BRICK_SIZE.s,
+        BG_WALL_TOP + row * BRICK_SIZE.t
     }};
     b->sprite.quad = gfx_quad_create(&sprites.render, pos, BRICK_SIZE, BRICK_OFFSETS[i]);
     b->sprite.size = BRICK_SIZE;
@@ -246,8 +253,18 @@ void music_load() {
     size_t count = COUNT(AUD_MUSIC);
     music = (ma_sound**) malloc(count * sizeof(ma_sound*));
     for (size_t i = 0; i < count; i++) {
-	aud_sound_load(AUD_MUSIC[i]);
+	music[i] = aud_sound_load(AUD_MUSIC[i]);
     }
+}
+
+// Do the minimum required to get a loading screen
+void game_loading(void) {
+    gfx_init();
+
+    vec2s pos = (vec2s) {{ 0, 0 }};
+    vec2s size = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
+    loading.render = gfx_render_create(1, LOADING_FILE);
+    loading.quad   = gfx_quad_create(&loading.render, pos, size, pos);
 }
 
 void game_load(void) {
@@ -255,8 +272,6 @@ void game_load(void) {
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
-
-    gfx_init();
 
     bg.render = gfx_render_create(1, BG_FILE);
     bg.quad   = gfx_quad_create(&bg.render, BG_OFFSET, BG_SIZE, BG_OFFSET);
@@ -273,10 +288,10 @@ void game_load(void) {
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
     sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
     sounds[SoundWin]   = aud_sound_load(AUD_WIN);
-    //music_load();
+    music_load();
     playing = aud_sound_play(AUD_MUSIC[track]);
 
-    state = StateRun;
+    state = StateMenu;
 }
 
 void level_unload(void) {
@@ -312,7 +327,7 @@ void game_unload(void) {
     gfx_font_delete(&font);
     level_unload();
     gfx_render_delete(&sprites.render);
-    gfx_render_delete(&bg.render);
+    gfx_render_delete(&loading.render);
     gfx_term();
 }
 
@@ -350,14 +365,23 @@ unsigned random(unsigned min, unsigned max) {
     return roundf(min + ((float) rand()) / RAND_MAX * (max - min));
 }
 
-void ball_release(void) {
-    Ball* b = &sprites.ball;
+void click(void) {
+    switch (state) {
+    case StateMenu:
+	state = StateRun;
+	break;
+    case StateRun:
+	Ball* b = &sprites.ball;
 
-    if (b->is_stuck) {
-        b->vel = BALL_RELEASE[random(0, COUNT(BALL_RELEASE) - 1)];
-        b->vel = glms_vec2_normalize(b->vel);
+	if (b->is_stuck) {
+	    b->vel = BALL_RELEASE[random(0, COUNT(BALL_RELEASE) - 1)];
+	    b->vel = glms_vec2_normalize(b->vel);
 
-        b->is_stuck = false;
+	    b->is_stuck = false;
+	}
+	break;
+    default:
+	// VOID
     }
 }
 
@@ -382,8 +406,8 @@ void game_input([[maybe_unused]] double frame_time) {
 	vec2s mouse_pos = main_get_mouse_pos();
 	mouse_pos.x = CLAMP(
 		mouse_pos.x,
-		BG_WALL,
-		SCR_WIDTH - ps->size.s - BG_WALL
+		BG_WALL_LEFT,
+		SCR_WIDTH - ps->size.s - BG_WALL_RIGHT
 	);
 	vec2s newpos = (vec2s) {{
 	    mouse_pos.x,
@@ -408,9 +432,9 @@ void game_input([[maybe_unused]] double frame_time) {
 }
 
 vec2s get_wall_dist(Sprite* s) {
-    float left  = s->pos.x - BG_WALL;
-    float right = SCR_WIDTH - BG_WALL - s->size.s - s->pos.x;
-    float top   = s->pos.y - BG_WALL;
+    float left  = s->pos.x - BG_WALL_LEFT;
+    float right = SCR_WIDTH - BG_WALL_RIGHT - s->size.s - s->pos.x;
+    float top   = s->pos.y - BG_WALL_TOP;
     return (vec2s) {{
 	left < right ? left : right,
 	top
@@ -451,9 +475,9 @@ void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle) {
 }
 
 bool is_wall_hit(Sprite* s, vec2s newpos) {
-    return newpos.x < BG_WALL ||
-           newpos.x > SCR_WIDTH - BG_WALL - s->size.s ||
-           newpos.y < BG_WALL;
+    return newpos.x < BG_WALL_LEFT ||
+           newpos.x > SCR_WIDTH - BG_WALL_RIGHT - s->size.s ||
+           newpos.y < BG_WALL_TOP;
 }
 
 bool is_oob(Sprite* s, vec2s newpos) {
@@ -494,8 +518,8 @@ vec2s get_aabb_dist(Sprite* s1, Sprite* s2) {
 
 // Bricks are in a grid and don't move so we can get the index from a position
 unsigned get_brick_index(float x, float y) {
-    unsigned col = (x - BG_WALL) / BRICK_SIZE.s;
-    unsigned row = (y - BG_WALL) / BRICK_SIZE.t;
+    unsigned col = (x - BG_WALL_LEFT) / BRICK_SIZE.s;
+    unsigned row = (y - BG_WALL_TOP) / BRICK_SIZE.t;
     return col + row * BRICK_COLS;
 }
 
@@ -505,7 +529,7 @@ unsigned get_brick_hits(Sprite* s, vec2s newpos, unsigned brick_hits[VERT_COUNT]
     unsigned count = 0;
 
     // Is the ball within the brick area?
-    if (newpos.y < BG_WALL + BRICK_ROWS * BRICK_SIZE.t) {
+    if (newpos.y < BG_WALL_TOP + BRICK_ROWS * BRICK_SIZE.t) {
 	// Get the brick index for each corner of the ball
         indices[0] = get_brick_index(newpos.x, newpos.y);
         indices[1] = get_brick_index(newpos.x + s->size.s, newpos.y);
@@ -632,7 +656,13 @@ void level_render(void) {
     }
 }
 
-void game_render(void) {
+void screen_loading() {
+    gfx_render_begin(&loading.render);
+    gfx_render_quad(&loading.render, &loading.quad);
+    gfx_render_end(&loading.render);
+}
+
+void screen_game() {
     gfx_render_begin(&bg.render);
     gfx_render_quad(&bg.render, &bg.quad);
     gfx_render_end(&bg.render);
@@ -644,6 +674,31 @@ void game_render(void) {
     gfx_render_end(&sprites.render);
 
     gfx_font_begin(&font);
-    gfx_font_printf(&font, SCORE_POS, SCORE_COLOUR, SCORE_FMT, score);
+    gfx_font_printf(&font, TEXT_SCORE.pos, TEXT_SCORE.col, TEXT_SCORE.fmt, score);
     gfx_font_end(&font);
+}
+
+void game_render(void) {
+    switch(state) {
+    case StateLoading:
+	screen_loading();
+	break;
+    case StateMenu:
+	screen_loading();
+
+	gfx_font_begin(&font);
+	gfx_font_printf(&font, TEXT_MENU.pos, TEXT_MENU.col, TEXT_MENU.fmt);
+	gfx_font_end(&font);
+	break;
+    case StatePause:
+	screen_game();
+
+	gfx_font_begin(&font);
+	gfx_font_printf(&font, TEXT_PAUSED.pos, TEXT_PAUSED.col, TEXT_PAUSED.fmt);
+	gfx_font_end(&font);
+	break;
+    default:
+	screen_game();
+	break;
+    }
 }

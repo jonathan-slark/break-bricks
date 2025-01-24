@@ -8,14 +8,21 @@ static const Key KEYS[] = {
     { GLFW_KEY_SPACE, pause }
 };
 static const Button BUTTONS[] = {
-    { GLFW_MOUSE_BUTTON_LEFT, ball_release }
+    { GLFW_MOUSE_BUTTON_LEFT, click }
 };
 
+static const char     LOADING_FILE[] = "gfx/loading.png";
 static const char     LEVEL_FOLDER[] = "level";
 static const unsigned LEVEL_COUNT    = 2;
 static const unsigned CR_COUNT = 2; // How many times per frame to run collision resolution
 
-static const float       AUD_VOL     = 0.2; // Volume 0 - 1
+static const char     FONT_FILE[]  = "font/JupiteroidRegular.ttf";
+static const unsigned FONT_HEIGHT  = 64;
+static const Text     TEXT_SCORE   = { {{ 1750, 56 }},  {{ 1.0f, 1.0f, 1.0f }}, "%05u" };
+static const Text     TEXT_PAUSED  = { {{ 880, 600 }},  {{ 1.0f, 1.0f, 1.0f }}, "Paused" };
+static const Text     TEXT_MENU    = { {{ 600, 1000 }}, {{ 1.0f, 1.0f, 1.0f }}, "Click mouse button to continue." };
+
+static const float       AUD_VOL     = 0.1; // Volume 0 - 1
 static const char        AUD_BRICK[] = "sfx/brick.wav";
 static const char        AUD_DEATH[] = "sfx/death.wav";
 static const char        AUD_WIN[]   = "sfx/win.wav";
@@ -29,16 +36,12 @@ static const char* const AUD_MUSIC[] = {
     "music/HoliznaCC0 - Where It's Safe.mp3"
 };
 
-static const char     FONT_FILE[]  = "font/JupiteroidRegular.ttf";
-static const unsigned FONT_HEIGHT  = 64;
-static const vec2s    SCORE_POS    = {{ 0, 40 }};
-static const vec3s    SCORE_COLOUR = {{ 1.0f, 1.0f, 1.0f }};
-static const char     SCORE_FMT[]  = "%06u";
-
-static const char     BG_FILE[] = "gfx/background.png";
-static const vec2s    BG_SIZE   = {{ 1920, 1080 }};
-static const vec2s    BG_OFFSET = {{ 0, 0 }};
-static const unsigned BG_WALL   = 32; // Walls left, top and right
+static const char     BG_FILE[]      = "gfx/background.png";
+static const vec2s    BG_SIZE        = {{ 1920, 1080 }};
+static const vec2s    BG_OFFSET      = {{ 0, 0 }};
+static const unsigned BG_WALL_TOP    = 72;
+static const unsigned BG_WALL_LEFT   = 32;
+static const unsigned BG_WALL_RIGHT  = 32;
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 

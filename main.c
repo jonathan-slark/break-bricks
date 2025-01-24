@@ -164,6 +164,12 @@ void create_window(void) {
 int main(void) {
     init();
     create_window();
+
+    // Render one frame: the loading screen
+    game_loading();
+    game_render();
+    glfwSwapBuffers(window);
+
     game_load();
 
     double last_time = 0.0f;

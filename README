@@ -80,6 +80,8 @@ MIT No Attribution:
 <https://github.com/aws/mit-0>
 
 stb_image.h
+stb_rect_pack.h
+stb_truetype.h
 <https://github.com/nothings/stb>
 Public Doman:
 <https://github.com/nothings/stb/blob/master/LICENSE>
@@ -101,6 +103,11 @@ CC0 License:
 
 Astroids by HoliznaCC0:
 <https://freemusicarchive.org/music/holiznacc0/tiny-plastic-video-games-for-long-anxious-space-travel/astroids/>
+CC0 License:
+<https://creativecommons.org/publicdomain/zero/1.0/>
+
+Jupiteroid Font
+<https://ggbot.itch.io/jupiteroid-font>
 CC0 License:
 <https://creativecommons.org/publicdomain/zero/1.0/>
 
