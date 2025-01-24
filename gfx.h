@@ -4,11 +4,10 @@
  */
 
 #undef GLAD_GL_IMPLEMENTATION
+#undef STB_TRUETYPE_IMPLEMENTATION
 #include <cglm/struct.h>
 #include <glad.h>
-
-#define IND_COUNT  2  // Number of indices per vertex
-#define VERT_COUNT 4  // Number of vertices per quad
+#include <stb/stb_truetype.h>
 
 // Graphics subsystem
 
@@ -17,6 +16,9 @@ void gfx_term(void);
 void gfx_resize(int width, int height);
 
 // Quad renderer
+
+#define IND_COUNT  2  // Number of indices per vertex
+#define VERT_COUNT 4  // Number of vertices per quad
 
 typedef struct {
     vec2s pos;
@@ -57,16 +59,13 @@ void     gfx_quad_add_vec(Quad* q, vec2s v);
 
 // Font renderer
 
-typedef struct {
-    vec2s size;
-    vec2s offset;
-    float xadvance;
-    Quad quad;
-} Glyph;
+#define ASCII_FIRST 32
+#define ASCII_LAST  126
+#define ASCII_COUNT (ASCII_LAST + 1 - ASCII_FIRST)
 
 typedef struct {
     Renderer render;
-    Glyph*   glyphs;
+    stbtt_packedchar chars[ASCII_COUNT];
 } Font;
 
 Font gfx_font_create(unsigned height, const char* file);

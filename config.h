@@ -31,7 +31,7 @@ static const char* const AUD_MUSIC[] = {
 
 static const char     FONT_FILE[]  = "font/JupiteroidRegular.ttf";
 static const unsigned FONT_HEIGHT  = 64;
-static const vec2s    SCORE_POS    = {{ 0, 0 }};
+static const vec2s    SCORE_POS    = {{ 0, 40 }};
 static const vec3s    SCORE_COLOUR = {{ 1.0f, 1.0f, 1.0f }};
 static const char     SCORE_FMT[]  = "%06u";
 

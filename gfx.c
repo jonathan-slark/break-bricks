@@ -8,18 +8,12 @@
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
-#ifndef NDEBUG
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#endif // !NDEBUG
 #define STB_RECT_PACK_IMPLEMENTATION
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
 #include <cglm/struct.h>
 #include <glad.h>
 #include <stb/stb_image.h>
-#ifndef NDEBUG
-#include <stb/stb_image_write.h>
-#endif // !NDEBUG
 #include <stb/stb_rect_pack.h>
 #include <stb/stb_truetype.h>
 #include <stddef.h>
@@ -72,9 +66,6 @@ static const GLchar   UNIFORM_PROJ[]     = "proj";
 static const GLchar   UNIFORM_TEX[]      = "tex";
 static const GLchar   UNIFORM_COL[]   = "col";
 static const GLushort QUAD_INDICES[]     = { 0, 1, 2, 0, 2, 3 };
-static const unsigned ASCII_FIRST        = 32;
-static const unsigned ASCII_LAST         = 126;
-static const unsigned ASCII_COUNT        = ASCII_LAST + 1 - ASCII_FIRST;
 static const unsigned FONT_QUAD_COUNT    = 100; // Max amount of letter quads
 
 // Variables
@@ -392,25 +383,15 @@ Font gfx_font_create(unsigned height, const char* file) {
 
     unsigned char* bitmap = (unsigned char*) malloc(SCR_WIDTH * SCR_HEIGHT * sizeof(unsigned char));
 
-    stbtt_packedchar   chars[ASCII_COUNT];
-    stbtt_aligned_quad quads[ASCII_COUNT];
+    Font f;
     stbtt_pack_context ctx;
     if (!stbtt_PackBegin(&ctx, bitmap, SCR_WIDTH, SCR_HEIGHT, 0, 1, NULL)) {
 	main_term(EXIT_FAILURE, "stbtt_PackBegin failed.\n");
     }
-    stbtt_PackFontRange(&ctx, data, 0, height, ASCII_FIRST, ASCII_COUNT, chars);
+    stbtt_PackFontRange(&ctx, data, 0, height, ASCII_FIRST, ASCII_COUNT, f.chars);
     stbtt_PackEnd(&ctx);
 
     util_unload((char*) data);
-
-    for (unsigned i = 0; i < ASCII_COUNT; i++) {
-	float x = 0.0f, y = 0.0f;
-	stbtt_GetPackedQuad(chars, SCR_WIDTH, SCR_HEIGHT, i, &x, &y, &quads[i], 0);
-    }
-
-#ifndef NDEBUG
-    stbi_write_png("font.png", SCR_WIDTH, SCR_HEIGHT, 1, (void*) bitmap, SCR_WIDTH);
-#endif // !NDEBUG
 
     GLuint name;
     glGenTextures(1, &name);
@@ -424,7 +405,6 @@ Font gfx_font_create(unsigned height, const char* file) {
 
     free(bitmap);
 
-    Font f;
     f.render = render_create(FONT_QUAD_COUNT);
     f.render.tex = (Tex) {
 	.name = name,
@@ -432,36 +412,10 @@ Font gfx_font_create(unsigned height, const char* file) {
 	.size = {{ SCR_WIDTH, SCR_HEIGHT }}
     };
 
-    // Convert to our glyph/quad system
-    f.glyphs = (Glyph*) malloc(ASCII_COUNT * sizeof(Glyph));
-    for (unsigned i = 0; i < ASCII_COUNT; i++) {
-	float x1 = 0.0f;
-	float y1 = 0.0f;
-	float x2 = chars[i].x1 - chars[i].x0;
-	float y2 = chars[i].y1 - chars[i].y0;
-	float u1 = quads[i].s0;
-	float v1 = quads[i].t0;
-	float u2 = quads[i].s1;
-	float v2 = quads[i].t1;
-	f.glyphs[i].quad = (Quad) {
-	    {
-		{ {{ x1, y1 }}, {{ u1, v1 }} },
-		{ {{ x2, y1 }}, {{ u2, v1 }} },
-		{ {{ x2, y2 }}, {{ u2, v2 }} },
-		{ {{ x1, y2 }}, {{ u1, v2 }} }
-	    }
-	};
-
-	f.glyphs[i].size     = (vec2s) {{ x2, y2 }};
-	f.glyphs[i].offset   = (vec2s) {{ chars[i].xoff, chars[i].yoff }};
-	f.glyphs[i].xadvance = chars[i].xadvance;
-    };
-
     return f;
 }
 
 void gfx_font_delete(Font* f) {
-    if (f->glyphs) free(f->glyphs);
     gfx_render_delete(&f->render);
 }
 
@@ -470,19 +424,26 @@ void gfx_font_begin(Font* f) {
     shader_set_tex(shader_font, f->render.tex.unit);
 }
 
-void gfx_font_printf(Font* f, [[maybe_unused]] vec2s pos, vec3s colour, [[maybe_unused]] const char* fmt, ...) {
+void gfx_font_printf(Font* f, vec2s pos, vec3s colour, [[maybe_unused]] const char* fmt, ...) {
     char test[] = "The quick brown fox jumped over the lazy dog.";
     shader_set_colour(shader_font, colour);
 
     for (unsigned i = 0; i < sizeof test - 1; i++) {
-	Glyph *g = &f->glyphs[test[i] - ASCII_FIRST];
-	vec2s glyph_pos = (vec2s) {{
-	    pos.x + g->offset.x,
-	    pos.y + g->offset.y + 40
-	}};
-	gfx_quad_set_pos(&g->quad, glyph_pos, g->size);
-	gfx_render_quad(&f->render, &g->quad);
-	pos.x += g->xadvance;
+	stbtt_aligned_quad quad;
+	stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, test[i] - ASCII_FIRST, &pos.x, &pos.y, &quad, 0);
+	float x1 = quad.x0; float y1 = quad.y0;
+	float u1 = quad.s0; float v1 = quad.t0;
+	float x2 = quad.x1; float y2 = quad.y1;
+	float u2 = quad.s1; float v2 = quad.t1;
+	Quad gfx_quad = (Quad) {
+	    {
+		{ {{ x1, y1 }}, {{ u1, v1 }} },
+		{ {{ x2, y1 }}, {{ u2, v1 }} },
+		{ {{ x2, y2 }}, {{ u2, v2 }} },
+		{ {{ x1, y2 }}, {{ u1, v2 }} }
+	    }
+	};
+	gfx_render_quad(&f->render, &gfx_quad);
     }
 }
 
