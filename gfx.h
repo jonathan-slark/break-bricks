@@ -64,6 +64,7 @@ void     gfx_quad_add_vec(Quad* q, vec2s v);
 #define ASCII_COUNT (ASCII_LAST + 1 - ASCII_FIRST)
 
 typedef struct {
+    unsigned size;
     Renderer render;
     stbtt_packedchar chars[ASCII_COUNT];
 } Font;

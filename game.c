@@ -3,6 +3,7 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
  * TODO: Ball can get stuck in corner.
+ * TODO: Music track per level?
  */
 
 #define CGLM_PRINT_COLOR       ""
@@ -30,6 +31,8 @@
 
 enum { SoundBrick, SoundDeath, SoundWin, SoundCount };
 enum { StateLoading, StateMenu, StateRun, StatePause, StateWon } state = StateLoading;
+enum FontSize { FontLarge, FontMedium, FontSizeCount };
+typedef enum FontSize FontSize;
 
 typedef struct {
     int key;
@@ -80,9 +83,10 @@ typedef struct {
 } Sprites;
 
 typedef struct {
-    vec2s pos;
-    vec3s col;
-    char* fmt;
+    FontSize size;
+    vec2s    pos;
+    vec3s    col;
+    char*    fmt;
 } Text;
 
 // Function prototypes
@@ -123,7 +127,7 @@ static unsigned level = 1, track = 0;
 static ma_sound** sounds;
 static ma_sound** music;
 static ma_sound* playing;
-static Font font;
+static Font fonts[FontSizeCount];
 static unsigned score = 0;
 
 // Function implementations
@@ -257,14 +261,17 @@ void music_load() {
     }
 }
 
+void screen_init(Screen* s, const char* file) {
+    vec2s pos  = (vec2s) {{ 0, 0 }};
+    vec2s size = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
+    s->render  = gfx_render_create(1, file);
+    s->quad    = gfx_quad_create(&loading.render, pos, size, pos);
+}
+
 // Do the minimum required to get a loading screen
 void game_loading(void) {
     gfx_init();
-
-    vec2s pos = (vec2s) {{ 0, 0 }};
-    vec2s size = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
-    loading.render = gfx_render_create(1, LOADING_FILE);
-    loading.quad   = gfx_quad_create(&loading.render, pos, size, pos);
+    screen_init(&loading, LOADING_FILE);
 }
 
 void game_load(void) {
@@ -273,15 +280,16 @@ void game_load(void) {
     timespec_get(&ts, TIME_UTC);
     srand(ts.tv_nsec);
 
-    bg.render = gfx_render_create(1, BG_FILE);
-    bg.quad   = gfx_quad_create(&bg.render, BG_OFFSET, BG_SIZE, BG_OFFSET);
+    screen_init(&bg, BG_FILE);
 
     sprites.render = gfx_render_create(SPRITE_COUNT, SPRITE_SHEET);
     paddle_init(&sprites.paddle.sprite);
     ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
     level_load(level);
 
-    font = gfx_font_create(FONT_HEIGHT, FONT_FILE);
+    for (unsigned i = 0; i < COUNT(FONT_HEIGHTS); i++) {
+	fonts[i] = gfx_font_create(FONT_HEIGHTS[i], FONT_FILE);
+    }
 
     aud_init(AUD_VOL);
     sounds = (ma_sound**) malloc(SoundCount * sizeof(ma_sound*));
@@ -324,7 +332,10 @@ void game_unload(void) {
     }
     aud_term();
 
-    gfx_font_delete(&font);
+    for (unsigned i = 0; i < FontSizeCount; i++) {
+	gfx_font_delete(&fonts[i]);
+    }
+
     level_unload();
     gfx_render_delete(&sprites.render);
     gfx_render_delete(&loading.render);
@@ -332,7 +343,18 @@ void game_unload(void) {
 }
 
 void quit(void) {
-    main_quit();
+    switch(state) {
+    case StatePause:
+    case StateRun:
+	level_reset();
+	state = StateMenu;
+	break;
+    case StateMenu:
+	main_quit();
+	break;
+    default:
+	// VOID
+    }
 }
 
 void pause(void) {
@@ -656,16 +678,14 @@ void level_render(void) {
     }
 }
 
-void screen_loading() {
-    gfx_render_begin(&loading.render);
-    gfx_render_quad(&loading.render, &loading.quad);
-    gfx_render_end(&loading.render);
+void screen_render(Screen* s) {
+    gfx_render_begin(&s->render);
+    gfx_render_quad(&s->render, &s->quad);
+    gfx_render_end(&s->render);
 }
 
 void screen_game() {
-    gfx_render_begin(&bg.render);
-    gfx_render_quad(&bg.render, &bg.quad);
-    gfx_render_end(&bg.render);
+    screen_render(&bg);
 
     gfx_render_begin(&sprites.render);
     level_render();
@@ -673,29 +693,29 @@ void screen_game() {
     gfx_render_quad(&sprites.render, &sprites.ball.sprite.quad);
     gfx_render_end(&sprites.render);
 
-    gfx_font_begin(&font);
-    gfx_font_printf(&font, TEXT_SCORE.pos, TEXT_SCORE.col, TEXT_SCORE.fmt, score);
-    gfx_font_end(&font);
+    gfx_font_begin(&fonts[TEXT_SCORE.size]);
+    gfx_font_printf(&fonts[TEXT_SCORE.size], TEXT_SCORE.pos, TEXT_SCORE.col, TEXT_SCORE.fmt, score);
+    gfx_font_end(&fonts[TEXT_SCORE.size]);
 }
 
 void game_render(void) {
     switch(state) {
     case StateLoading:
-	screen_loading();
+	screen_render(&loading);
 	break;
     case StateMenu:
-	screen_loading();
+	screen_render(&loading);
 
-	gfx_font_begin(&font);
-	gfx_font_printf(&font, TEXT_MENU.pos, TEXT_MENU.col, TEXT_MENU.fmt);
-	gfx_font_end(&font);
+	gfx_font_begin(&fonts[TEXT_MENU.size]);
+	gfx_font_printf(&fonts[TEXT_MENU.size], TEXT_MENU.pos, TEXT_MENU.col, TEXT_MENU.fmt);
+	gfx_font_end(&fonts[TEXT_MENU.size]);
 	break;
     case StatePause:
 	screen_game();
 
-	gfx_font_begin(&font);
-	gfx_font_printf(&font, TEXT_PAUSED.pos, TEXT_PAUSED.col, TEXT_PAUSED.fmt);
-	gfx_font_end(&font);
+	gfx_font_begin(&fonts[TEXT_PAUSED.size]);
+	gfx_font_printf(&fonts[TEXT_PAUSED.size], TEXT_PAUSED.pos, TEXT_PAUSED.col, TEXT_PAUSED.fmt);
+	gfx_font_end(&fonts[TEXT_PAUSED.size]);
 	break;
     default:
 	screen_game();

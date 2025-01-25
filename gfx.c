@@ -24,10 +24,6 @@
 #include "main.h"
 #include "util.h"
 
-// Macros
-// https://stackoverflow.com/q/40574677
-#define NORMALISE(x, extent) (((x) + 0.5f) / (extent))
-
 // Types
 typedef struct {
     GLuint program;
@@ -66,7 +62,7 @@ static const GLchar   UNIFORM_PROJ[]     = "proj";
 static const GLchar   UNIFORM_TEX[]      = "tex";
 static const GLchar   UNIFORM_COL[]   = "col";
 static const GLushort QUAD_INDICES[]     = { 0, 1, 2, 0, 2, 3 };
-static const unsigned FONT_QUAD_COUNT    = 100; // Max amount of letter quads
+static const unsigned FONT_QUAD_COUNT    = 200; // Max amount of letter quads
 
 // Variables
 Shader shader_quad, shader_font;
@@ -344,10 +340,10 @@ Quad gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset) {
 
     gfx_quad_set_pos(&q, pos, size);
 
-    float u1 = NORMALISE(tex_offset.x,          r->tex.size.s);
-    float v1 = NORMALISE(tex_offset.y,          r->tex.size.t);
-    float u2 = NORMALISE(tex_offset.x + size.s, r->tex.size.s);
-    float v2 = NORMALISE(tex_offset.y + size.y, r->tex.size.t);
+    float u1 = tex_offset.x            / r->tex.size.s;
+    float v1 = tex_offset.y            / r->tex.size.t;
+    float u2 = (tex_offset.x + size.s) / r->tex.size.s;
+    float v2 = (tex_offset.y + size.y) / r->tex.size.t;
 
     q.verts[0].tex_coord = (vec2s) {{ u1, v1 }};
     q.verts[1].tex_coord = (vec2s) {{ u2, v1 }};
@@ -405,6 +401,7 @@ Font gfx_font_create(unsigned height, const char* file) {
 
     free(bitmap);
 
+    f.size   = height;
     f.render = render_create(FONT_QUAD_COUNT);
     f.render.tex = (Tex) {
 	.name = name,
@@ -432,24 +429,31 @@ void gfx_font_printf(Font* f, vec2s pos, vec3s colour, const char* fmt, ...) {
     vsnprintf(text, sizeof text, fmt, ap);
     va_end(ap);
 
+    float posx = pos.x;
     shader_set_colour(shader_font, colour);
     for (unsigned i = 0; i < sizeof text - 1; i++) {
-	stbtt_aligned_quad quad;
-	int j = text[i] - ASCII_FIRST;
-	stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, j, &pos.x, &pos.y, &quad, 0);
-	float x1 = quad.x0; float y1 = quad.y0;
-	float u1 = quad.s0; float v1 = quad.t0;
-	float x2 = quad.x1; float y2 = quad.y1;
-	float u2 = quad.s1; float v2 = quad.t1;
-	Quad gfx_quad = (Quad) {
-	    {
-		{ {{ x1, y1 }}, {{ u1, v1 }} },
-		{ {{ x2, y1 }}, {{ u2, v1 }} },
-		{ {{ x2, y2 }}, {{ u2, v2 }} },
-		{ {{ x1, y2 }}, {{ u1, v2 }} }
-	    }
-	};
-	gfx_render_quad(&f->render, &gfx_quad);
+	if (text[i] == '\n') {
+	    pos.y += f->size;
+	    pos.x = posx;
+	} else {
+	    int j = text[i] - ASCII_FIRST;
+	    stbtt_aligned_quad quad;
+	    stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, j, &pos.x, &pos.y, &quad, 0);
+	    // Convert to our quad structure
+	    float x1 = quad.x0; float y1 = quad.y0;
+	    float u1 = quad.s0; float v1 = quad.t0;
+	    float x2 = quad.x1; float y2 = quad.y1;
+	    float u2 = quad.s1; float v2 = quad.t1;
+	    Quad gfx_quad = (Quad) {
+		{
+		    { {{ x1, y1 }}, {{ u1, v1 }} },
+		    { {{ x2, y1 }}, {{ u2, v1 }} },
+		    { {{ x2, y2 }}, {{ u2, v2 }} },
+		    { {{ x1, y2 }}, {{ u1, v2 }} }
+		}
+	    };
+	    gfx_render_quad(&f->render, &gfx_quad);
+	}
     }
 }
 
