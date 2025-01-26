@@ -745,8 +745,10 @@ void game_render(void) {
 	gfx_font_printf(&fonts[TEXT_PAUSED.size], TEXT_PAUSED.pos, TEXT_PAUSED.col, TEXT_PAUSED.fmt);
 	gfx_font_end(&fonts[TEXT_PAUSED.size]);
 	break;
-    default:
+    case StateRun:
 	screen_game();
 	break;
+    default:
+	// VOID
     }
 }

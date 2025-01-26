@@ -158,6 +158,7 @@ void create_window(void) {
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_callback);
     glfwSetFramebufferSizeCallback(window, resize_callback);
+    // Turn on Vsync
     glfwSwapInterval(1);
 }
 
@@ -167,6 +168,9 @@ int main(void) {
 
     // Render one frame: the loading screen
     game_loading();
+    game_render();
+    glfwSwapBuffers(window);
+    // Render to both buffers to avoid flicker
     game_render();
     glfwSwapBuffers(window);
 
