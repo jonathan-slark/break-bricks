@@ -18,10 +18,11 @@ static const unsigned CR_COUNT       = 2; // How many times per frame to run col
 
 static const char     FONT_FILE[]    = "font/JupiteroidRegular.ttf";
 static const unsigned FONT_HEIGHTS[] = { 64, 40 };
-static const Text     TEXT_SCORE     = { FontLarge,  {{ 1750, 56 }}, {{ 1.0f, 1.0f, 1.0f }}, "%05u" };
+static const Text     TEXT_SCORE     = { FontLarge,  {{ 94,  54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
 static const Text     TEXT_PAUSED    = { FontLarge,  {{ 880, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused" };
-static const Text     TEXT_MENU      = { FontMedium, {{ 680, 900 }}, {{ 0.6f, 0.6f, 0.6f }},
+static const Text     TEXT_MENU      = { FontMedium, {{ 680, 860 }}, {{ 0.6f, 0.6f, 0.6f }},
     "Use the mouse to control the paddle.\n"
+    "Click mouse button to release the ball.\n"
     "Press space to pause.\n"
     "Press escape to quit.\n"
     "\n"
@@ -43,8 +44,12 @@ static const char* const AUD_MUSIC[] = {
 
 static const char     BG_FILE[]      = "gfx/background.png";
 static const unsigned BG_WALL_TOP    = 72;
-static const unsigned BG_WALL_LEFT   = 32;
-static const unsigned BG_WALL_RIGHT  = 32;
+static const unsigned BG_WALL_LEFT   = 96;
+static const unsigned BG_WALL_RIGHT  = 96;
+
+/*
+ * Sprites
+ */
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 
@@ -62,20 +67,29 @@ static const vec2s    BALL_RELEASE[] = {
 };
 
 static const vec2s    BRICK_SIZE  = {{ 64, 32 }};
-static const unsigned BRICK_COLS  = 29;
+static const unsigned BRICK_COLS  = 27;
 static const unsigned BRICK_ROWS  = 12;
-static const unsigned BRICK_TYPES = 6; // Number of brick colours
-static const vec2s    BRICK_OFFSETS[] = {
-    {{ 0,   0  }}, // blue,   breakable,   id = 0
-    {{ 64,  0  }}, // green,  breakable,   id = 1
-    {{ 128, 0  }}, // orange, breakable,   id = 2
-    {{ 192, 0  }}, // purple, breakable,   id = 3
-    {{ 256, 0  }}, // red,    breakable,   id = 4
-    {{ 320, 0  }}, // yellow, breakable,   id = 5
-    {{ 0,   32 }}, // blue,   unbreakable, id = a
-    {{ 64,  32 }}, // green,  unbreakable, id = b
-    {{ 128, 32 }}, // orange, unbreakable, id = c
-    {{ 192, 32 }}, // purple, unbreakable, id = d
-    {{ 256, 32 }}, // red,    unbreakable, id = e
-    {{ 320, 32 }}  // yellow, unbreakable, id = f
+static const vec2s    BRICK_SINGLE_OFFSETS[] = {
+    {{ 0,   0  }}, // blue,   id = 0
+    {{ 64,  0  }}, // green,  id = 1
+    {{ 128, 0  }}, // orange, id = 2
+    {{ 192, 0  }}, // purple, id = 3
+    {{ 256, 0  }}, // red,    id = 4
+    {{ 320, 0  }}  // yellow, id = 5
+};
+static const vec2s    BRICK_SOLID_OFFSETS[] = {
+    {{ 0,   32 }}, // blue,   id = a
+    {{ 64,  32 }}, // green,  id = b
+    {{ 128, 32 }}, // orange, id = c
+    {{ 192, 32 }}, // purple, id = d
+    {{ 256, 32 }}, // red,    id = e
+    {{ 320, 32 }}, // yellow, id = f
+};
+static const vec2s    BRICK_DOUBLE_OFFSETS[] = {
+    {{ 0,   64 }}, // blue,   id = A
+    {{ 128, 64 }}, // green,  id = B
+    {{ 256, 64 }}, // orange, id = C
+    {{ 0,   96 }}, // purple, id = D
+    {{ 128, 96 }}, // red,    id = E
+    {{ 256, 96 }}  // yellow, id = f
 };

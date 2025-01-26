@@ -424,8 +424,8 @@ void gfx_font_begin(Font* f) {
 void gfx_font_printf(Font* f, vec2s pos, vec3s colour, const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    int sz = vsnprintf(NULL, 0, fmt, ap);
-    char text[sz + 1];
+    int size = vsnprintf(NULL, 0, fmt, ap);
+    char text[size + 1];
     vsnprintf(text, sizeof text, fmt, ap);
     va_end(ap);
 

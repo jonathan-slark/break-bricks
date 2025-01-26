@@ -69,10 +69,12 @@ typedef struct {
 } Paddle;
 
 typedef struct {
-    bool   is_active;
-    bool   is_solid;
-    bool   is_destroyed;
-    Sprite sprite;
+    bool     is_active;
+    bool     is_solid;
+    bool     is_double;
+    bool     is_first; // First of a double pair
+    bool     is_destroyed;
+    Sprite   sprite;
 } Brick;
 
 typedef struct {
@@ -193,20 +195,39 @@ void ball_init(Ball* b, Sprite* bs, Sprite* ps) {
 }
 
 void brick_init(Brick* b, char id, unsigned col, unsigned row) {
-    bool solid = (!isdigit(id));
-    unsigned i;
-    i = solid ? (unsigned) id - 'a' + BRICK_TYPES : (unsigned) id - '0';
+    bool is_double = isupper(id);
+    bool is_solid = !(is_double || isdigit(id));
+    bool is_first = false;
+    if (is_double) {
+	if (col == 0) {
+	    is_first = true;
+	} else {
+	    Brick *b_prev = &sprites.bricks[col - 1 + row * BRICK_COLS];
+	    is_first = !(b_prev->is_active && b_prev->is_double && b_prev->is_first);
+	}
+    }
 
-    b->is_active = true;
-    b->is_solid = solid;
+    b->is_active    = true;
+    b->is_solid     = is_solid;
+    b->is_double    = is_double;
+    b->is_first     = is_first;
     b->is_destroyed = false;
 
     vec2s pos = {{
         BG_WALL_LEFT + col * BRICK_SIZE.s,
-        BG_WALL_TOP + row * BRICK_SIZE.t
+        BG_WALL_TOP  + row * BRICK_SIZE.t
     }};
-    b->sprite.quad = gfx_quad_create(&sprites.render, pos, BRICK_SIZE, BRICK_OFFSETS[i]);
-    b->sprite.size = BRICK_SIZE;
+
+    float width = is_double ? BRICK_SIZE.s * 2 : BRICK_SIZE.s;
+    vec2s size = (vec2s) {{ width, BRICK_SIZE.t }};
+
+    vec2s offset;
+    if      (is_double) offset = BRICK_DOUBLE_OFFSETS[id - 'A'];
+    else if (is_solid)  offset = BRICK_SOLID_OFFSETS[ id - 'a'];
+    else                offset = BRICK_SINGLE_OFFSETS[id - '0'];
+
+    b->sprite.quad = gfx_quad_create(&sprites.render, pos, size, offset);
+    b->sprite.size = size;
 }
 
 void level_read(const char* data) {
@@ -222,7 +243,7 @@ void level_read(const char* data) {
             // No brick
             sprites.bricks[count++].is_active = false;
             col++;
-        } else if (isdigit(c) || (c >= 'a' && c <= 'f')) {
+        } else if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
             brick_init(&sprites.bricks[count++], c, col, row);
             col++;
         } else if (c == '\n') {
@@ -296,7 +317,7 @@ void game_load(void) {
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
     sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
     sounds[SoundWin]   = aud_sound_load(AUD_WIN);
-    music_load();
+    //music_load();
     playing = aud_sound_play(AUD_MUSIC[track]);
 
     state = StateMenu;
@@ -596,6 +617,10 @@ vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT])
     Brick* b = &sprites.bricks[i];
     if (!b->is_solid) {
         b->is_destroyed = true;
+	if (b->is_double && !b->is_first) {
+	    Brick* b_prev = &sprites.bricks[i - 1];
+	    b_prev->is_destroyed = true;
+	}
         aud_sound_play(AUD_BRICK);
     }
 
@@ -672,7 +697,7 @@ void game_update(double frame_time) {
 void level_render(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
 	Brick* b = &sprites.bricks[i];
-        if (b->is_active && !b->is_destroyed) {
+        if (b->is_active && !b->is_destroyed && (!b->is_double || b->is_first)) {
             gfx_render_quad(&sprites.render, &b->sprite.quad);
         }
     }
