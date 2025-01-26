@@ -617,9 +617,12 @@ vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT])
     Brick* b = &sprites.bricks[i];
     if (!b->is_solid) {
         b->is_destroyed = true;
-	if (b->is_double && !b->is_first) {
-	    Brick* b_prev = &sprites.bricks[i - 1];
-	    b_prev->is_destroyed = true;
+	if (b->is_double) {
+	    if (b->is_first) {
+		sprites.bricks[i + 1].is_destroyed = true;
+	    } else {
+		sprites.bricks[i - 1].is_destroyed = true;
+	    }
 	}
         aud_sound_play(AUD_BRICK);
     }

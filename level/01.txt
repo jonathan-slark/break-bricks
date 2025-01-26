@@ -1,27 +1,21 @@
 # x = no brick
-# 0 = blue,   breakable | a = blue,   unbreakable
-# 1 = green,  breakable | b = green,  unbreakable
-# 2 = orange, breakable | c = orange, unbreakable
-# 3 = purple, breakable | d = purple, unbreakable
-# 4 = red,    breakable | e = red,    unbreakable
-# 5 = yellow, breakable | f = yellow, unbreakable
-# A = blue,   breakable, double
-# B = green,  breakable, double
-# C = orange, breakable, double
-# D = purple, breakable, double
-# E = red,    breakable, double
-# F = yellow, breakable, double
+# 0 = blue   | A = blue,   double | a = blue,   unbreakable
+# 1 = green  | B = green,  double | b = green,  unbreakable
+# 2 = orange | C = orange, double | c = orange, unbreakable
+# 3 = purple | D = purple, double | d = purple, unbreakable
+# 4 = red    | E = red,    double | e = red,    unbreakable
+# 5 = yellow | F = yellow, double | f = yellow, unbreakable
 # White space, new lines and comments are ignored
 
 x x x x x x x x x x x x x x x x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x
 x x x x x x x x x x x x 0 0 0 x x x x x x x x x x x x
 x x x x x x x x x x x A A 0 A A x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x 5 5 0 2 0 5 5 x x x x x x x x x x
+x x x x x x x x x x 4 5 2 0 2 5 4 x x x x x x x x x x
+x x x x x x x x x x E E 0 2 0 E E x x x x x x x x x x
+x x x x x x x x x x 4 5 2 0 2 5 4 x x x x x x x x x x
+x x x x x x x x x x 5 5 0 2 0 5 5 x x x x x x x x x x
+x x x x x x x x x x x A A 0 A A x x x x x x x x x x x
+x x x x x x x x x x x x 0 0 0 x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x
