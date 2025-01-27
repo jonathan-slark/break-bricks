@@ -112,7 +112,8 @@ static bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos);
 static vec2s get_aabb_dist(Sprite* s1, Sprite* s2);
 static unsigned get_brick_index(float x, float y);
 static unsigned get_brick_hits(Sprite* bs, vec2s newpos, unsigned brick_hits[VERT_COUNT]);
-static vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]);
+static void score_update(unsigned brick_index);
+static vec2s get_brick_closest(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]);
 static bool is_won(void);
 static void ball_move(Ball* b, Sprite* s, double frame_time);
 
@@ -125,7 +126,7 @@ static const unsigned SPRITE_COUNT = 200;
 // Variables
 static Screen loading, bg;
 static Sprites sprites;
-static unsigned level = 1, track = 0;
+static unsigned level = 1;
 static ma_sound** sounds;
 static ma_sound** music;
 static ma_sound* playing;
@@ -274,14 +275,6 @@ void level_load(unsigned num) {
     util_unload(data);
 }
 
-void music_load() {
-    size_t count = COUNT(AUD_MUSIC);
-    music = (ma_sound**) malloc(count * sizeof(ma_sound*));
-    for (size_t i = 0; i < count; i++) {
-	music[i] = aud_sound_load(AUD_MUSIC[i]);
-    }
-}
-
 void screen_init(Screen* s, const char* file) {
     vec2s pos  = (vec2s) {{ 0, 0 }};
     vec2s size = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
@@ -317,8 +310,7 @@ void game_load(void) {
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
     sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
     sounds[SoundWin]   = aud_sound_load(AUD_WIN);
-    //music_load();
-    playing = aud_sound_play(AUD_MUSIC[track]);
+    playing            = aud_sound_load(AUD_MUSIC[level - 1]);
 
     state = StateMenu;
 }
@@ -593,8 +585,17 @@ unsigned get_brick_hits(Sprite* s, vec2s newpos, unsigned brick_hits[VERT_COUNT]
     return count;
 }
 
+void score_update(unsigned brick_index) {
+    Brick* b = &sprites.bricks[brick_index];
+
+    unsigned score_base = b->is_double ? 2 : 1;
+    unsigned row = brick_index / BRICK_COLS;
+
+    score += score_base * level * (BRICK_ROWS - row);
+}
+
 // Find the distance to the closest brick and destroy it, if applicable
-vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]) {
+vec2s get_brick_closest(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]) {
     float closest = FLT_MAX;
     unsigned brick = 0;
     vec2s dist_min = {};
@@ -624,6 +625,7 @@ vec2s get_brick_dist(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT])
 		sprites.bricks[i - 1].is_destroyed = true;
 	    }
 	}
+	score_update(i);
         aud_sound_play(AUD_BRICK);
     }
 
@@ -651,7 +653,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 #ifndef NDEBUG
 	    //brick_print(count, brick_hits);
 #endif
-            vec2s dist = get_brick_dist(bs, count, brick_hits);
+            vec2s dist = get_brick_closest(bs, count, brick_hits);
             bounce(b, bs, vel, dist, false);
         } else {
 	    gfx_quad_set_pos(&bs->quad, newpos, bs->size);
@@ -689,8 +691,7 @@ void game_update(double frame_time) {
 	}
 
 	if (!ma_sound_is_playing(playing)) {
-	    track = (track + 1) % COUNT(AUD_MUSIC);
-	    playing = aud_sound_play(AUD_MUSIC[track]);
+	    playing = aud_sound_play(AUD_MUSIC[level - 1]);
 	}
     default:
 	// VOID

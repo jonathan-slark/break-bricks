@@ -33,7 +33,7 @@ static const char        AUD_BRICK[] = "sfx/brick.wav";
 static const char        AUD_DEATH[] = "sfx/death.wav";
 static const char        AUD_WIN[]   = "sfx/win.wav";
 static const char* const AUD_MUSIC[] = {
-    "music/HoliznaCC0 - 2nd Dimension.mp3",
+    "music/HoliznaCC0 - 2nd Dimension.mp3", // One track per level
     "music/HoliznaCC0 - Astroids.mp3",
     "music/HoliznaCC0 - In The End.mp3",
     "music/HoliznaCC0 - Pixel Party.mp3",
