@@ -9,5 +9,6 @@ void      aud_init(float vol);
 void      aud_term(void);
 
 ma_sound* aud_sound_load(const char* file);
-void      aud_sound_unload(ma_sound *sound);
+void      aud_sound_unload(ma_sound* sound);
 ma_sound* aud_sound_play(const char* file);
+void      aud_sound_stop(ma_sound* sound);

@@ -13,13 +13,15 @@ static const Button BUTTONS[] = {
 
 static const char     LOADING_FILE[] = "gfx/loading.png";
 static const char     LEVEL_FOLDER[] = "level";
-static const unsigned LEVEL_COUNT    = 2;
+static const unsigned LEVEL_COUNT    = 1;
+static const char     HISCORE_FILE[] = "hiscore.txt";
+static const unsigned LIVES          = 3;
 static const unsigned CR_COUNT       = 2; // How many times per frame to run collision resolution
 
 static const char     FONT_FILE[]    = "font/JupiteroidRegular.ttf";
 static const unsigned FONT_HEIGHTS[] = { 64, 40 };
 static const Text     TEXT_SCORE     = { FontLarge,  {{ 94,  54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
-static const Text     TEXT_PAUSED    = { FontLarge,  {{ 880, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused" };
+static const Text     TEXT_PAUSED    = { FontLarge,  {{ 880, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
 static const Text     TEXT_MENU      = { FontMedium, {{ 680, 860 }}, {{ 0.6f, 0.6f, 0.6f }},
     "Use the mouse to control the paddle.\n"
     "Click mouse button to release the ball.\n"
@@ -27,11 +29,18 @@ static const Text     TEXT_MENU      = { FontMedium, {{ 680, 860 }}, {{ 0.6f, 0.
     "Press escape to quit.\n"
     "\n"
     "Click mouse button to continue." };
+static const Text     TEXT_LOST      = { FontLarge,  {{ 850, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
+static const Text     TEXT_HISCORE   = { FontLarge,  {{ 830, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
+static const Text     TEXT_WON       = { FontLarge,  {{ 865, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
+static const Text     TEXT_CONTINUE  = { FontMedium, {{ 755, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
+    "Click mouse button to continue." };
 
 static const float       AUD_VOL     = 0.1; // Volume 0 - 1
 static const char        AUD_BRICK[] = "sfx/brick.wav";
 static const char        AUD_DEATH[] = "sfx/death.wav";
-static const char        AUD_WIN[]   = "sfx/win.wav";
+static const char        AUD_CLEAR[] = "sfx/clear.wav";
+static const char        AUD_WON[]   = "sfx/won.wav";
+static const char        AUD_LOST[]  = "sfx/lost.wav";
 static const char* const AUD_MUSIC[] = {
     "music/HoliznaCC0 - 2nd Dimension.mp3", // One track per level
     "music/HoliznaCC0 - Astroids.mp3",

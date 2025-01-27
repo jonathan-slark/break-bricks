@@ -51,3 +51,7 @@ ma_sound* aud_sound_play(const char* file) {
     ma_sound_start(sound);
     return sound;
 }
+
+void aud_sound_stop(ma_sound* sound) {
+    ma_sound_stop(sound);
+}

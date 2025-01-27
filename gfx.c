@@ -373,6 +373,9 @@ void gfx_quad_add_vec(Quad* q, vec2s v) {
 
 Font gfx_font_create(unsigned height, const char* file) {
     unsigned char* data = (unsigned char*) util_load(file, READ_ONLY_BIN);
+    if (!data) {
+	main_term(EXIT_FAILURE, "Unable to load font: \n%s\n", file);
+    }
     if (stbtt_GetNumberOfFonts(data) < 0) {
 	main_term(EXIT_FAILURE, "Loaded font does not contain valid data:\n%s\n", file);
     }

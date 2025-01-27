@@ -3,7 +3,6 @@
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
  * TODO: Ball can get stuck in corner.
- * TODO: Music track per level?
  */
 
 #define CGLM_PRINT_COLOR       ""
@@ -29,8 +28,8 @@
 
 // Types
 
-enum { SoundBrick, SoundDeath, SoundWin, SoundCount };
-enum { StateLoading, StateMenu, StateRun, StatePause, StateWon } state = StateLoading;
+enum { SoundBrick, SoundDeath, SoundClear, SoundWon, SoundLost, SoundCount };
+enum { StateLoading, StateMenu, StateRun, StatePause, StateWon, StateLost } state = StateLoading;
 enum FontSize { FontLarge, FontMedium, FontSizeCount };
 typedef enum FontSize FontSize;
 
@@ -114,8 +113,12 @@ static unsigned get_brick_index(float x, float y);
 static unsigned get_brick_hits(Sprite* bs, vec2s newpos, unsigned brick_hits[VERT_COUNT]);
 static void score_update(unsigned brick_index);
 static vec2s get_brick_closest(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUNT]);
-static bool is_won(void);
 static void ball_move(Ball* b, Sprite* s, double frame_time);
+static bool is_won(void);
+static void level_render(void);
+static void screen_render(Screen* s);
+static void text_render(const Text* t);
+static void screen_game(void);
 
 // Requires above types and functions
 #include "config.h"
@@ -131,7 +134,8 @@ static ma_sound** sounds;
 static ma_sound** music;
 static ma_sound* playing;
 static Font fonts[FontSizeCount];
-static unsigned score = 0;
+static unsigned score = 0, hiscore, lives = LIVES;
+static bool is_hiscore = false;
 
 // Function implementations
 
@@ -268,6 +272,7 @@ void level_load(unsigned num) {
     char file[sz + 1];
     snprintf(file, sizeof file, fmt, LEVEL_FOLDER, num);
     char* data = util_load(file, READ_ONLY_TEXT);
+    if (!data) main_term(EXIT_FAILURE, "Unable to load level:\n%s\n", level);
 
     sprites.bricks = (Brick*) malloc(BRICK_COLS * BRICK_ROWS * sizeof(Brick));
     level_read(data);
@@ -286,6 +291,16 @@ void screen_init(Screen* s, const char* file) {
 void game_loading(void) {
     gfx_init();
     screen_init(&loading, LOADING_FILE);
+}
+
+unsigned hiscore_load(void) {
+    char* data = util_load(HISCORE_FILE, READ_ONLY_TEXT);
+    if (data) {
+	char* end = NULL;
+	return strtoul(data, &end, 10);
+    } else {
+	return 0;
+    }
 }
 
 void game_load(void) {
@@ -309,8 +324,12 @@ void game_load(void) {
     sounds = (ma_sound**) malloc(SoundCount * sizeof(ma_sound*));
     sounds[SoundBrick] = aud_sound_load(AUD_BRICK);
     sounds[SoundDeath] = aud_sound_load(AUD_DEATH);
-    sounds[SoundWin]   = aud_sound_load(AUD_WIN);
+    sounds[SoundClear] = aud_sound_load(AUD_CLEAR);
+    sounds[SoundWon]   = aud_sound_load(AUD_WON);
+    sounds[SoundLost]  = aud_sound_load(AUD_LOST);
     playing            = aud_sound_load(AUD_MUSIC[level - 1]);
+
+    hiscore = hiscore_load();
 
     state = StateMenu;
 }
@@ -357,29 +376,34 @@ void game_unload(void) {
 
 void quit(void) {
     switch(state) {
-    case StatePause:
-    case StateRun:
-	level_reset();
-	state = StateMenu;
+    case StateLoading:
 	break;
     case StateMenu:
 	main_quit();
 	break;
-    default:
-	// VOID
+    case StateRun:
+    case StatePause:
+    case StateWon:
+    case StateLost:
+	level_reset();
+	state = StateMenu;
+	break;
     }
 }
 
 void pause(void) {
     switch(state) {
-    case StateRun:
-	state = StatePause;
+    case StateLoading:
+    case StateMenu:
+    case StateWon:
+    case StateLost:
 	break;
     case StatePause:
 	state = StateRun;
 	break;
-    default:
-	// VOID
+    case StateRun:
+	state = StatePause;
+	break;
     };
 }
 
@@ -402,6 +426,16 @@ unsigned random(unsigned min, unsigned max) {
 
 void click(void) {
     switch (state) {
+    case StateLoading:
+	break;
+    case StatePause:
+	state = StateRun;
+	break;
+    case StateWon:
+    case StateLost:
+	level_reset();
+	state = StateMenu;
+	break;
     case StateMenu:
 	state = StateRun;
 	break;
@@ -415,8 +449,6 @@ void click(void) {
 	    b->is_stuck = false;
 	}
 	break;
-    default:
-	// VOID
     }
 }
 
@@ -638,8 +670,15 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     vec2s newpos = glms_vec2_add(bs->pos, vel);
 
     if (is_oob(bs, newpos)) {
-	aud_sound_play(AUD_DEATH);
-	level_reset();
+	lives -= 1;
+	if (!lives) {
+	    aud_sound_stop(playing);
+	    aud_sound_play(AUD_LOST);
+	    state = StateLost;
+	} else {
+	    level_reset();
+	    aud_sound_play(AUD_DEATH);
+	}
     } else if (is_wall_hit(bs, newpos)) {
         vec2s dist = get_wall_dist(bs);
         bounce(b, bs, vel, dist, false);
@@ -684,9 +723,23 @@ void game_update(double frame_time) {
 	    ball_move(b, &b->sprite, frame_time - cr_time * (CR_COUNT - 1));
 
 	    if (is_won()) {
-		aud_sound_play(AUD_WIN);
-		if (++level > LEVEL_COUNT) level = 1;
-		level_reset();
+		level++;
+		if (level > LEVEL_COUNT) {
+		    aud_sound_stop(playing);
+		    aud_sound_play(AUD_WON);
+		    if (score > hiscore) {
+			hiscore = score;
+			is_hiscore = true;
+		    }
+		    level = 1;
+		    state = StateWon;
+		    return;
+		} else {
+		    aud_sound_stop(playing);
+		    aud_sound_play(AUD_CLEAR);
+		    level_reset();
+		    return;
+		}
 	    }
 	}
 
@@ -713,7 +766,13 @@ void screen_render(Screen* s) {
     gfx_render_end(&s->render);
 }
 
-void screen_game() {
+void text_render(const Text* t) {
+    gfx_font_begin(&fonts[t->size]);
+    gfx_font_printf(&fonts[t->size], t->pos, t->col, t->fmt, score);
+    gfx_font_end(&fonts[t->size]);
+}
+
+void screen_game(void) {
     screen_render(&bg);
 
     gfx_render_begin(&sprites.render);
@@ -722,9 +781,7 @@ void screen_game() {
     gfx_render_quad(&sprites.render, &sprites.ball.sprite.quad);
     gfx_render_end(&sprites.render);
 
-    gfx_font_begin(&fonts[TEXT_SCORE.size]);
-    gfx_font_printf(&fonts[TEXT_SCORE.size], TEXT_SCORE.pos, TEXT_SCORE.col, TEXT_SCORE.fmt, score);
-    gfx_font_end(&fonts[TEXT_SCORE.size]);
+    text_render(&TEXT_SCORE);
 }
 
 void game_render(void) {
@@ -734,22 +791,26 @@ void game_render(void) {
 	break;
     case StateMenu:
 	screen_render(&loading);
-
-	gfx_font_begin(&fonts[TEXT_MENU.size]);
-	gfx_font_printf(&fonts[TEXT_MENU.size], TEXT_MENU.pos, TEXT_MENU.col, TEXT_MENU.fmt);
-	gfx_font_end(&fonts[TEXT_MENU.size]);
+	text_render(&TEXT_MENU);
 	break;
     case StatePause:
 	screen_game();
-
-	gfx_font_begin(&fonts[TEXT_PAUSED.size]);
-	gfx_font_printf(&fonts[TEXT_PAUSED.size], TEXT_PAUSED.pos, TEXT_PAUSED.col, TEXT_PAUSED.fmt);
-	gfx_font_end(&fonts[TEXT_PAUSED.size]);
+	text_render(&TEXT_PAUSED);
 	break;
     case StateRun:
 	screen_game();
 	break;
-    default:
-	// VOID
+    case StateWon:
+	screen_game();
+	text_render(&TEXT_WON);
+	if (is_hiscore) text_render(&TEXT_HISCORE);
+	text_render(&TEXT_CONTINUE);
+	break;
+    case StateLost:
+	screen_game();
+	text_render(&TEXT_LOST);
+	if (is_hiscore) text_render(&TEXT_HISCORE);
+	text_render(&TEXT_CONTINUE);
+	break;
     }
 }
