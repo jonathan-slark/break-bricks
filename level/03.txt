@@ -9,13 +9,13 @@
 
 x x x x x x x x x x x x x x x x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x
+x x x x x x x x x x x x 0 0 0 x x x x x x x x x x x x
+x x x x x x x x x x x A A 0 A A x x x x x x x x x x x
+x x x x x x x x x x 5 5 0 2 0 5 5 x x x x x x x x x x
+x x x x x x x x x x 4 5 2 0 2 5 4 x x x x x x x x x x
+x x x x x x x x x x E E 0 2 0 E E x x x x x x x x x x
+x x x x x x x x x x 4 5 2 0 2 5 4 x x x x x x x x x x
+x x x x x x x x x x 5 5 0 2 0 5 5 x x x x x x x x x x
+x x x x x x x x x x x A A 0 A A x x x x x x x x x x x
+x x x x x x x x x x x x 0 0 0 x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x x x x x x x x x x x x x x x x x x x x x x x x x x x
-x A A A A A A A A A A A A x A A A A A A A A A A A A x
-x B B B B B B B B B B B B x B B B B B B B B B B B B x
-x C C C C C C C C C C C C x C C C C C C C C C C C C x
-x D D D D D D D D D D D D x D D D D D D D D D D D D x
-x E E E E E E E E E E E E x E E E E E E E E E E E E x
-x F F F F F F F F F F F F x F F F F F F F F F F F F x

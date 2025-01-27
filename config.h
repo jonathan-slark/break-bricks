@@ -53,11 +53,11 @@ static const unsigned BG_WALL_RIGHT  = 96;
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 
-static const vec2s PADDLE_SIZE       = {{ 126, 26 }};
+static const vec2s PADDLE_SIZE       = {{ 144, 24 }};
 static const vec2s PADDLE_OFFSET     = {{ 384, 0 }};
 
-static const vec2s    BALL_SIZE       = {{ 28, 28 }};
-static const vec2s    BALL_OFFSET     = {{ 510, 0 }};
+static const vec2s    BALL_SIZE       = {{ 24, 24 }};
+static const vec2s    BALL_OFFSET     = {{ 528, 0 }};
 static const unsigned BALL_SPEED      = 750;  // Pixels per second
 static const float    BALL_BOUNCE_STR = 1.5f; // Strength of deflect off paddle
 // Choose a random release vector for the ball
