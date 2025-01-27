@@ -338,6 +338,13 @@ void level_unload(void) {
     if (sprites.bricks) free(sprites.bricks);
 }
 
+void level_fullreset(void) {
+    score = 0;
+    lives = LIVES;
+    is_hiscore = 0;
+    level_reset();
+}
+
 void level_reset(void) {
     level_unload();
 
@@ -385,7 +392,7 @@ void quit(void) {
     case StatePause:
     case StateWon:
     case StateLost:
-	level_reset();
+	level_fullreset();
 	state = StateMenu;
 	break;
     }
@@ -433,7 +440,7 @@ void click(void) {
 	break;
     case StateWon:
     case StateLost:
-	level_reset();
+	level_fullreset();
 	state = StateMenu;
 	break;
     case StateMenu:
@@ -466,6 +473,12 @@ void game_button_up([[maybe_unused]] int button) {
 
 void game_input([[maybe_unused]] double frame_time) {
     switch(state) {
+    case StateLoading:
+    case StateMenu:
+    case StatePause:
+    case StateWon:
+    case StateLost:
+	break;
     case StateRun:
 	Sprite* ps = &sprites.paddle.sprite;
 	Sprite* bs = &sprites.ball.sprite;
@@ -492,9 +505,6 @@ void game_input([[maybe_unused]] double frame_time) {
 
 	// Don't allow cursor to move away from paddle
 	main_set_mouse_pos(mouse_pos);
-	break;
-    default:
-	// VOID
     }
 }
 
@@ -672,9 +682,9 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     if (is_oob(bs, newpos)) {
 	lives -= 1;
 	if (!lives) {
+	    state = StateLost;
 	    aud_sound_stop(playing);
 	    aud_sound_play(AUD_LOST);
-	    state = StateLost;
 	} else {
 	    level_reset();
 	    aud_sound_play(AUD_DEATH);
@@ -711,6 +721,12 @@ bool is_won(void) {
 
 void game_update(double frame_time) {
     switch(state) {
+    case StateLoading:
+    case StateMenu:
+    case StatePause:
+    case StateWon:
+    case StateLost:
+	break;
     case StateRun:
 	if (!sprites.ball.is_stuck) {
 	    Ball* b = &sprites.ball;
@@ -725,6 +741,7 @@ void game_update(double frame_time) {
 	    if (is_won()) {
 		level++;
 		if (level > LEVEL_COUNT) {
+		    state = StateWon;
 		    aud_sound_stop(playing);
 		    aud_sound_play(AUD_WON);
 		    if (score > hiscore) {
@@ -732,22 +749,17 @@ void game_update(double frame_time) {
 			is_hiscore = true;
 		    }
 		    level = 1;
-		    state = StateWon;
-		    return;
 		} else {
 		    aud_sound_stop(playing);
 		    aud_sound_play(AUD_CLEAR);
 		    level_reset();
-		    return;
 		}
 	    }
 	}
 
-	if (!ma_sound_is_playing(playing)) {
+	if (state == StateRun && !ma_sound_is_playing(playing)) {
 	    playing = aud_sound_play(AUD_MUSIC[level - 1]);
 	}
-    default:
-	// VOID
     }
 }
 
