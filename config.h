@@ -29,10 +29,10 @@ static const Text     TEXT_MENU      = { FontMedium, {{ 680, 860 }}, {{ 0.6f, 0.
     "Press escape to quit.\n"
     "\n"
     "Click mouse button to continue." };
-static const Text     TEXT_LOST      = { FontLarge,  {{ 850, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
+static const Text     TEXT_LOST      = { FontLarge,  {{ 840, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
 static const Text     TEXT_HISCORE   = { FontLarge,  {{ 830, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
 static const Text     TEXT_WON       = { FontLarge,  {{ 865, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
-static const Text     TEXT_CONTINUE  = { FontMedium, {{ 755, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
+static const Text     TEXT_CONTINUE  = { FontMedium, {{ 745, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
     "Click mouse button to continue." };
 
 static const float       AUD_VOL     = 0.1; // Volume 0 - 1
@@ -53,8 +53,8 @@ static const char* const AUD_MUSIC[] = {
 
 static const char     BG_FILE[]      = "gfx/background.png";
 static const unsigned BG_WALL_TOP    = 72;
-static const unsigned BG_WALL_LEFT   = 96;
-static const unsigned BG_WALL_RIGHT  = 96;
+static const unsigned BG_WALL_LEFT   = 192;
+static const unsigned BG_WALL_RIGHT  = 192;
 
 /*
  * Sprites
@@ -75,16 +75,16 @@ static const vec2s    BALL_RELEASE[] = {
     {{  0.5f, -0.5f }}
 };
 
-static const vec2s    BRICK_SIZE  = {{ 64, 32 }};
-static const unsigned BRICK_COLS  = 27;
+static const vec2s    BRICK_SIZE  = {{ 128, 32 }};
+static const unsigned BRICK_COLS  = 12;
 static const unsigned BRICK_ROWS  = 12;
 static const vec2s    BRICK_SINGLE_OFFSETS[] = {
-    {{ 0,   0  }}, // blue,   id = 0
-    {{ 64,  0  }}, // green,  id = 1
-    {{ 128, 0  }}, // orange, id = 2
-    {{ 192, 0  }}, // purple, id = 3
-    {{ 256, 0  }}, // red,    id = 4
-    {{ 320, 0  }}  // yellow, id = 5
+    {{ 0,   64 }}, // blue,   id = A
+    {{ 128, 64 }}, // green,  id = B
+    {{ 256, 64 }}, // orange, id = C
+    {{ 0,   96 }}, // purple, id = D
+    {{ 128, 96 }}, // red,    id = E
+    {{ 256, 96 }}  // yellow, id = f
 };
 static const vec2s    BRICK_SOLID_OFFSETS[] = {
     {{ 0,   32 }}, // blue,   id = a
@@ -93,12 +93,4 @@ static const vec2s    BRICK_SOLID_OFFSETS[] = {
     {{ 192, 32 }}, // purple, id = d
     {{ 256, 32 }}, // red,    id = e
     {{ 320, 32 }}, // yellow, id = f
-};
-static const vec2s    BRICK_DOUBLE_OFFSETS[] = {
-    {{ 0,   64 }}, // blue,   id = A
-    {{ 128, 64 }}, // green,  id = B
-    {{ 256, 64 }}, // orange, id = C
-    {{ 0,   96 }}, // purple, id = D
-    {{ 128, 96 }}, // red,    id = E
-    {{ 256, 96 }}  // yellow, id = f
 };
