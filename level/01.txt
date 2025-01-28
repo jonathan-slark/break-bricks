@@ -1,10 +1,10 @@
 # x = no brick
-# 0 = blue   | A = blue,   double | a = blue,   unbreakable
-# 1 = green  | B = green,  double | b = green,  unbreakable
-# 2 = orange | C = orange, double | c = orange, unbreakable
-# 3 = purple | D = purple, double | d = purple, unbreakable
-# 4 = red    | E = red,    double | e = red,    unbreakable
-# 5 = yellow | F = yellow, double | f = yellow, unbreakable
+# 0 = blue   | a = blue,   unbreakable
+# 1 = green  | b = green,  unbreakable
+# 2 = orange | c = orange, unbreakable
+# 3 = purple | d = purple, unbreakable
+# 4 = red    | e = red,    unbreakable
+# 5 = yellow | f = yellow, unbreakable
 # White space, new lines and comments are ignored
 
 x x x x x x x x x x x x

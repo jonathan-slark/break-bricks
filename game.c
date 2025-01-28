@@ -95,8 +95,11 @@ static void ball_init(Ball* b, Sprite* bs, Sprite* p);
 static void brick_init(Brick* brick, char id, unsigned col, unsigned row);
 static void level_read(const char* data);
 static void level_load(unsigned num);
+static void screen_init(Screen* s, const char* file);
+static unsigned hiscore_load(void);
 static void level_unload(void);
 static void level_reset(void);
+static void hiscore_save(void);
 static void quit(void);
 static void pause(void);
 static unsigned random(unsigned min, unsigned max);
@@ -104,6 +107,7 @@ static void click(void);
 static vec2s get_wall_dist(Sprite* s);
 static void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle);
 static bool is_wall_hit(Sprite* s, vec2s newpos);
+static void hiscore_check(void);
 static bool is_oob(Sprite* s, vec2s newpos);
 static bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos);
 static vec2s get_aabb_dist(Sprite* s1, Sprite* s2);
@@ -115,7 +119,7 @@ static void ball_move(Ball* b, Sprite* s, double frame_time);
 static bool is_won(void);
 static void level_render(void);
 static void screen_render(Screen* s);
-static void text_render(const Text* t);
+static void text_render(const Text* t, ...);
 static void screen_game(void);
 
 // Requires above types and functions
@@ -250,8 +254,8 @@ void level_read(const char* data) {
 
 void level_load(unsigned num) {
     char fmt[] = "%s/%02i.txt";
-    int sz = snprintf(NULL, 0, fmt, LEVEL_FOLDER, num);
-    char file[sz + 1];
+    int size = snprintf(NULL, 0, fmt, LEVEL_FOLDER, num);
+    char file[size + 1];
     snprintf(file, sizeof file, fmt, LEVEL_FOLDER, num);
     char* data = util_load(file, READ_ONLY_TEXT);
     if (!data) main_term(EXIT_FAILURE, "Unable to load level:\n%s\n", level);
@@ -276,13 +280,25 @@ void game_loading(void) {
 }
 
 unsigned hiscore_load(void) {
-    char* data = util_load(HISCORE_FILE, READ_ONLY_TEXT);
-    if (data) {
-	char* end = NULL;
-	return strtoul(data, &end, 10);
-    } else {
-	return 0;
+    FILE* fp = fopen(HISCORE_FILE, READ_ONLY_TEXT);
+    if (!fp) {
+        fprintf(stderr, "Could not open file %s\n", HISCORE_FILE);
+        perror("fopen() error");
+        return 0;
     }
+
+    unsigned hiscore;
+    if (fscanf(fp, "%u", &hiscore) != 1) {
+	fprintf(stderr, "Could not read hiscore from file %s\n", HISCORE_FILE);
+        return 0;
+    }
+
+    if (fclose(fp) == EOF) {
+        fprintf(stderr, "Error on closing file %s\n", HISCORE_FILE);
+        perror("fclose() error");
+    }
+
+    return hiscore;
 }
 
 void game_load(void) {
@@ -323,7 +339,7 @@ void level_unload(void) {
 void level_fullreset(void) {
     score = 0;
     lives = LIVES;
-    is_hiscore = 0;
+    is_hiscore = false;
     level_reset();
 }
 
@@ -363,11 +379,26 @@ void game_unload(void) {
     gfx_term();
 }
 
+void hiscore_save(void) {
+    FILE* fp = fopen(HISCORE_FILE, WRITE_ONLY_TEXT);
+    if (!fp) {
+        fprintf(stderr, "Could not open file %s.\n", HISCORE_FILE);
+	perror("fopen() failed");
+    }
+
+    if (fprintf(fp, "%u\n", hiscore) < 0) {
+	perror("fprintf failed");
+    }
+
+    fclose(fp);
+}
+
 void quit(void) {
     switch(state) {
     case StateLoading:
 	break;
     case StateMenu:
+	hiscore_save();
 	main_quit();
 	break;
     case StateRun:
@@ -649,6 +680,13 @@ vec2s get_brick_closest(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUN
     return dist_min;
 }
 
+void hiscore_check(void) {
+    if (score > hiscore) {
+	hiscore = score;
+	is_hiscore = true;
+    }
+}
+
 void ball_move(Ball* b, Sprite* bs, double frame_time) {
     Sprite* ps   = &sprites.paddle.sprite;
     vec2s vel    = glms_vec2_scale(b->vel, BALL_SPEED * frame_time);
@@ -660,6 +698,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	    state = StateLost;
 	    aud_sound_stop(playing);
 	    aud_sound_play(AUD_LOST);
+	    hiscore_check();
 	} else {
 	    aud_sound_play(AUD_DEATH);
 	    b->is_stuck = true;
@@ -720,10 +759,7 @@ void game_update(double frame_time) {
 		    state = StateWon;
 		    aud_sound_stop(playing);
 		    aud_sound_play(AUD_WON);
-		    if (score > hiscore) {
-			hiscore = score;
-			is_hiscore = true;
-		    }
+		    hiscore_check();
 		    level = 1;
 		} else {
 		    aud_sound_stop(playing);
@@ -754,9 +790,15 @@ void screen_render(Screen* s) {
     gfx_render_end(&s->render);
 }
 
-void text_render(const Text* t) {
+void text_render(const Text* t, ...) {
     gfx_font_begin(&fonts[t->size]);
-    gfx_font_printf(&fonts[t->size], t->pos, t->col, t->fmt, score);
+    va_list ap;
+    va_start(ap, t);
+    int size = vsnprintf(NULL, 0, t->fmt, ap);
+    char text[size + 1];
+    vsnprintf(text, sizeof text, t->fmt, ap);
+    va_end(ap);
+    gfx_font_printf(&fonts[t->size], t->pos, t->col, text);
     gfx_font_end(&fonts[t->size]);
 }
 
@@ -769,7 +811,8 @@ void screen_game(void) {
     gfx_render_quad(&sprites.render, &sprites.ball.sprite.quad);
     gfx_render_end(&sprites.render);
 
-    text_render(&TEXT_SCORE);
+    text_render(&TEXT_SCORE,   score);
+    text_render(&TEXT_HISCORE, hiscore);
 }
 
 void game_render(void) {
@@ -791,13 +834,13 @@ void game_render(void) {
     case StateWon:
 	screen_game();
 	text_render(&TEXT_WON);
-	if (is_hiscore) text_render(&TEXT_HISCORE);
+	if (is_hiscore) text_render(&TEXT_NEWHISCORE);
 	text_render(&TEXT_CONTINUE);
 	break;
     case StateLost:
 	screen_game();
 	text_render(&TEXT_LOST);
-	if (is_hiscore) text_render(&TEXT_HISCORE);
+	if (is_hiscore) text_render(&TEXT_NEWHISCORE);
 	text_render(&TEXT_CONTINUE);
 	break;
     }

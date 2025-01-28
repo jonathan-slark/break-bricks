@@ -20,19 +20,20 @@ static const unsigned CR_COUNT       = 2; // How many times per frame to run col
 
 static const char     FONT_FILE[]    = "font/JupiteroidRegular.ttf";
 static const unsigned FONT_HEIGHTS[] = { 64, 40 };
-static const Text     TEXT_SCORE     = { FontLarge,  {{ 94,  54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
-static const Text     TEXT_PAUSED    = { FontLarge,  {{ 880, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
-static const Text     TEXT_MENU      = { FontMedium, {{ 680, 860 }}, {{ 0.6f, 0.6f, 0.6f }},
+static const Text     TEXT_SCORE     = { FontLarge,  {{ 192,  54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
+static const Text     TEXT_HISCORE   = { FontLarge,  {{ 1550, 54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
+static const Text     TEXT_PAUSED    = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
+static const Text     TEXT_MENU      = { FontMedium, {{ 680,  860 }}, {{ 0.6f, 0.6f, 0.6f }},
     "Use the mouse to control the paddle.\n"
     "Click mouse button to release the ball.\n"
     "Press space to pause.\n"
     "Press escape to quit.\n"
     "\n"
     "Click mouse button to continue." };
-static const Text     TEXT_LOST      = { FontLarge,  {{ 840, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
-static const Text     TEXT_HISCORE   = { FontLarge,  {{ 830, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
-static const Text     TEXT_WON       = { FontLarge,  {{ 865, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
-static const Text     TEXT_CONTINUE  = { FontMedium, {{ 745, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
+static const Text     TEXT_LOST       = { FontLarge,  {{ 840, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
+static const Text     TEXT_NEWHISCORE = { FontLarge,  {{ 820, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
+static const Text     TEXT_WON        = { FontLarge,  {{ 865, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
+static const Text     TEXT_CONTINUE   = { FontMedium, {{ 745, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
     "Click mouse button to continue." };
 
 static const float       AUD_VOL     = 0.1; // Volume 0 - 1
@@ -79,18 +80,18 @@ static const vec2s    BRICK_SIZE  = {{ 128, 32 }};
 static const unsigned BRICK_COLS  = 12;
 static const unsigned BRICK_ROWS  = 12;
 static const vec2s    BRICK_SINGLE_OFFSETS[] = {
-    {{ 0,   64 }}, // blue,   id = A
-    {{ 128, 64 }}, // green,  id = B
-    {{ 256, 64 }}, // orange, id = C
-    {{ 0,   96 }}, // purple, id = D
-    {{ 128, 96 }}, // red,    id = E
-    {{ 256, 96 }}  // yellow, id = f
+    {{ 0,   64 }}, // blue,   id = 0
+    {{ 128, 64 }}, // green,  id = 1
+    {{ 256, 64 }}, // orange, id = 2
+    {{ 0,   96 }}, // purple, id = 3
+    {{ 128, 96 }}, // red,    id = 4
+    {{ 256, 96 }}  // yellow, id = 5
 };
 static const vec2s    BRICK_SOLID_OFFSETS[] = {
-    {{ 0,   32 }}, // blue,   id = a
-    {{ 64,  32 }}, // green,  id = b
-    {{ 128, 32 }}, // orange, id = c
-    {{ 192, 32 }}, // purple, id = d
-    {{ 256, 32 }}, // red,    id = e
-    {{ 320, 32 }}, // yellow, id = f
+    {{ 0,   0 }},  // blue,   id = a
+    {{ 128, 0 }},  // green,  id = b
+    {{ 256, 0 }},  // orange, id = c
+    {{ 0,   32 }}, // purple, id = d
+    {{ 128, 32 }}, // red,    id = e
+    {{ 256, 32 }}, // yellow, id = f
 };

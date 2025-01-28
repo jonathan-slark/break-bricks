@@ -1,4 +1,3 @@
-#include <cglm/struct.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,17 +7,20 @@
 char* util_load(const char* file, const char* mode) {
     FILE* fp = fopen(file, mode);
     if (!fp) {
-	fprintf(stderr, "Could not open file %s.\n", file);
+	fprintf(stderr, "Could not open file %s\n", file);
+	perror("fopen() error");
 	return NULL;
     }
 
     if (fseek(fp, 0L, SEEK_END) != 0) {
-	fprintf(stderr, "Error on seeking file %s.\n", file);
+	fprintf(stderr, "Error on seeking file %s\n", file);
+	perror("fseek() error");
 	return NULL;
     }
     long l = ftell(fp);
     if (l < 0) {
-	fprintf(stderr, "Error on getting size of file %s.\n", file);
+	fprintf(stderr, "Error on getting size of file %s\n", file);
+	perror("ftell() error");
 	return NULL;
     }
     size_t size = (size_t) l;
@@ -26,14 +28,15 @@ char* util_load(const char* file, const char* mode) {
 
     char* data = (char*) malloc((size + 1) * sizeof(char));
     if (fread(data, sizeof(char), size, fp) < size) {
-	fprintf(stderr, "Error reading file %s.\n", file);
+	fprintf(stderr, "Error reading file %s\n", file);
+	perror("fread() error");
 	return NULL;
     }
     data[size] = '\0';
 
     if (fclose(fp) == EOF) {
-	fprintf(stderr, "Error on closing file %s.\n", file);
-	return NULL;
+	fprintf(stderr, "Error on closing file %s\n", file);
+	perror("fclose() error");
     }
 
     return data;
