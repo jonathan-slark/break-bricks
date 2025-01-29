@@ -7,14 +7,14 @@
 # 5 = yellow | f = yellow, unbreakable
 # White space, new lines and comments are ignored
 
+x x x x x x x x x x x x
+x x x x x x x x x x x x
+x x x x x x x x x x x x
+x x x x x x x x x x x x
 0 0 0 0 0 0 0 0 0 0 0 0
 1 1 1 1 1 1 1 1 1 1 1 1
 2 2 2 2 2 2 2 2 2 2 2 2
-x x x x x x x x x x x x
-x x x x x x x x x x x x
-x x x x x x x x x x x x
-x x x x x x x x x x x x
-x x x x x x x x x x x x
+d d d x x x x x x d d d
 x x x x x x x x x x x x
 x x x x x x x x x x x x
 x x x x x x x x x x x x

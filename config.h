@@ -4,8 +4,12 @@
  */
 
 static const Key KEYS[] = {
+#ifndef NDEBUG
+    { GLFW_KEY_LEFT,   level_prev },
+    { GLFW_KEY_RIGHT,  level_next },
+#endif
     { GLFW_KEY_ESCAPE, quit },
-    { GLFW_KEY_SPACE, pause }
+    { GLFW_KEY_SPACE,  pause }
 };
 static const Button BUTTONS[] = {
     { GLFW_MOUSE_BUTTON_LEFT, click }
@@ -13,7 +17,7 @@ static const Button BUTTONS[] = {
 
 static const char     LOADING_FILE[] = "gfx/loading.png";
 static const char     LEVEL_FOLDER[] = "level";
-static const unsigned LEVEL_COUNT    = 1;
+static const unsigned LEVEL_COUNT    = 6;
 static const char     HISCORE_FILE[] = "hiscore.txt";
 static const unsigned LIVES          = 3;
 static const unsigned CR_COUNT       = 2; // How many times per frame to run collision resolution

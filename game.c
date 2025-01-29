@@ -104,6 +104,8 @@ static unsigned hiscore_load(void);
 static void level_unload(void);
 static void level_reset(void);
 static void hiscore_save(void);
+static void level_next(void);
+static void level_prev(void);
 static void quit(void);
 static void pause(void);
 static unsigned random(unsigned min, unsigned max);
@@ -315,6 +317,13 @@ unsigned hiscore_load(void) {
     return hiscore;
 }
 
+void music_load(void) {
+    music = (ma_sound**) malloc(COUNT(AUD_MUSIC) * sizeof(ma_sound*));
+    for (size_t i = 0; i < COUNT(AUD_MUSIC); i ++) {
+	music[i] = aud_sound_load(AUD_MUSIC[i]);
+    }
+}
+
 void game_load(void) {
     // Decent random seed: https://stackoverflow.com/q/58150771
     struct timespec ts;
@@ -339,7 +348,7 @@ void game_load(void) {
     sounds[SoundClear] = aud_sound_load(AUD_CLEAR);
     sounds[SoundWon]   = aud_sound_load(AUD_WON);
     sounds[SoundLost]  = aud_sound_load(AUD_LOST);
-    playing            = aud_sound_load(AUD_MUSIC[level - 1]);
+    music_load();
 
     hiscore = hiscore_load();
 
@@ -406,6 +415,22 @@ void hiscore_save(void) {
     }
 
     fclose(fp);
+}
+
+void level_next(void) {
+    if (level < LEVEL_COUNT) {
+	level++;
+	aud_sound_stop(playing);
+	level_reset();
+    }
+}
+
+void level_prev(void) {
+    if (level > 1) {
+	level--;
+	aud_sound_stop(playing);
+	level_reset();
+    }
 }
 
 void quit(void) {
@@ -800,7 +825,7 @@ void game_update(double frame_time) {
 	    }
 	}
 
-	if (!ma_sound_is_playing(playing)) {
+	if (!playing || !ma_sound_is_playing(playing)) {
 	    playing = aud_sound_play(AUD_MUSIC[level - 1]);
 	}
     }
