@@ -9,13 +9,21 @@
 #include "aud.h"
 #include "main.h"
 
+// Constants
+static const unsigned CHANNELS    = 2;
+static const unsigned SAMPLE_RATE = 48000;
+
 // Variables
 ma_engine engine;
 
 // Function implementations
 
 void aud_init(float vol) {
-    if (ma_engine_init(NULL, &engine) != MA_SUCCESS) {
+    ma_engine_config ec;
+    ec = ma_engine_config_init();
+    ec.channels = CHANNELS;
+    ec.sampleRate = SAMPLE_RATE;
+    if (ma_engine_init(&ec, &engine) != MA_SUCCESS) {
 	main_term(EXIT_FAILURE, "Failed to initialise audio engine.\n");
     }
     ma_engine_set_volume(&engine, vol);
@@ -31,6 +39,7 @@ ma_sound* aud_sound_load(const char* file) {
     ma_sound* sound = (ma_sound*) malloc(sizeof(ma_sound));
 
     // Load and decode now to avoid overhead during game play
+    // https://miniaud.io/docs/manual/index.html#OptimizationTips
     if (ma_sound_init_from_file(&engine, file,
 	    MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION,
 	    NULL, NULL, sound) != MA_SUCCESS) {
