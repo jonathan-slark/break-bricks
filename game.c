@@ -59,6 +59,7 @@ typedef struct {
 
 typedef struct {
     bool   is_stuck;
+    bool   just_bounced;
     vec2s  vel;
     Sprite sprite;
 } Ball;
@@ -205,6 +206,7 @@ void paddle_init(Paddle* p) {
 
 void ball_init(Ball* b, Sprite* bs, Sprite* ps) {
     b->is_stuck = true;
+    b->just_bounced = false;
     vec2s pos = {{
         ps->pos.x + ps->size.s / 2.0f - BALL_SIZE.s / 2.0f,
         ps->pos.y - BALL_SIZE.t
@@ -548,9 +550,18 @@ vec2s get_wall_dist(Sprite* s) {
 
 void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle) {
     // Calculate which axis will hit first
-    float time_x   = vel.x != 0.0f ? fabs(dist.s / vel.x) : 0.0f;
-    float time_y   = vel.y != 0.0f ? fabs(dist.t / vel.y) : 0.0f;
-    float time_min = fmin(time_x, time_y);
+    float time_x = vel.x != 0.0f ? fabs(dist.s / vel.x) : 0.0f;
+    float time_y = vel.y != 0.0f ? fabs(dist.t / vel.y) : 0.0f;
+    // Ignore a time of 0.0f as that means the ball is in the corner and just bounced.
+    // A real corner case, no?
+    float time_min;
+    if (b->just_bounced && time_x == 0.0f) {
+	time_min = time_y;
+    } else if (b->just_bounced && time_y == 0.0f) {
+	time_min = time_x;
+    } else {
+	time_min = fmin(time_x, time_y);
+    }
 
     // Move ball to the point of the collision
     vel = glms_vec2_scale(vel, time_min);
@@ -577,6 +588,8 @@ void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle) {
             b->vel.y = -b->vel.y;
         }
     }
+
+    b->just_bounced = true;
 }
 
 bool is_wall_hit(Sprite* s, vec2s newpos) {
@@ -706,6 +719,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     vec2s newpos = glms_vec2_add(bs->pos, vel);
 
     if (is_oob(bs, newpos)) {
+	b->just_bounced = false;
 	sprites.paddle.lives -= 1;
 	if (!sprites.paddle.lives) {
 	    state = StateLost;
@@ -734,6 +748,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
             bounce(b, bs, vel, dist, false);
         } else {
 	    gfx_quad_set_pos(&bs->quad, newpos, bs->size);
+	    b->just_bounced = false;
         }
     }
 }
