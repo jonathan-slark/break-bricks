@@ -197,7 +197,7 @@ void paddle_init(Paddle* p) {
     p->sprite.size = PADDLE_SIZE;
 
     p->lives_sprites = (Sprite*) malloc((LIVES - 1) * sizeof(Sprite));
-    for (size_t i = 0; i < LIVES; i++) {
+    for (size_t i = 0; i < LIVES - 1; i++) {
 	p->lives_sprites[i].quad = gfx_quad_create(&sprites.render, PADDLE_LIVES[i], PADDLE_SIZE, PADDLE_OFFSET);
 	p->lives_sprites[i].size = PADDLE_SIZE;
     }
@@ -762,9 +762,11 @@ void game_update(double frame_time) {
 	    double cr_time = frame_time / CR_COUNT;
 	    for (unsigned i = 0; i < CR_COUNT - 1; i++) {
 		ball_move(b, &b->sprite, cr_time);
+		if (state != StateRun) return;
 	    }
 	    // Account for rounding errors
 	    ball_move(b, &b->sprite, frame_time - cr_time * (CR_COUNT - 1));
+	    if (state != StateRun) return;
 
 	    if (is_won()) {
 		level++;
@@ -782,7 +784,7 @@ void game_update(double frame_time) {
 	    }
 	}
 
-	if (state == StateRun && !ma_sound_is_playing(playing)) {
+	if (!ma_sound_is_playing(playing)) {
 	    playing = aud_sound_play(AUD_MUSIC[level - 1]);
 	}
     }
@@ -822,7 +824,7 @@ void screen_game(void) {
     level_render();
     gfx_render_quad(&sprites.render, &sprites.ball.sprite.quad);
     gfx_render_quad(&sprites.render, &sprites.paddle.sprite.quad);
-    if (sprites.paddle.lives > 0) {
+    if (sprites.paddle.lives > 1) {
 	for (size_t i = 0; i < sprites.paddle.lives - 1; i++) {
 	    gfx_render_quad(&sprites.render, &sprites.paddle.lives_sprites[i].quad);
 	}
