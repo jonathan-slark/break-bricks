@@ -64,7 +64,10 @@ typedef struct {
 } Ball;
 
 typedef struct {
-    Sprite sprite;
+    Sprite   sprite;
+    unsigned score;
+    unsigned lives;
+    Sprite*  lives_sprites;
 } Paddle;
 
 typedef struct {
@@ -90,7 +93,7 @@ typedef struct {
 
 // Function prototypes
 
-static void paddle_init(Sprite* ps);
+static void paddle_init(Paddle* p);
 static void ball_init(Ball* b, Sprite* bs, Sprite* p);
 static void brick_init(Brick* brick, char id, unsigned col, unsigned row);
 static void level_read(const char* data);
@@ -136,7 +139,7 @@ static ma_sound** sounds;
 static ma_sound** music;
 static ma_sound* playing;
 static Font fonts[FontSizeCount];
-static unsigned score = 0, hiscore, lives = LIVES;
+static unsigned hiscore;
 static bool is_hiscore = false;
 
 // Function implementations
@@ -181,14 +184,23 @@ void brick_print(unsigned count, unsigned brick_hits[VERT_COUNT]) {
 
 #endif
 
-void paddle_init(Sprite* ps) {
+void paddle_init(Paddle* p) {
+    p->score = 0;
+    p->lives = LIVES;
+
     vec2s mouse_pos = main_get_mouse_pos();
     vec2s pos = {{
 	mouse_pos.x,
 	SCR_HEIGHT - PADDLE_SIZE.t
     }};
-    ps->quad = gfx_quad_create(&sprites.render, pos, PADDLE_SIZE, PADDLE_OFFSET);
-    ps->size = PADDLE_SIZE;
+    p->sprite.quad = gfx_quad_create(&sprites.render, pos, PADDLE_SIZE, PADDLE_OFFSET);
+    p->sprite.size = PADDLE_SIZE;
+
+    p->lives_sprites = (Sprite*) malloc((LIVES - 1) * sizeof(Sprite));
+    for (size_t i = 0; i < LIVES; i++) {
+	p->lives_sprites[i].quad = gfx_quad_create(&sprites.render, PADDLE_LIVES[i], PADDLE_SIZE, PADDLE_OFFSET);
+	p->lives_sprites[i].size = PADDLE_SIZE;
+    }
 }
 
 void ball_init(Ball* b, Sprite* bs, Sprite* ps) {
@@ -310,7 +322,7 @@ void game_load(void) {
     screen_init(&bg, BG_FILE);
 
     sprites.render = gfx_render_create(SPRITE_COUNT, SPRITE_SHEET);
-    paddle_init(&sprites.paddle.sprite);
+    paddle_init(&sprites.paddle);
     ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
     level_load(level);
 
@@ -337,8 +349,8 @@ void level_unload(void) {
 }
 
 void level_fullreset(void) {
-    score = 0;
-    lives = LIVES;
+    sprites.paddle.score = 0;
+    sprites.paddle.lives = LIVES;
     is_hiscore = false;
     level_reset();
 }
@@ -374,6 +386,7 @@ void game_unload(void) {
     }
 
     level_unload();
+    if (sprites.paddle.lives_sprites) free(sprites.paddle.lives_sprites);
     gfx_render_delete(&sprites.render);
     gfx_render_delete(&loading.render);
     gfx_term();
@@ -646,7 +659,7 @@ void score_update(unsigned brick_index) {
     unsigned score_base = 1;
     unsigned row = brick_index / BRICK_COLS;
 
-    score += score_base * level * (BRICK_ROWS - row);
+    sprites.paddle.score += score_base * level * (BRICK_ROWS - row);
 }
 
 // Find the distance to the closest brick and destroy it, if applicable
@@ -681,8 +694,8 @@ vec2s get_brick_closest(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUN
 }
 
 void hiscore_check(void) {
-    if (score > hiscore) {
-	hiscore = score;
+    if (sprites.paddle.score > hiscore) {
+	hiscore = sprites.paddle.score;
 	is_hiscore = true;
     }
 }
@@ -693,8 +706,8 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     vec2s newpos = glms_vec2_add(bs->pos, vel);
 
     if (is_oob(bs, newpos)) {
-	lives -= 1;
-	if (!lives) {
+	sprites.paddle.lives -= 1;
+	if (!sprites.paddle.lives) {
 	    state = StateLost;
 	    aud_sound_stop(playing);
 	    aud_sound_play(AUD_LOST);
@@ -807,11 +820,16 @@ void screen_game(void) {
 
     gfx_render_begin(&sprites.render);
     level_render();
-    gfx_render_quad(&sprites.render, &sprites.paddle.sprite.quad);
     gfx_render_quad(&sprites.render, &sprites.ball.sprite.quad);
+    gfx_render_quad(&sprites.render, &sprites.paddle.sprite.quad);
+    if (sprites.paddle.lives > 0) {
+	for (size_t i = 0; i < sprites.paddle.lives - 1; i++) {
+	    gfx_render_quad(&sprites.render, &sprites.paddle.lives_sprites[i].quad);
+	}
+    }
     gfx_render_end(&sprites.render);
 
-    text_render(&TEXT_SCORE,   score);
+    text_render(&TEXT_SCORE,   sprites.paddle.score);
     text_render(&TEXT_HISCORE, hiscore);
 }
 

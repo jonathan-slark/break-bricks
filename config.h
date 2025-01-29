@@ -63,8 +63,12 @@ static const unsigned BG_WALL_RIGHT  = 192;
 
 static const char SPRITE_SHEET[] = "gfx/spritesheet.png";
 
-static const vec2s PADDLE_SIZE       = {{ 144, 24 }};
-static const vec2s PADDLE_OFFSET     = {{ 384, 0 }};
+static const vec2s PADDLE_SIZE    = {{ 144, 24 }};
+static const vec2s PADDLE_OFFSET  = {{ 384, 0 }};
+static const vec2s PADDLE_LIVES[] = {
+    {{ 8, 1053 }},
+    {{ 8, 1027 }}
+};
 
 static const vec2s    BALL_SIZE       = {{ 24, 24 }};
 static const vec2s    BALL_OFFSET     = {{ 528, 0 }};
