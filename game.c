@@ -776,6 +776,7 @@ void game_update(double frame_time) {
 		    aud_sound_play(AUD_WON);
 		    hiscore_check();
 		    level = 1;
+		    return;
 		} else {
 		    aud_sound_stop(playing);
 		    aud_sound_play(AUD_CLEAR);

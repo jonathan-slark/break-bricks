@@ -32,7 +32,7 @@ static const Text     TEXT_MENU      = { FontMedium, {{ 680,  860 }}, {{ 0.6f, 0
     "Click mouse button to continue." };
 static const Text     TEXT_LOST       = { FontLarge,  {{ 840, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
 static const Text     TEXT_NEWHISCORE = { FontLarge,  {{ 820, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
-static const Text     TEXT_WON        = { FontLarge,  {{ 865, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
+static const Text     TEXT_WON        = { FontLarge,  {{ 855, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
 static const Text     TEXT_CONTINUE   = { FontMedium, {{ 745, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
     "Click mouse button to continue." };
 
