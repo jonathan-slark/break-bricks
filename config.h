@@ -20,8 +20,8 @@ static const unsigned CR_COUNT       = 2; // How many times per frame to run col
 
 static const char     FONT_FILE[]    = "font/JupiteroidRegular.ttf";
 static const unsigned FONT_HEIGHTS[] = { 64, 40 };
-static const Text     TEXT_SCORE     = { FontLarge,  {{ 192,  54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
-static const Text     TEXT_HISCORE   = { FontLarge,  {{ 1550, 54  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
+static const Text     TEXT_SCORE     = { FontLarge,  {{ 192,  56  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
+static const Text     TEXT_HISCORE   = { FontLarge,  {{ 1573, 56  }}, {{ 1.0f, 1.0f, 1.0f }}, "%u" };
 static const Text     TEXT_PAUSED    = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
 static const Text     TEXT_MENU      = { FontMedium, {{ 680,  860 }}, {{ 0.6f, 0.6f, 0.6f }},
     "Use the mouse to control the paddle.\n"

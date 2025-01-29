@@ -8,12 +8,18 @@
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
+#ifndef NDEBUG
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif // !NDEBUG
 #define STB_RECT_PACK_IMPLEMENTATION
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
 #include <cglm/struct.h>
 #include <glad.h>
 #include <stb/stb_image.h>
+#ifndef NDEBUG
+#include <stb/stb_image_write.h>
+#endif // !NDEBUG
 #include <stb/stb_rect_pack.h>
 #include <stb/stb_truetype.h>
 #include <stddef.h>
@@ -391,6 +397,14 @@ Font gfx_font_create(unsigned height, const char* file) {
     stbtt_PackEnd(&ctx);
 
     util_unload((char*) data);
+
+#ifndef NDEBUG
+    char fmt[] = "font_%u.png";
+    int size = snprintf(NULL, 0, fmt, height);
+    char file_png[size + 1];
+    snprintf(file_png, sizeof file_png, fmt, height);
+    stbi_write_png(file_png, SCR_WIDTH, SCR_HEIGHT, 1, (void*) bitmap, SCR_WIDTH);
+#endif // !NDEBUG
 
     GLuint name;
     glGenTextures(1, &name);

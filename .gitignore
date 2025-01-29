@@ -2,5 +2,5 @@
 .*.swp
 *.exe
 *.o
-font.png
+font_*.png
 hiscore.txt
