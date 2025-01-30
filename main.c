@@ -176,7 +176,11 @@ int main(void) {
 
     game_load();
 
-    double last_time = 0.0f;
+    // Ignore events that happened during loading
+    glfwPollEvents();
+    game_loaded();
+
+    double last_time = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
 	double cur_time = glfwGetTime();
 	double frame_time = cur_time - last_time;

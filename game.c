@@ -2,7 +2,6 @@
  * This file is released into the public domain under the CC0 1.0 Universal License.
  * For details, see https://creativecommons.org/publicdomain/zero/1.0/
  *
- * TODO: Ball can get stuck in corner.
  */
 
 #define CGLM_PRINT_COLOR       ""
@@ -351,7 +350,10 @@ void game_load(void) {
     music_load();
 
     hiscore = hiscore_load();
+}
 
+// Don't go to the menu till main indicates to
+void game_loaded(void) {
     state = StateMenu;
 }
 

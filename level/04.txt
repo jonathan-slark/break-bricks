@@ -8,14 +8,26 @@
 # White space, new lines and comments are ignored
 
 x x x x x x x x x x x x
+x x x x x 2 2 x x x x x
+x x x x x b b x x x x x
+x x x x x 0 0 x x x x x
 x x x x x x x x x x x x
+a x x x x x x x x x x a
 x x x x x x x x x x x x
+x x x x x 2 2 x x x x x
+x x x x x b b x x x x x
+x x x x x 0 0 x x x x x
 x x x x x x x x x x x x
-0 0 0 0 0 0 0 0 0 0 0 0
-1 1 1 1 1 1 1 1 1 1 1 1
-2 2 2 2 2 2 2 2 2 2 2 2
-d d d x x x x x x d d d
+a x x x x x x x x x x a
 x x x x x x x x x x x x
+x x x x x 2 2 x x x x x
+x x x x x b b x x x x x
+x x x x x 0 0 x x x x x
 x x x x x x x x x x x x
+a x x x x x x x x x x a
 x x x x x x x x x x x x
+x x x x x 2 2 x x x x x
+x x x x x b b x x x x x
+x x x x x 0 0 x x x x x
 x x x x x x x x x x x x
+a x x x x x x x x x x a

@@ -5,6 +5,7 @@
 
 void game_loading(void);
 void game_load(void);
+void game_loaded(void);
 void game_unload(void);
 void game_key_down(int key);
 void game_key_up(int key);
