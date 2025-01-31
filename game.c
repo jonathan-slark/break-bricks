@@ -613,11 +613,12 @@ void bounce(Ball* b, Sprite* bs, vec2s vel, vec2s dist, bool is_paddle) {
     assert(dist.s < SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT - BALL_SIZE.s || dist.s == FLT_MAX);
     assert(dist.t >= 0.0f);
     assert(dist.t < SCR_HEIGHT - BG_WALL_TOP - BALL_SIZE.t || dist.t == FLT_MAX);
+    assert(!(dist.s == FLT_MAX && dist.t == FLT_MAX));
 
     // Calculate which axis will hit first
-    float time_x = vel.x != 0.0f ? dist.s / fabs(vel.x) : 0.0f;
+    float time_x = vel.x == 0.0f ? 0.0f : dist.s / fabs(vel.x);
     assert(time_x >= 0.0f);
-    float time_y = vel.y != 0.0f ? dist.t / fabs(vel.y) : 0.0f;
+    float time_y = vel.y == 0.0f ? 0.0f : dist.t / fabs(vel.y);
     assert(time_y >= 0.0f);
     // Ignore a time of 0.0f as that means the ball is in the corner and just bounced.
     // A real corner case, no?
@@ -672,10 +673,9 @@ bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos) {
     assert(newpos.x < SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s + 10.0f);
     assert(newpos.y > BG_WALL_TOP - 10.0f);
     assert(newpos.y < SCR_HEIGHT - BALL_SIZE.s + 10.0f);
-    return newpos.y > SCR_HEIGHT - ps->size.y - bs->size.y &&
-           newpos.y < SCR_HEIGHT &&
-           newpos.x < ps->pos.x + ps->size.x &&
-           newpos.x + bs->size.x > ps->pos.x;
+    return newpos.y > SCR_HEIGHT - ps->size.t - bs->size.t &&
+           newpos.x < ps->pos.x + ps->size.s &&
+           newpos.x + bs->size.s > ps->pos.x;
 }
 
 vec2s get_aabb_dist(Sprite* s1, Sprite* s2) {
@@ -692,7 +692,7 @@ vec2s get_aabb_dist(Sprite* s1, Sprite* s2) {
     assert(s1y >= BG_WALL_TOP);
     assert(s1y <= SCR_HEIGHT);
 
-    if (s1x <= s2x) {
+    if (s1x < s2x) {
         dist.s = s2x - (s1x + s1->size.s);
     } else if (s1x > s2x) {
         dist.s = s1x - (s2x + s2->size.s);
@@ -702,7 +702,7 @@ vec2s get_aabb_dist(Sprite* s1, Sprite* s2) {
 	dist.s = FLT_MAX;
     }
 
-    if (s1y <= s2y) {
+    if (s1y < s2y) {
         dist.t = s2y - (s1y + s1->size.t);
     } else if (s1y > s2y) {
         dist.t = s1y - (s2y + s2->size.t);
@@ -799,7 +799,6 @@ vec2s get_brick_closest(Sprite* s, unsigned count, unsigned brick_hits[VERT_COUN
         }
     }
 
-
     unsigned i = brick_hits[brick];
     Brick* b = &sprites.bricks[i];
     assert(b);
@@ -836,7 +835,6 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     vec2s newpos = glms_vec2_add(bs->pos, vel);
 
     if (is_oob(bs, newpos)) {
-	b->just_bounced = false;
 	sprites.paddle.lives -= 1;
 	if (!sprites.paddle.lives) {
 	    state = StateLost;
@@ -845,7 +843,6 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	    hiscore_check();
 	} else {
 	    aud_sound_play(AUD_DEATH);
-	    b->is_stuck = true;
 	    ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
 	}
     } else if (is_wall_hit(bs, newpos)) {
@@ -857,11 +854,18 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
         bounce(b, bs, vel, dist, false);
     } else if (is_paddle_hit(bs, ps, newpos)) {
         vec2s dist = get_aabb_dist(bs, ps);
-	assert(dist.s >= 0.0f);
-	assert(dist.s < 10.0f || dist.s == FLT_MAX);
-	assert(dist.t >= 0.0f);
-	assert(dist.t < 10.0f || dist.t == FLT_MAX);
-        bounce(b, bs, vel, dist, true);
+	// If the ball hits the side of the paddle and the paddle is then moved the ball can
+	// end up inside the paddle, ignore this situation and allow the ball to drop oob.
+	if (!(dist.s == FLT_MAX && dist.t == FLT_MAX)) {
+	    assert(dist.s >= 0.0f);
+	    assert(dist.s < 10.0f || dist.s == FLT_MAX);
+	    assert(dist.t >= 0.0f);
+	    assert(dist.t < 10.0f || dist.t == FLT_MAX);
+	    bounce(b, bs, vel, dist, true);
+        } else {
+	    gfx_quad_set_pos(&bs->quad, newpos, bs->size);
+	    b->just_bounced = false;
+        }
     } else {
         unsigned brick_hits[VERT_COUNT];
         unsigned count = get_brick_hits(bs, newpos, brick_hits);
