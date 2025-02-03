@@ -21,7 +21,6 @@ static const char     LEVEL_FOLDER[] = "level";
 static const unsigned LEVEL_COUNT    = 7;
 static const char     HISCORE_FILE[] = "hiscore.txt";
 static const unsigned LIVES          = 3;
-static const unsigned CR_COUNT       = 2; // How many times per frame to run collision resolution
 
 static const char     FONT_FILE[]    = "font/JupiteroidRegular.ttf";
 static const unsigned FONT_HEIGHTS[] = { 64, 40 };

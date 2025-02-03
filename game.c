@@ -91,6 +91,17 @@ typedef struct {
     char*    fmt;
 } Text;
 
+enum Obj  { BrickObj, PaddleObj, WallObj };
+enum Axis { XAxis, YAxis };
+typedef enum Axis Axis;
+typedef enum Obj  Obj;
+
+typedef struct {
+    float len;
+    Axis  axis;
+    Obj   type;
+} Dist;
+
 // Function prototypes
 
 static void paddle_init(Paddle* p);
@@ -113,16 +124,16 @@ static unsigned random(unsigned min, unsigned max);
 static void click(void);
 static bool is_oob(Sprite* bs, vec2s newpos);
 static bool is_wall_hit(Sprite* bs, vec2s newpos);
-static vec2s get_wall_dist(Ball* b, Sprite* bs);
-static void bounce(Ball* b, Sprite* bs, Sprite* ps, vec2s vel, vec2s dist, bool is_paddle);
+static Dist get_wall_dist(Ball* b, Sprite* bs);
+static void bounce(Ball* b, Sprite* bs, Sprite* ps, vec2s vel, Dist dist);
 static void hiscore_check(void);
 static bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos);
-static vec2s get_aabb_dist(Ball* b, Sprite* bs, Sprite* s);
-static int get_brick_index(float x, float y);
-static bool is_member(unsigned index, unsigned brick_hits[VERT_COUNT]);
-static unsigned get_brick_hits(Sprite* bs, vec2s newpos, unsigned brick_hits[VERT_COUNT]);
-static void score_update(unsigned brick_index);
-static vec2s get_brick_closest(Ball* b, Sprite* bs, unsigned count, unsigned brick_hits[VERT_COUNT]);
+static Dist get_ball_dist(Ball* b, Sprite* bs, Sprite* s);
+//static int get_brick_index(float x, float y);
+//static bool is_member(unsigned index, unsigned brick_hits[VERT_COUNT]);
+//static unsigned get_brick_hits(Sprite* bs, vec2s newpos, unsigned brick_hits[VERT_COUNT]);
+//static void score_update(unsigned brick_index);
+//static vec2s get_brick_closest(Ball* b, Sprite* bs, unsigned count, unsigned brick_hits[VERT_COUNT]);
 static void ball_move(Ball* b, Sprite* bs, double frame_time);
 static bool is_won(void);
 static void level_render(void);
@@ -614,7 +625,7 @@ bool is_wall_hit(Sprite* bs, vec2s newpos) {
            newpos.y < BG_WALL_TOP;
 }
 
-vec2s get_wall_dist(Ball* b, Sprite* bs) {
+Dist get_wall_dist(Ball* b, Sprite* bs) {
     assert(b);
     assert(bs);
 
@@ -641,37 +652,28 @@ vec2s get_wall_dist(Ball* b, Sprite* bs) {
 	t = FLT_MAX;
     }
 
-    return (vec2s) {{ s, t }};
+    return (Dist) { .len = s < t ? s : t, .axis = s < t ? XAxis : YAxis };
 }
 
-void bounce(Ball* b, Sprite* bs, Sprite* ps, vec2s vel, vec2s dist, bool is_paddle) {
+void bounce(Ball* b, Sprite* bs, Sprite* ps, vec2s vel, Dist dist) {
     assert(b);
     assert(bs);
 
-    // Find which axis will hit first.
     // Ignore negative distances as the ball can't hit on that axis.
-    float time_x = FLT_MAX;
-    if (!signbit(dist.s)) time_x = vel.x == 0.0f ? 0.0f : dist.s / fabs(vel.x);
-    float time_y = FLT_MAX;
-    if (!signbit(dist.t)) time_y = vel.y == 0.0f ? 0.0f : dist.t / fabs(vel.y);
-    float time_min = fmin(time_x, time_y);
-
-    assert(time_x >= 0.0f);
-    assert(time_y >= 0.0f);
-    assert(time_min >= 0.0f);
-    assert(time_min < 1.0f);
+    float time;
+    if (dist.axis == XAxis) {
+	time = vel.x == 0.0f ? 0.0f : dist.len / fabs(vel.x);
+    } else {
+	time = vel.y == 0.0f ? 0.0f : dist.len / fabs(vel.y);
+    }
+    assert(time >= 0.0f);
+    assert(time <  1.0f);
 
     // Move ball to the point of collision
-    vel = glms_vec2_scale(vel, time_min);
+    vel = glms_vec2_scale(vel, time);
     gfx_quad_add_vec(&bs->quad, vel);
-    // Make sure ball isn't inisde a wall
-    vec2s newpos = {{
-	CLAMP(bs->pos.x, BG_WALL_LEFT, SCR_WIDTH - BG_WALL_RIGHT - bs->size.s),
-	MAX(  bs->pos.y, BG_WALL_TOP)
-    }};
-    gfx_quad_set_pos(&bs->quad, newpos, bs->size);
 #ifndef NDEBUG
-    glms_vec2_print(newpos, stderr);
+    glms_vec2_print(bs->pos, stderr);
 #endif
 
     assert(bs->pos.x >= BG_WALL_LEFT);
@@ -680,14 +682,11 @@ void bounce(Ball* b, Sprite* bs, Sprite* ps, vec2s vel, vec2s dist, bool is_padd
     assert(bs->pos.y <= SCR_HEIGHT - BALL_SIZE.t);
 
     // Finally, bounce the ball
-    if (time_x == time_y) {
-        b->vel.x = -b->vel.x;
-        b->vel.y = -b->vel.y;
-    } else if (time_x < time_y) {
+    if (dist.axis == XAxis) {
         b->vel.x = -b->vel.x;
     } else {
 	// Adjust horizontal velocity based on distance from the paddles centre
-	if (is_paddle) {
+	if (dist.type == PaddleObj) {
 	    float centre = ps->pos.x + ps->size.s / 2.0f;
 	    float dist = bs->pos.x + bs->size.s / 2.0f - centre;
 	    float percent = dist / (ps->size.s / 2.0f);
@@ -713,7 +712,7 @@ bool is_paddle_hit(Sprite* bs, Sprite* ps, vec2s newpos) {
            newpos.x + bs->size.s > ps->pos.x;
 }
 
-vec2s get_aabb_dist(Ball* b, Sprite* bs, Sprite* s2) {
+Dist get_ball_dist(Ball* b, Sprite* bs, Sprite* s2) {
     assert(b);
     assert(bs);
     assert(s2);
@@ -729,18 +728,21 @@ vec2s get_aabb_dist(Ball* b, Sprite* bs, Sprite* s2) {
     assert(bsy <= SCR_HEIGHT);
 
     float s = signbit(b->vel.x) ? bsx - (s2x + s2->size.s) : s2x - (bsx + bs->size.s);
+    if (signbit(s)) s = FLT_MAX;
 
-    assert(s >= -((float) SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT));
-    assert(s <=           SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT);
+    assert(s >= 0.0f);
+    assert(s <= SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT || s == FLT_MAX);
 
     float t = signbit(b->vel.y) ? bsy - (s2y + s2->size.t) : s2y - (bsy + bs->size.t);
+    if (signbit(s)) t = FLT_MAX;
 
-    assert(t >= -((float) SCR_HEIGHT - BG_WALL_TOP));
-    assert(t <=           SCR_HEIGHT - BG_WALL_TOP);
+    assert(t >= 0.0f);
+    assert(t <= SCR_HEIGHT - BG_WALL_TOP || s == FLT_MAX);
 
-    return (vec2s) {{ s, t }};
+    return (Dist) { .len = s < t ? s : t, .axis = s < t ? XAxis : YAxis };
 }
 
+#if 0
 // Bricks are in a grid and don't move so we can get the index from a position
 int get_brick_index(float x, float y) {
     assert(x > BG_WALL_LEFT - 10.0f);
@@ -820,7 +822,7 @@ vec2s get_brick_closest(Ball* b, Sprite* bs, unsigned count, unsigned brick_hits
     for (unsigned i = 0; i < count; i++) {
 	Sprite* brick_sprite = &sprites.bricks[brick_hits[i]].sprite;
 	assert(brick_sprite);
-	vec2s dist = get_aabb_dist(b, bs, brick_sprite);
+	vec2s dist = get_ball_dist(b, bs, brick_sprite);
         if (dist.s < closest && dist.s < dist.t) {
             dist_min = dist;
             closest  = dist.s;
@@ -845,6 +847,7 @@ vec2s get_brick_closest(Ball* b, Sprite* bs, unsigned count, unsigned brick_hits
 
     return dist_min;
 }
+#endif
 
 void hiscore_check(void) {
     if (sprites.paddle.score > hiscore) {
@@ -874,11 +877,69 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	    aud_sound_play(AUD_DEATH);
 	    ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
 	}
+	return;
+    }
+
+    Dist min = { .len = FLT_MAX };
+
+    if (is_paddle_hit(bs, ps, newpos)) {
+	Dist dist = get_ball_dist(b, bs, ps);
+#ifndef NDEBUG
+	fprintf(stderr, "Paddle hit: dist = %f, axis = %u\n", dist.len, dist.axis);
+#endif
+	if (dist.len < min.len) {
+	    min.len  = dist.len;
+	    min.axis = dist.axis;
+	    min.type = PaddleObj;
+	}
+    }
+
+   if (is_wall_hit(bs, newpos)) {
+	Dist dist = get_wall_dist(b, bs);
+#ifndef NDEBUG
+	fprintf(stderr, "Wall hit: dist = %f, axis = %u\n", dist.len, dist.axis);
+#endif
+	if (dist.len < min.len) {
+	    min.len  = dist.len;
+	    min.axis = dist.axis;
+	    min.type = WallObj;
+	}
+   }
+
+   if (min.len == FLT_MAX) {
+       gfx_quad_set_pos(&bs->quad, newpos, bs->size);
+   } else {
+       bounce(b, bs, ps, vel, min);
+   }
+}
+
+#if 0
+void ball_move(Ball* b, Sprite* bs, double frame_time) {
+    assert(b);
+    assert(bs);
+    assert(frame_time < 1.0);
+    assert(frame_time >= 0.0);
+
+    Sprite* ps   = &sprites.paddle.sprite;
+    vec2s vel    = glms_vec2_scale(b->vel, BALL_SPEED * frame_time);
+    vec2s newpos = glms_vec2_add(bs->pos, vel);
+
+    if (is_oob(bs, newpos)) {
+	sprites.paddle.lives -= 1;
+	if (!sprites.paddle.lives) {
+	    state = StateLost;
+	    aud_sound_stop(playing);
+	    aud_sound_play(AUD_LOST);
+	    hiscore_check();
+	} else {
+	    aud_sound_play(AUD_DEATH);
+	    ball_init(&sprites.ball, &sprites.ball.sprite, &sprites.paddle.sprite);
+	}
     } else if (is_paddle_hit(bs, ps, newpos)) {
 #ifndef NDEBUG
 	fprintf(stderr, "Paddle hit\n");
 #endif
-        vec2s dist = get_aabb_dist(b, bs, ps);
+        vec2s dist = get_ball_dist(b, bs, ps);
 	bounce(b, bs, ps, vel, dist, true);
     } else {
         unsigned brick_hits[VERT_COUNT];
@@ -900,6 +961,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
         }
     }
 }
+#endif
 
 bool is_won(void) {
     for (unsigned i = 0; i < BRICK_COLS * BRICK_ROWS; i++) {
@@ -925,14 +987,7 @@ void game_update(double frame_time) {
     case StateRun:
 	if (!sprites.ball.is_stuck) {
 	    Ball* b = &sprites.ball;
-
-	    double cr_time = frame_time / CR_COUNT;
-	    for (unsigned i = 0; i < CR_COUNT - 1; i++) {
-		ball_move(b, &b->sprite, cr_time);
-		if (state != StateRun) return;
-	    }
-	    // Account for rounding errors
-	    ball_move(b, &b->sprite, frame_time - cr_time * (CR_COUNT - 1));
+	    ball_move(b, &b->sprite, frame_time);
 	    if (state != StateRun) return;
 
 	    if (is_won()) {
