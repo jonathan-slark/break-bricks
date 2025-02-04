@@ -728,17 +728,17 @@ Dist get_ball_dist(Ball* b, Sprite* bs, Sprite* s2) {
     assert(bsy >= BG_WALL_TOP);
     assert(bsy <= SCR_HEIGHT);
 
-    float s = signbit(b->vel.x) ? bsx - (s2x + s2->size.s) : s2x - (bsx + bs->size.s);
-    if (signbit(s)) s = FLT_MAX;
+    bsx < s2x ? s2x - (bsx + bs->size.s) : bsx - (s2x + s2->size.s);
+    s = fabs(s);
 
     assert(s >= 0.0f);
-    assert(s <= SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT || s == FLT_MAX);
+    assert(s <= SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT);
 
-    float t = signbit(b->vel.y) ? bsy - (s2y + s2->size.t) : s2y - (bsy + bs->size.t);
-    if (signbit(s)) t = FLT_MAX;
+    bsy < s2y ? s2y - (bsy + bs->size.t) : bsy - (s2y + s2->size.t);
+    t = fabs(t);
 
     assert(t >= 0.0f);
-    assert(t <= SCR_HEIGHT - BG_WALL_TOP || s == FLT_MAX);
+    assert(t <= SCR_HEIGHT - BG_WALL_TOP);
 
     return (Dist) { .len = s < t ? s : t, .axis = s < t ? XAxis : YAxis };
 }
@@ -894,7 +894,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	if (is_paddle_hit(bs, ps, newpos)) {
 	    Dist dist = get_ball_dist(b, bs, ps);
 #ifndef NDEBUG
-	    fprintf(stderr, "Paddle hit: dist = %f, axis = %u\n", dist.len, dist.axis);
+	    fprintf(stderr, "Pass: %u, paddle hit: dist = %f, axis = %u\n", pass, dist.len, dist.axis);
 #endif
 	    min = min_dist(dist, min, PaddleObj);
 	}
@@ -902,7 +902,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	if (is_wall_hit(bs, newpos)) {
 	    Dist dist = get_wall_dist(b, bs);
 #ifndef NDEBUG
-	    fprintf(stderr, "Wall hit: dist = %f, axis = %u\n", dist.len, dist.axis);
+	    fprintf(stderr, "Pass: %u, wall hit: dist = %f, axis = %u\n", pass, dist.len, dist.axis);
 #endif
 	    min = min_dist(dist, min, WallObj);
 	}
@@ -910,7 +910,7 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	if (is_brick_hit(bs, newpos)) {
 	    Dist dist = get_brick_dist(b, bs, newpos, &brick);
 #ifndef NDEBUG
-	    fprintf(stderr, "Brick hit: dist = %f, axis = %u\n", dist.len, dist.axis);
+	    fprintf(stderr, "Pass: %u, brick hit: dist = %f, axis = %u\n", pass, dist.len, dist.axis);
 #endif
 	    min = min_dist(dist, min, BrickObj);
 	}
