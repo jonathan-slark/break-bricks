@@ -663,9 +663,9 @@ void bounce(Ball* b, Sprite* bs, Sprite* ps, vec2s vel, Dist dist) {
     // Ignore negative distances as the ball can't hit on that axis.
     float time;
     if (dist.axis == XAxis) {
-	time = vel.x == 0.0f ? 0.0f : dist.len / fabs(vel.x);
+	time = vel.x == 0.0f ? 0.0f : fabs(dist.len / vel.x);
     } else {
-	time = vel.y == 0.0f ? 0.0f : dist.len / fabs(vel.y);
+	time = vel.y == 0.0f ? 0.0f : fabs(dist.len / vel.y);
     }
     assert(time >= 0.0f);
     assert(time <  1.0f);
@@ -728,19 +728,29 @@ Dist get_ball_dist(Ball* b, Sprite* bs, Sprite* s2) {
     assert(bsy >= BG_WALL_TOP);
     assert(bsy <= SCR_HEIGHT);
 
-    bsx < s2x ? s2x - (bsx + bs->size.s) : bsx - (s2x + s2->size.s);
-    s = fabs(s);
+    float s;
+    if (signbit(b->vel.x)) {
+	s = bsx - (s2x + s2->size.s);
+    } else {
+	s = s2x - (bsx + bs->size.s);
+    }
 
-    assert(s >= 0.0f);
-    assert(s <= SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT);
+    //assert(s >= 0.0f);
+    //assert(s <= SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT);
 
-    bsy < s2y ? s2y - (bsy + bs->size.t) : bsy - (s2y + s2->size.t);
-    t = fabs(t);
+    float t;
+    if (signbit(b->vel.y)) {
+	t = bsy - (s2y + s2->size.t);
+    } else {
+	t = s2y - (bsy + bs->size.t);
+    }
 
-    assert(t >= 0.0f);
-    assert(t <= SCR_HEIGHT - BG_WALL_TOP);
+    // TODO: good for pass 0, what about pass 1?
 
-    return (Dist) { .len = s < t ? s : t, .axis = s < t ? XAxis : YAxis };
+    //assert(t >= 0.0f);
+    //assert(t <= SCR_HEIGHT - BG_WALL_TOP);
+
+    return (Dist) { .len = fabs(s) < fabs(t) ? s : t, .axis = fabs(s) < fabs(t) ? XAxis : YAxis };
 }
 
 // Bricks are in a grid and don't move so we can get the index from a position
@@ -852,7 +862,6 @@ void brick_destroy(signed index) {
     Brick* b = &sprites.bricks[index];
     assert(b);
     assert(b->is_active);
-    assert(!b->is_solid);
     assert(!b->is_destroyed);
 
     b->is_destroyed = true;
@@ -919,7 +928,12 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 	    bounce(b, bs, ps, vel, min);
 	    if (min.type == BrickObj) {
 		assert(brick > -1);
-		brick_destroy(brick);
+
+		Brick* b = &sprites.bricks[brick];
+		assert(b);
+		assert(b->is_active);
+
+		if (!b->is_solid) brick_destroy(brick);
 	    }
 	    newpos = bs->pos;
 	    has_bounced = true;
