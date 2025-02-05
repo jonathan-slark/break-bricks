@@ -346,10 +346,10 @@ Quad gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset) {
 
     gfx_quad_set_pos(&q, pos, size);
 
-    float u1 = tex_offset.x            / r->tex.size.s;
-    float v1 = tex_offset.y            / r->tex.size.t;
-    float u2 = (tex_offset.x + size.s) / r->tex.size.s;
-    float v2 = (tex_offset.y + size.y) / r->tex.size.t;
+    float u1 = tex_offset.x                / r->tex.size.s;
+    float v1 = tex_offset.y                / r->tex.size.t;
+    float u2 = (tex_offset.x + size.s - 1) / r->tex.size.s;
+    float v2 = (tex_offset.y + size.y - 1) / r->tex.size.t;
 
     q.verts[0].tex_coord = (vec2s) {{ u1, v1 }};
     q.verts[1].tex_coord = (vec2s) {{ u2, v1 }};
@@ -362,8 +362,8 @@ Quad gfx_quad_create(Renderer* r, vec2s pos, vec2s size, vec2s tex_offset) {
 void gfx_quad_set_pos(Quad* q, vec2s pos, vec2s size) {
     float x1 = pos.x;
     float y1 = pos.y;
-    float x2 = pos.x + size.s;
-    float y2 = pos.y + size.t;
+    float x2 = pos.x + size.s - 1;
+    float y2 = pos.y + size.t - 1;
 
     q->verts[0].pos = (vec2s) {{ x1, y1 }};
     q->verts[1].pos = (vec2s) {{ x2, y1 }};

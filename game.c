@@ -707,8 +707,10 @@ Dist get_sprite_dist(Ball* b, Sprite* bs, Sprite* s2, Axis axis) {
 	    s = s2x - (bsx + bs->size.s);
 	}
 
-	assert(s >= -((float) SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT));
-	assert(s <=           SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT);
+	assert(axis == AnyAxis || (axis == XAxis && (s >= 0.0f || s <= SCR_WIDTH - BG_WALL_LEFT - BG_WALL_RIGHT)));
+
+	// Not hitting on this axis
+	if (signbit(s)) s = FLT_MAX;
     }
 
     float t;
@@ -719,8 +721,10 @@ Dist get_sprite_dist(Ball* b, Sprite* bs, Sprite* s2, Axis axis) {
 	    t = s2y - (bsy + bs->size.t);
 	}
 
-	assert(t >= -((float) SCR_HEIGHT - BG_WALL_TOP));
-	assert(t <=           SCR_HEIGHT - BG_WALL_TOP);
+	assert(axis == AnyAxis || (axis == YAxis && (t >= 0.0f || t <= SCR_HEIGHT - BG_WALL_TOP)));
+
+	// Not hitting on this axis
+	if (signbit(t)) t = FLT_MAX;
     }
 
     Dist dist;
@@ -732,7 +736,7 @@ Dist get_sprite_dist(Ball* b, Sprite* bs, Sprite* s2, Axis axis) {
 	dist = (Dist) { .len = t, .axis = YAxis };
 	break;
     case AnyAxis:
-	dist = (Dist) { .len = fabs(s) < fabs(t) ? s : t, .axis = fabs(s) < fabs(t) ? XAxis : YAxis };
+	dist = (Dist) { .len = s < t ? s : t, .axis = s < t ? XAxis : YAxis };
 	break;
     }
     return dist;
@@ -767,15 +771,17 @@ bool is_brick_hit(Sprite* bs, vec2s pos_new) {
     assert(pos_new.x < SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s + 10.0f);
     assert(pos_new.y > BG_WALL_TOP - 10.0f);
     assert(pos_new.y < SCR_HEIGHT - BALL_SIZE.s + 10.0f);
+    assert(bs->size.s == BALL_SIZE.s);
+    assert(bs->size.t == BALL_SIZE.t);
     static_assert(VERT_COUNT == 4);
 
     // Is the ball within the brick area?
     if (pos_new.y < BG_WALL_TOP + BRICK_ROWS * BRICK_SIZE.t) {
 	// Get the brick index for each corner of the ball but check if oob
-	if (get_brick_index(pos_new.x,              pos_new.y)              > -1) return true;
-	if (get_brick_index(pos_new.x + bs->size.s, pos_new.y)              > -1) return true;
-	if (get_brick_index(pos_new.x,              pos_new.y + bs->size.t) > -1) return true;
-	if (get_brick_index(pos_new.x + bs->size.s, pos_new.y + bs->size.t) > -1) return true;
+	if (get_brick_index(pos_new.x,                  pos_new.y)                  > -1) return true;
+	if (get_brick_index(pos_new.x + bs->size.s - 1, pos_new.y)                  > -1) return true;
+	if (get_brick_index(pos_new.x,                  pos_new.y + bs->size.t - 1) > -1) return true;
+	if (get_brick_index(pos_new.x + bs->size.s - 1, pos_new.y + bs->size.t - 1) > -1) return true;
     }
 
     return false;
@@ -808,17 +814,17 @@ Dist get_brick_dist(Ball* b, Sprite* bs, vec2s pos_new, signed* index, Axis axis
 	min  = min_dist(dist, min, BrickObj);
 	if (dist.len == min.len) *index = i;
     }
-    if ((i = get_brick_index(pos_new.x + bs->size.s, pos_new.y)) > -1) {
+    if ((i = get_brick_index(pos_new.x + bs->size.s - 1, pos_new.y)) > -1) {
 	dist = get_sprite_dist(b, bs, &sprites.bricks[i].sprite, axis);
 	min  = min_dist(dist, min, BrickObj);
 	if (dist.len == min.len) *index = i;
     }
-    if ((i = get_brick_index(pos_new.x, pos_new.y + bs->size.t)) > -1) {
+    if ((i = get_brick_index(pos_new.x, pos_new.y + bs->size.t - 1)) > -1) {
 	dist = get_sprite_dist(b, bs, &sprites.bricks[i].sprite, axis);
 	min  = min_dist(dist, min, BrickObj);
 	if (dist.len == min.len) *index = i;
     }
-    if ((i = get_brick_index(pos_new.x + bs->size.s, pos_new.y + bs->size.t)) > -1) {
+    if ((i = get_brick_index(pos_new.x + bs->size.s - 1, pos_new.y + bs->size.t - 1)) > -1) {
 	dist = get_sprite_dist(b, bs, &sprites.bricks[i].sprite, axis);
 	min  = min_dist(dist, min, BrickObj);
 	if (dist.len == min.len) *index = i;
@@ -855,12 +861,16 @@ void brick_destroy(signed index) {
 }
 
 vec2s pos_update_one_axis(vec2s pos, vec2s vel, Dist dist) {
+    assert(dist.len >=  0.0f);
+    assert(dist.len <= 10.0f);
+
     float time;
     if (dist.axis == XAxis) {
         time = vel.x == 0.0f ? 0.0f : dist.len / fabs(vel.x);
     } else {
         time = vel.y == 0.0f ? 0.0f : dist.len / fabs(vel.y);
     }
+
     assert(time >= 0.0f);
     assert(time <  1.0f);
 
@@ -871,6 +881,10 @@ vec2s pos_update_one_axis(vec2s pos, vec2s vel, Dist dist) {
 }
 
 vec2s pos_update_two_axis(vec2s pos, vec2s vel, Dist dist1, Dist dist2) {
+    assert(dist1.len >=  0.0f);
+    assert(dist1.len <= 10.0f);
+    assert(dist2.len >=  0.0f);
+    assert(dist2.len <= 10.0f);
     assert((dist1.axis == XAxis && dist2.axis == YAxis) || (dist2.axis == XAxis && dist1.axis == YAxis));
 
     float time_x, time_y;
@@ -881,6 +895,7 @@ vec2s pos_update_two_axis(vec2s pos, vec2s vel, Dist dist1, Dist dist2) {
         time_x = vel.x == 0.0f ? 0.0f : dist2.len / fabs(vel.x);
         time_y = vel.y == 0.0f ? 0.0f : dist1.len / fabs(vel.y);
     }
+
     assert(time_x >= 0.0f);
     assert(time_x <  1.0f);
     assert(time_y >= 0.0f);
@@ -899,9 +914,14 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
     assert(frame_time < 1.0);
     assert(frame_time >= 0.0);
 
-    Sprite* ps     = &sprites.paddle.sprite;
-    vec2s   vel    = glms_vec2_scale(b->vel, BALL_SPEED * frame_time);
+    Sprite* ps      = &sprites.paddle.sprite;
+    vec2s   vel     = glms_vec2_scale(b->vel, BALL_SPEED * frame_time);
     vec2s   pos_new = glms_vec2_add(bs->pos, vel);
+
+    assert(pos_new.x > BG_WALL_LEFT - 10.0f);
+    assert(pos_new.x < SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s + 10.0f);
+    assert(pos_new.y > BG_WALL_TOP - 10.0f);
+    assert(pos_new.y < SCR_HEIGHT - BALL_SIZE.s + 10.0f);
 
     if (is_oob(bs, pos_new)) {
 	sprites.paddle.lives -= 1;
@@ -924,31 +944,61 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 
     if (is_paddle_hit(bs, ps, pos_new)) {
 	Dist dist = get_sprite_dist(b, bs, ps, AnyAxis);
+
+	assert(dist.len >  0.0f);
+	assert(dist.len < 10.0f);
+
 #ifndef NDEBUG
 	fprintf(stderr, "Paddle hit (pass 1): dist = %f, axis = %u\n", dist.len, dist.axis);
 #endif
 	dist_pass1 = min_dist(dist, dist_pass1, PaddleObj);
+
+	assert(dist_pass1.len <= dist.len);
     }
 
     if (is_wall_hit(bs, pos_new)) {
 	Dist dist = get_wall_dist(b, bs, AnyAxis);
+
+	assert(dist.len >  0.0f);
+	assert(dist.len < 10.0f);
+
 #ifndef NDEBUG
 	fprintf(stderr, "Wall hit (pass 1): dist = %f, axis = %u\n", dist.len, dist.axis);
 #endif
 	dist_pass1 = min_dist(dist, dist_pass1, WallObj);
+
+	assert(dist_pass1.len <= dist.len);
     }
 
     if (is_brick_hit(bs, pos_new)) {
 	Dist dist = get_brick_dist(b, bs, pos_new, &brick_pass1, AnyAxis);
+
+	assert(dist.len >  0.0f);
+	assert(dist.len < 10.0f);
+	assert(brick_pass1 > -1);
+
 #ifndef NDEBUG
 	fprintf(stderr, "Brick hit (pass 1): dist = %f, axis = %u, brick = %i\n", dist.len, dist.axis, brick_pass1);
 #endif
 	dist_pass1 = min_dist(dist, dist_pass1, BrickObj);
+
+	assert(dist_pass1.len <= dist.len);
     }
 
     if (dist_pass1.len != FLT_MAX) {
-	pos_new = pos_update_one_axis(bs->pos, vel, dist_pass1);
 #ifndef NDEBUG
+	fputc('\n', stderr);
+        glms_vec2_print(pos_new, stderr);
+#endif
+	pos_new = pos_update_one_axis(bs->pos, vel, dist_pass1);
+
+	assert(pos_new.x > BG_WALL_LEFT - 10.0f);
+	assert(pos_new.x < SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s + 10.0f);
+	assert(pos_new.y > BG_WALL_TOP - 10.0f);
+	assert(pos_new.y < SCR_HEIGHT - BALL_SIZE.s + 10.0f);
+
+#ifndef NDEBUG
+	fputc('\n', stderr);
 	glms_vec2_print(pos_new, stderr);
 #endif
     }
@@ -960,36 +1010,66 @@ void ball_move(Ball* b, Sprite* bs, double frame_time) {
 
     if (is_paddle_hit(bs, ps, pos_new)) {
 	Dist dist = get_sprite_dist(b, bs, ps, axis_other(dist_pass1.axis));
+
+	assert(dist.len >  0.0f);
+	assert(dist.len < 10.0f);
+	assert(dist.axis != dist_pass1.axis);
+
 #ifndef NDEBUG
 	fprintf(stderr, "Paddle hit (pass 2): dist = %f, axis = %u\n", dist.len, dist.axis);
 #endif
 	dist_pass2 = min_dist(dist, dist_pass2, PaddleObj);
+
+	assert(dist_pass2.len <= dist.len);
     }
 
     if (is_wall_hit(bs, pos_new)) {
 	Dist dist = get_wall_dist(b, bs, axis_other(dist_pass1.axis));
+
+	assert(dist.len >  0.0f);
+	assert(dist.len < 10.0f);
+	assert(dist.axis != dist_pass1.axis);
+
 #ifndef NDEBUG
 	fprintf(stderr, "Wall hit (pass 2): dist = %f, axis = %u\n", dist.len, dist.axis);
 #endif
 	dist_pass2 = min_dist(dist, dist_pass2, WallObj);
+
+	assert(dist_pass2.len <= dist.len);
     }
 
     if (is_brick_hit(bs, pos_new)) {
 	Dist dist = get_brick_dist(b, bs, pos_new, &brick_pass2, axis_other(dist_pass1.axis));
+
+	assert(dist.len >  0.0f);
+	assert(dist.len < 10.0f);
+	assert(dist.axis != dist_pass1.axis);
+	assert(brick_pass2 > -1);
+
 #ifndef NDEBUG
 	fprintf(stderr, "Brick hit (pass 2): dist = %f, axis = %u, brick = %i\n", dist.len, dist.axis, brick_pass2);
 #endif
 	dist_pass2 = min_dist(dist, dist_pass2, BrickObj);
+
+	assert(dist_pass2.len <= dist.len);
     }
 
     if (dist_pass2.len != FLT_MAX) {
 	pos_new = pos_update_two_axis(bs->pos, vel, dist_pass1, dist_pass2);
+
+	assert(pos_new.x > BG_WALL_LEFT - 10.0f);
+	assert(pos_new.x < SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s + 10.0f);
+	assert(pos_new.y > BG_WALL_TOP - 10.0f);
+	assert(pos_new.y < SCR_HEIGHT - BALL_SIZE.s + 10.0f);
+
 #ifndef NDEBUG
+	fputc('\n', stderr);
 	glms_vec2_print(pos_new, stderr);
 #endif
     }
 
     gfx_quad_set_pos(&bs->quad, pos_new, bs->size);
+
     assert(bs->pos.x >= BG_WALL_LEFT);
     assert(bs->pos.x <= SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s);
     assert(bs->pos.y >= BG_WALL_TOP);
