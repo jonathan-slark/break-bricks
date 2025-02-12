@@ -764,11 +764,11 @@ signed get_brick_index(float x, float y) {
     assert(y > BG_WALL_TOP - 10.0f);
     assert(y < SCR_HEIGHT + 10.0f);
 
-    if (x > BG_WALL_LEFT && x < SCR_WIDTH - BG_WALL_RIGHT &&
-	y > BG_WALL_TOP  && y < BG_WALL_TOP + BRICK_ROWS * BRICK_SIZE.t) {
+    if (x >= BG_WALL_LEFT && x < SCR_WIDTH - BG_WALL_RIGHT &&
+	y >= BG_WALL_TOP  && y < BG_WALL_TOP + BRICK_ROWS * BRICK_SIZE.t) {
 	unsigned col = (x - BG_WALL_LEFT) / BRICK_SIZE.s;
 	unsigned row = (y - BG_WALL_TOP)  / BRICK_SIZE.t;
-	signed i = col + row * BRICK_COLS;
+	signed   i   = col + row * BRICK_COLS;
 	assert(i < (signed) (BRICK_COLS * BRICK_ROWS));
 
 	Brick* b = &sprites.bricks[i];

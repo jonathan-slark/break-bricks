@@ -4,3 +4,4 @@
 *.o
 font_*.png
 hiscore.txt
+log
