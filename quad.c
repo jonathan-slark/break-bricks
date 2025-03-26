@@ -1,0 +1,41 @@
+#include <cglm/struct.h> // vec2s, glms_vec2_add
+
+#include "quad.h"
+#include "rend.h"
+
+// Pre-caculate the vertices needed for a textured quad
+Quad quad_create(Rend* r, vec2s pos, vec2s size, vec2s texOffset) {
+    Quad q;
+
+    quad_setPos(&q, pos, size);
+
+    float u1 = texOffset.x / r->tex.size.s;
+    float v1 = texOffset.y / r->tex.size.t;
+    float u2 = (texOffset.x + size.s - 1) / r->tex.size.s;
+    float v2 = (texOffset.y + size.y - 1) / r->tex.size.t;
+
+    q.verts[0].tex_coord = (vec2s) {{ u1, v1 }};
+    q.verts[1].tex_coord = (vec2s) {{ u2, v1 }};
+    q.verts[2].tex_coord = (vec2s) {{ u2, v2 }};
+    q.verts[3].tex_coord = (vec2s) {{ u1, v2 }};
+
+    return q;
+}
+
+void quad_setPos(Quad* q, vec2s pos, vec2s size) {
+    float x1 = pos.x;
+    float y1 = pos.y;
+    float x2 = pos.x + size.s - 1;
+    float y2 = pos.y + size.t - 1;
+
+    q->verts[0].pos = (vec2s) {{ x1, y1 }};
+    q->verts[1].pos = (vec2s) {{ x2, y1 }};
+    q->verts[2].pos = (vec2s) {{ x2, y2 }};
+    q->verts[3].pos = (vec2s) {{ x1, y2 }};
+}
+
+void quad_addVec(Quad* q, vec2s v) {
+    for (size_t i = 0; i < VERT_COUNT; i++) {
+        q->verts[i].pos = glms_vec2_add(q->verts[i].pos, v);
+    }
+}

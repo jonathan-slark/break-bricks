@@ -1,14 +1,12 @@
-/*
- * This file is released into the public domain under the CC0 1.0 Universal License.
- * For details, see https://creativecommons.org/publicdomain/zero/1.0/
- */
+#pragma once
 
-#include <cglm/struct.h>
+#include <cglm/struct.h> // vec2s
 
-extern const unsigned SCR_WIDTH;
-extern const unsigned SCR_HEIGHT;
+// Constants
+extern const int SCR_WIDTH;
+extern const int SCR_HEIGHT;
 
-void  main_term(int status, const char* fmt, ...);
+// Function prototypes
 void  main_quit(void);
-vec2s main_get_mouse_pos(void);
-void  main_set_mouse_pos(vec2s pos);
+vec2s main_getMousePos(void);
+void  main_setMousePos(vec2s pos);

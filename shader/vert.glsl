@@ -2,11 +2,11 @@
 #pragma shader_stage(vertex)
 
 layout (location = 0) in vec2 pos;
-layout (location = 1) in vec2 texcoords;
-out vec2 fragcoords;
+layout (location = 1) in vec2 texCoords;
+out vec2 fragCoords;
 uniform mat4 proj;
 
 void main() {
-    fragcoords = texcoords;
+    fragCoords  = texCoords;
     gl_Position = proj * vec4(pos, 0.0, 1.0);
 }

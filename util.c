@@ -1,7 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>  // FILE, fopen, fprintf, stderr, perror, fseek, ftell, malloc, fclose, free
+#include <stdlib.h> // size_t
 
 #include "util.h"
+
+// Constants
+const char READ_ONLY_TEXT[]  = "r";
+const char READ_ONLY_BIN[]   = "rb";
+const char WRITE_ONLY_TEXT[] = "w";
+const char WRITE_ONLY_BIN[]  = "wb";
 
 // Have separate char and uint8_t loaders?
 char* util_load(const char* file, const char* mode) {
