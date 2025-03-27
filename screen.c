@@ -1,5 +1,6 @@
 #include <cglm/struct.h> // vec2s
 
+#include "main.h"
 #include "quad.h"
 #include "rend.h"
 #include "screen.h"
@@ -22,6 +23,6 @@ void screen_unload(Screen s)
 void screen_rend(Screen s)
 {
     rend_begin(s.rend);
-    rend_quad(&s.rend, &s.quad);
+    rend_quad(&s.rend, s.quad);
     rend_end(&s.rend);
 }

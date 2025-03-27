@@ -5,6 +5,7 @@
 #include <stdlib.h> // size_t
 
 #include "quad.h"
+#include "tex.h"
 
 // Types
 typedef struct

@@ -15,10 +15,10 @@ Quad quad_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
     float u2 = (texOffset.x + size.s - 1) / texSize.s;
     float v2 = (texOffset.y + size.y - 1) / texSize.t;
 
-    q.verts[0].tex_coord = (vec2s) {{ u1, v1 }};
-    q.verts[1].tex_coord = (vec2s) {{ u2, v1 }};
-    q.verts[2].tex_coord = (vec2s) {{ u2, v2 }};
-    q.verts[3].tex_coord = (vec2s) {{ u1, v2 }};
+    q.verts[0].texCoord = (vec2s) {{ u1, v1 }};
+    q.verts[1].texCoord = (vec2s) {{ u2, v1 }};
+    q.verts[2].texCoord = (vec2s) {{ u2, v2 }};
+    q.verts[3].texCoord = (vec2s) {{ u1, v2 }};
 
     return q;
 }

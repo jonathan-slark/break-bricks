@@ -13,7 +13,6 @@
 #include "main.h"
 
 // Function declarations
-static void term(int status, const char* fmt, ...);
 static void errorCallback(int err, const char* desc);
 static void init(void);
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -49,7 +48,7 @@ void init(void)
     if (!glfwInit()) exit(EXIT_FAILURE);
 }
 
-void term(int status, const char* fmt, ...)
+void main_term(int status, const char* fmt, ...)
 {
     if (window) glfwDestroyWindow(window);
 
@@ -80,11 +79,11 @@ void keyCallback(
 ) {
     if (action == GLFW_PRESS)
     {
-	game_key_down(key);
+	game_keyDown(key);
     }
     else if (action == GLFW_RELEASE)
     {
-	game_key_up(key);
+	game_keyUp(key);
     }
 }
 
@@ -151,7 +150,7 @@ void createWindow(void)
 
     if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, nullptr)))
     {
-	term(EXIT_FAILURE, nullptr);
+	main_term(EXIT_FAILURE, nullptr);
     }
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -162,14 +161,14 @@ void createWindow(void)
     }
     else
     {
-	term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
+	main_term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
     }
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
     if (!ver)
     {
-        term(EXIT_FAILURE, "Failed to load OpenGL.\n");
+        main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
     }
 
     glfwSetKeyCallback(window, keyCallback);
@@ -219,5 +218,5 @@ int main(void)
 	}
     }
 
-    term(EXIT_SUCCESS, nullptr);
+    main_term(EXIT_SUCCESS, nullptr);
 }

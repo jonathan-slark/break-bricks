@@ -4,8 +4,16 @@
 #include <stdlib.h>     // atexit
 
 #include "gfx.h"
+#include "main.h"
 #include "screen.h"
 #include "util.h"
+
+// Types
+typedef struct
+{
+    int key;
+    void (*func)(void);
+} Key;
 
 // Function prototypes
 static void bgLoad(void);
@@ -14,7 +22,8 @@ static void quit(void);
 
 // Constants
 static const char BG_FILE[] = "gfx/background.png";
-static const Key KEYS[] = {
+static const Key KEYS[] =
+{
     { GLFW_KEY_ESCAPE, quit }
 };
 

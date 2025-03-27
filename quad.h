@@ -4,8 +4,8 @@
 #include <stdlib.h>      // size_t
 
 // Constants
-constexpr size_t IND_COUNT  = 2  // Number of indices per vertex
-constexpr size_t VERT_COUNT = 4  // Number of vertices per quad
+constexpr size_t IND_COUNT  = 2;  // Number of indices per vertex
+constexpr size_t VERT_COUNT = 4;  // Number of vertices per quad
 
 // Types
 

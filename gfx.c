@@ -5,6 +5,7 @@
 #include <glad.h>        // gl*, GL*
 
 #include "gfx.h"
+#include "main.h"
 #include "shader.h"
 
 // Function prototypes
@@ -16,7 +17,8 @@ static void GLAPIENTRY debugOutput(GLenum source, GLenum type, GLuint id,
 
 // Constants
 #ifndef NDEBUG
-static const unsigned LOG_IGNORE[] = {
+static const unsigned LOG_IGNORE[] =
+{
     131185, // Buffer info
 };
 #endif // !NDEBUG

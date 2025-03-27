@@ -1,7 +1,6 @@
 .*~
 .*.swp
+*.d
 *.exe
 *.o
-font_*.png
 hiscore.txt
-log

@@ -11,11 +11,16 @@
 #include <stdio.h>             // vsnprintf
 
 #include "font.h"
+#include "gfx.h"
 #include "main.h"
+#include "quad.h"
 #include "rend.h"
 #include "shader.h"
 #include "tex.h"
 #include "util.h"
+
+// Constants
+static const unsigned FONT_QUAD_COUNT = 200; // Max amount of letter quads
 
 // Function declarations
 
@@ -91,7 +96,7 @@ void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...)
             float u1 = quad.s0; float v1 = quad.t0;
             float x2 = quad.x1; float y2 = quad.y1;
             float u2 = quad.s1; float v2 = quad.t1;
-            Quad quad = (Quad)
+            Quad gfxQuad = (Quad)
 	    {
                 {
                     { {{ x1, y1 }}, {{ u1, v1 }} },
@@ -100,7 +105,7 @@ void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...)
                     { {{ x1, y2 }}, {{ u1, v2 }} }
                 }
             };
-            rend_quad(&f->rend, quad);
+            rend_quad(&f->rend, gfxQuad);
         }
     }
 }

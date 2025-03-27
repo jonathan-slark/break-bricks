@@ -6,6 +6,7 @@
 #include <stb/stb_image.h> // stbi_load, stbi_image_free
 
 #include "main.h"
+#include "tex.h"
 
 int unit = 0;
 

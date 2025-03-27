@@ -3,6 +3,7 @@
 #include <cglm/struct.h> // mat4s, vec3s
 #include <glad.h>        // gl*, GL*
 
+#include "main.h"
 #include "shader.h"
 #include "util.h"
 
@@ -49,12 +50,12 @@ GLint shader_compile(GLenum type, const GLchar* src)
 
 Shader shader_load(const char* vert, const char* frag)
 {
-    GLchar* vsrc = (GLchar*) util_load(vert, READ_ONLY_TEXT);
-    GLchar* fsrc = (GLchar*) util_load(frag, READ_ONLY_TEXT);
-    GLuint v = shader_compile(GL_VERTEX_SHADER,   vsrc);
-    GLuint f = shader_compile(GL_FRAGMENT_SHADER, fsrc);
-    util_unload(vsrc);
-    util_unload(fsrc);
+    GLchar* vSrc = (GLchar*) util_load(vert, READ_ONLY_TEXT);
+    GLchar* fSrc = (GLchar*) util_load(frag, READ_ONLY_TEXT);
+    GLuint v = shader_compile(GL_VERTEX_SHADER,   vSrc);
+    GLuint f = shader_compile(GL_FRAGMENT_SHADER, fSrc);
+    util_unload(vSrc);
+    util_unload(fSrc);
 
     GLuint prog = glCreateProgram();
     glAttachShader(prog, v);
@@ -77,7 +78,7 @@ Shader shader_load(const char* vert, const char* frag)
         .prog       = prog,
         .loc_proj   = glGetUniformLocation(prog, UNIFORM_PROJ),
         .loc_tex    = glGetUniformLocation(prog, UNIFORM_TEX),
-        .loc_col    = glGetUniformLocation(prog, UNIFORM_COL)
+        .loc_col    = glGetUniformLocation(prog, UNIFORM_COL),
         .loc_isFont = glGetUniformLocation(prog, UNIFORM_IS_FONT)
     };
 }

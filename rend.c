@@ -1,12 +1,13 @@
 #include <stdlib.h> // size_t
 
+#include "gfx.h"
 #include "rend.h"
 #include "shader.h"
 #include "tex.h"
 #include "util.h"
 
-// Function prototypes
-static Rend create(size_t count);
+// Constants
+static const GLushort QUAD_INDICES[] = { 0, 1, 2, 0, 2, 3 };
 
 // Function declarations
 
@@ -21,7 +22,7 @@ Rend rend_create(size_t count)
     r.indices = (GLushort*) malloc(sizeof(GLushort) * iCount);
     for (size_t i = 0; i < iCount; i++)
     {
-        r.indices[i] = i / qiCount * VERT_COUNT + QUAD_INDICES[i % qi_count];
+        r.indices[i] = i / qiCount * VERT_COUNT + QUAD_INDICES[i % qiCount];
     }
 
     glGenVertexArrays(1, &r.vao);
@@ -43,7 +44,7 @@ Rend rend_create(size_t count)
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
-            (void*) offsetof(Vert, tex_coord));
+            (void*) offsetof(Vert, texCoord));
 
     r.vertCount = 0;
     r.verts = (Vert*) malloc(sizeof(Vert) * r.vertMax);
@@ -72,8 +73,8 @@ void rend_begin(Rend r)
 {
     Shader s = gfx_getShader();
     shader_setTex(s, r.tex.unit);
-    shader_setCol(s, (vec3s) { 1.0f, 1.0f, 1.0f });
-    shader_setIsFont(s, font);
+    shader_setCol(s, (vec3s) {{ 1.0f, 1.0f, 1.0f }});
+    shader_setIsFont(s, false);
 }
 
 void flush(Rend* r)
@@ -96,7 +97,7 @@ void rend_end(Rend* r)
     flush(r);
 }
 
-void rend_quad(Rend* r, const Quad* q)
+void rend_quad(Rend* r, Quad q)
 {
     if (r->vertCount == r->vertMax)
     {
@@ -108,6 +109,6 @@ void rend_quad(Rend* r, const Quad* q)
 
     for (size_t i = 0; i < VERT_COUNT; i++)
     {
-        r->verts[r->vertCount++] = q->verts[i];
+        r->verts[r->vertCount++] = q.verts[i];
     }
 }
