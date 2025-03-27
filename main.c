@@ -1,5 +1,6 @@
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
+
 #include <cglm/struct.h> // vec2s
 #include <glad.h>        // gl*
 #include <GLFW/glfw3.h>  // glfw*, GLFW*
@@ -7,8 +8,8 @@
 #include <stdio.h>       // fprintf, vfprintf
 #include <stdlib.h>      // exit, atexit, EXIT_SUCCESS, EXIT_FAILURE
 
-//#include "game.h"
-//#include "gfx.h"
+#include "game.h"
+#include "gfx.h"
 #include "main.h"
 
 // Function declarations
@@ -36,24 +37,26 @@ static bool isMinimised = false;
 
 // Function implementations
 
-void errorCallback(int err, const char* desc) {
+void errorCallback(int err, const char* desc)
+{
     fprintf(stderr, "%i: %s\n", err, desc);
 }
 
-void init(void) {
+void init(void)
+{
     glfwSetErrorCallback(errorCallback);
 
-    if (!glfwInit())
-	exit(EXIT_FAILURE);
+    if (!glfwInit()) exit(EXIT_FAILURE);
 }
 
-void term(int status, const char* fmt, ...) {
-    if (window)
-	glfwDestroyWindow(window);
+void term(int status, const char* fmt, ...)
+{
+    if (window) glfwDestroyWindow(window);
 
     glfwTerminate();
 
-    if (fmt) {
+    if (fmt)
+    {
 	va_list ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -63,7 +66,8 @@ void term(int status, const char* fmt, ...) {
     exit(status);
 }
 
-void main_quit(void) {
+void main_quit(void)
+{
     glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
@@ -74,20 +78,25 @@ void keyCallback(
     int action,
     [[maybe_unused]] int mods
 ) {
-    if (action == GLFW_PRESS) {
-	//game_key_down(key);
-    } else if (action == GLFW_RELEASE) {
-	//game_key_up(key);
+    if (action == GLFW_PRESS)
+    {
+	game_key_down(key);
+    }
+    else if (action == GLFW_RELEASE)
+    {
+	game_key_up(key);
     }
 }
 
-vec2s main_get_mouse_pos(void) {
+vec2s main_get_mouse_pos(void)
+{
     double x, y;
     glfwGetCursorPos(window, &x, &y);
     return (vec2s) {{ x, y }};
 }
 
-void main_setMousePos(vec2s pos) {
+void main_setMousePos(vec2s pos)
+{
     glfwSetCursorPos(window, pos.x, pos.y);
 }
 
@@ -97,23 +106,31 @@ void mouseCallback(
     int action,
     [[maybe_unused]] int mods
 ) {
-    if (action == GLFW_PRESS) {
+    if (action == GLFW_PRESS)
+    {
 	//game_button_down(button);
-    } else if (action == GLFW_RELEASE) {
+    } 
+    else if (action == GLFW_RELEASE)
+    {
 	//game_button_up(button);
     }
 }
 
-void resizeCallback([[maybe_unused]] GLFWwindow* window, int width, int height) {
-    if (!width || !height) {
+void resizeCallback([[maybe_unused]] GLFWwindow* window, int width, int height)
+{
+    if (!width || !height)
+    {
 	isMinimised = true;
-    } else {
+    }
+    else
+    {
 	isMinimised = false;
 	//gfx_resize(width, height);
     }
 }
 
-void createWindow(void) {
+void createWindow(void)
+{
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -132,19 +149,26 @@ void createWindow(void) {
     glfwWindowHint(GLFW_BLUE_BITS, SCR_BLUE_BITS);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, nullptr))) {
+    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, nullptr)))
+    {
 	term(EXIT_FAILURE, nullptr);
     }
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    if (glfwRawMouseMotionSupported()) {
+
+    if (glfwRawMouseMotionSupported())
+    {
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    } else {
+    }
+    else
+    {
 	term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
     }
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
-    if (!ver) {
+    if (!ver)
+    {
         term(EXIT_FAILURE, "Failed to load OpenGL.\n");
     }
 
@@ -155,7 +179,8 @@ void createWindow(void) {
     glfwSwapInterval(1);
 }
 
-int main(void) {
+int main(void)
+{
     init();
     createWindow();
 
@@ -168,25 +193,28 @@ int main(void) {
     //glfwSwapBuffers(window);
 
     game_load();
-    //atexit(game_unload);
 
     // Ignore events that happened during loading
     //glfwPollEvents();
     //game_loaded();
 
     //double last_time = glfwGetTime();
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window))
+    {
 	//double cur_time = glfwGetTime();
 	//double frame_time = cur_time - last_time;
 	//last_time = cur_time;
 
-	if (isMinimised) {
+	if (isMinimised)
+	{
 	    glfwWaitEvents();
-	} else {
+	}
+	else
+	{
 	    glfwPollEvents();
-	    //game_input(frame_time);
+	    game_input();
 	    //game_update(frame_time);
-	    //game_render();
+	    game_render();
 	    glfwSwapBuffers(window);
 	}
     }

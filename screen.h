@@ -11,5 +11,6 @@ typedef struct
 } Screen;
 
 // Function prototypes
-void screen_init(Screen *s, const char* file);
-void screen_render(Screen *s);
+Screen screen_load(const char* file);
+void   screen_unload(Screen s);
+void   screen_rend(Screen s);

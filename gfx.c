@@ -30,8 +30,10 @@ static Shader shader;
 
 #ifndef NDEBUG
 
-bool isMember(const unsigned array[], size_t size, unsigned value) {
-    for (size_t i = 0; i < size; i++) {
+bool isMember(const unsigned array[], size_t size, unsigned value)
+{
+    for (size_t i = 0; i < size; i++)
+    {
         if (array[i] == value) return true;
     }
 
@@ -54,11 +56,13 @@ void GLAPIENTRY debugOutput(
 
 #endif // !NDEBUG
 
-void gfx_init(void) {
+void gfx_init(void)
+{
 #ifndef NDEBUG
     int flags;
     glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+    {
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
         glDebugMessageCallbackARB(debugOutput, NULL);
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -73,14 +77,21 @@ void gfx_init(void) {
     gfx_resize(SCR_WIDTH, SCR_HEIGHT);
 }
 
-void gfx_term(void) {
+void gfx_term(void)
+{
     shader_unload(shader);
 }
 
-void gfx_resize(int width, int height) {
+void gfx_resize(int width, int height)
+{
     glViewport(0, 0, width, height);
 
     // Using origin top left to match coords typically used with images
     mat4s proj = glms_ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     shader_setProj(shader, proj);
+}
+
+Shader gfx_getShader(void)
+{
+    return shader;
 }

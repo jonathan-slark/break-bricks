@@ -1,13 +1,14 @@
 #pragma once
 #undef GLAD_GL_IMPLEMENTATION
 
-#include <glad.h>
+#include <glad.h>   // GL*
 #include <stdlib.h> // size_t
 
 #include "quad.h"
 
 // Types
-typedef struct {
+typedef struct
+{
     // Vertex buffer data
     GLuint    vao, vbo, ebo;
     size_t    vertCount;
@@ -20,8 +21,9 @@ typedef struct {
 } Rend;
 
 // Function prototypes
-Rend render_create(size_t count, const char* file);
-void render_delete(Rend* r);
-void render_begin(Rend* r);
-void render_quad(Rend* r, const Quad* q);
-void render_end(Rend* r);
+Rend rend_create(size_t count);
+Rend rend_load(size_t count, const char* file);
+void rend_unload(Rend r);
+void rend_begin(Rend r);
+void rend_quad(Rend* r, Quad q);
+void rend_end(Rend* r);

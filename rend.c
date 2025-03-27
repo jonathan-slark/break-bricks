@@ -1,6 +1,7 @@
 #include <stdlib.h> // size_t
 
 #include "rend.h"
+#include "shader.h"
 #include "tex.h"
 #include "util.h"
 
@@ -9,7 +10,8 @@ static Rend create(size_t count);
 
 // Function declarations
 
-Rend create(size_t count) {
+Rend rend_create(size_t count)
+{
     Rend r;
     r.vertMax      = count * VERT_COUNT;
     size_t qiCount = COUNT(QUAD_INDICES);
@@ -17,7 +19,8 @@ Rend create(size_t count) {
 
     // Pre-calculate the entire index buffer
     r.indices = (GLushort*) malloc(sizeof(GLushort) * iCount);
-    for (size_t i = 0; i < iCount; i++) {
+    for (size_t i = 0; i < iCount; i++)
+    {
         r.indices[i] = i / qiCount * VERT_COUNT + QUAD_INDICES[i % qi_count];
     }
 
@@ -48,29 +51,34 @@ Rend create(size_t count) {
     return r;
 }
 
-Rend render_create(size_t count, const char* file) {
-    Rend r = create(count);
+Rend rend_load(size_t count, const char* file)
+{
+    Rend r = rend_create(count);
     r.tex = tex_load(file);
     return r;
 }
 
-void render_delete(Rend* r) {
-    tex_unload(r->tex);
-    if (r->verts)   free(r->verts);
-    if (r->indices) free(r->indices);
-    glDeleteBuffers(1, &r->ebo);
-    glDeleteBuffers(1, &r->vbo);
-    glDeleteVertexArrays(1, &r->vao);
+void rend_unload(Rend r)
+{
+    tex_unload(r.tex);
+    if (r.verts)   free(r.verts);
+    if (r.indices) free(r.indices);
+    glDeleteBuffers(1, &r.ebo);
+    glDeleteBuffers(1, &r.vbo);
+    glDeleteVertexArrays(1, &r.vao);
 }
 
-void render_begin(Rend* r) {
-    shader_setTex(shader, r->tex.unit);
+void rend_begin(Rend r)
+{
+    Shader s = gfx_getShader();
+    shader_setTex(s, r.tex.unit);
+    shader_setCol(s, (vec3s) { 1.0f, 1.0f, 1.0f });
+    shader_setIsFont(s, font);
 }
 
-void flush(Rend* r) {
-    if (!r->vertCount) {
-        return;
-    }
+void flush(Rend* r)
+{
+    if (!r->vertCount) return;
 
     glBindBuffer(GL_ARRAY_BUFFER, r->vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vert) * r->vertCount,
@@ -83,19 +91,23 @@ void flush(Rend* r) {
     r->vertCount = 0;
 }
 
-void render_end(Rend* r) {
+void rend_end(Rend* r)
+{
     flush(r);
 }
 
-void render_quad(Rend* r, const Quad* q) {
-    if (r->vertCount == r->vertMax) {
+void rend_quad(Rend* r, const Quad* q)
+{
+    if (r->vertCount == r->vertMax)
+    {
 #ifndef NDEBUG
         fprintf(stderr, "%s\n", "Warning: flushed full vertex cache.");
 #endif // !NDEBUG
         flush(r);
     }
 
-    for (size_t i = 0; i < VERT_COUNT; i++) {
+    for (size_t i = 0; i < VERT_COUNT; i++)
+    {
         r->verts[r->vertCount++] = q->verts[i];
     }
 }

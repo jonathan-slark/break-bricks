@@ -2,15 +2,16 @@
 #undef GLAD_GL_IMPLEMENTATION
 
 #include <cglm/struct.h> // mat4s, vec3s
-#include <glad.h>        // gl*, GL*
+#include <glad.h>        // GL*
 
 // Types
-typedef struct {
-    GLuint prog;
-    GLint  loc_proj;
-    GLint  loc_tex;
-    GLint  loc_col;
-    GLbool loc_isFont;
+typedef struct
+{
+    GLuint    prog;
+    GLint     loc_proj;
+    GLint     loc_tex;
+    GLint     loc_col;
+    GLboolean loc_isFont;
 } Shader;
 
 // Function prototypes

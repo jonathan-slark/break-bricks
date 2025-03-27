@@ -4,15 +4,16 @@
 #include "rend.h"
 
 // Pre-caculate the vertices needed for a textured quad
-Quad quad_create(Rend* r, vec2s pos, vec2s size, vec2s texOffset) {
+Quad quad_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
+{
     Quad q;
 
     quad_setPos(&q, pos, size);
 
-    float u1 = texOffset.x / r->tex.size.s;
-    float v1 = texOffset.y / r->tex.size.t;
-    float u2 = (texOffset.x + size.s - 1) / r->tex.size.s;
-    float v2 = (texOffset.y + size.y - 1) / r->tex.size.t;
+    float u1 = texOffset.x / texSize.s;
+    float v1 = texOffset.y / texSize.t;
+    float u2 = (texOffset.x + size.s - 1) / texSize.s;
+    float v2 = (texOffset.y + size.y - 1) / texSize.t;
 
     q.verts[0].tex_coord = (vec2s) {{ u1, v1 }};
     q.verts[1].tex_coord = (vec2s) {{ u2, v1 }};
@@ -22,7 +23,8 @@ Quad quad_create(Rend* r, vec2s pos, vec2s size, vec2s texOffset) {
     return q;
 }
 
-void quad_setPos(Quad* q, vec2s pos, vec2s size) {
+void quad_setPos(Quad* q, vec2s pos, vec2s size)
+{
     float x1 = pos.x;
     float y1 = pos.y;
     float x2 = pos.x + size.s - 1;
@@ -34,8 +36,10 @@ void quad_setPos(Quad* q, vec2s pos, vec2s size) {
     q->verts[3].pos = (vec2s) {{ x1, y2 }};
 }
 
-void quad_addVec(Quad* q, vec2s v) {
-    for (size_t i = 0; i < VERT_COUNT; i++) {
+void quad_addVec(Quad* q, vec2s v)
+{
+    for (size_t i = 0; i < VERT_COUNT; i++)
+    {
         q->verts[i].pos = glms_vec2_add(q->verts[i].pos, v);
     }
 }
