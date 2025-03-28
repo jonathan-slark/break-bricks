@@ -4,8 +4,8 @@
 #include <cglm/struct.h> // mat4s, glms_ortho, vec3s
 #include <glad.h>        // gl*, GL*
 
+#include "../main.h"
 #include "gfx.h"
-#include "main.h"
 #include "shader.h"
 
 // Function prototypes

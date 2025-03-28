@@ -4,8 +4,8 @@
 in vec2 fragCoords;
 out vec4 outCol;
 uniform sampler2D tex;
-uniform vec3      col;
-uniform bool      isFont;
+uniform vec3 col;
+uniform bool isFont;
 
 void main()
 {

@@ -3,9 +3,9 @@
 #include <cglm/struct.h> // mat4s, vec3s
 #include <glad.h>        // gl*, GL*
 
-#include "main.h"
+#include "../main.h"
+#include "../util.h"
 #include "shader.h"
-#include "util.h"
 
 // Function prototypes
 static void showLog(GLuint object, PFNGLGETSHADERIVPROC proc_param, PFNGLGETSHADERINFOLOGPROC proc_log);

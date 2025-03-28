@@ -44,25 +44,32 @@ should compile and run on Linux and MacOS but I haven't tested that.
 As long as the objects aren't moving too fast and the collision resolution is
 run at a high enough rate tunnelling shouldn't be a problem.
 
-## Layout
+## Directory Organization
 
-aud.c   - Audio: sound effects and music.
-game.c  - Game logic.
-gfx.c   - Graphics: sprite and font renderer.
-main.c  - OS code to get a window and input.
-extern/ - External libraries (licenses below).
-font/   - TTF fonts.
-gfx/    - Sprite sheets and Paint.NET source.
-level/  - Levels text files.
-music/  - Music here is played in order and repeated.
-sfx/    - Sound effects.
-shader/ - GLSL shader source.
+break-bricks/
+├── LICENSE
+├── Makefile
+├── README
+├── extern/ - external dependencies
+├── image/
+├── shader/ - GLSL shaders
+└── src/
+    ├── main.c
+    ├── util.c
+    ├── game/ - game play subsystem
+    │   └── game.c
+    └── gfx/  - OpenGL graphics subsystem
+        ├── font.c
+        ├── gfx.c
+        ├── quad.c
+        ├── rend.c
+        ├── screen.c
+        ├── shader.c
+        └── tex.c
 
 ## Credits and Licences
 
 Break Bricks source:
-CC0 License:
-<https://creativecommons.org/publicdomain/zero/1.0/>
 
 glfw (linking):
 <https://www.glfw.org/>

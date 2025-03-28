@@ -1,6 +1,6 @@
 #include <cglm/struct.h> // vec2s
 
-#include "main.h"
+#include "../main.h"
 #include "quad.h"
 #include "rend.h"
 #include "screen.h"

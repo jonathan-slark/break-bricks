@@ -8,9 +8,9 @@
 #include <stdio.h>       // fprintf, vfprintf
 #include <stdlib.h>      // exit, atexit, EXIT_SUCCESS, EXIT_FAILURE
 
-#include "game.h"
-#include "gfx.h"
 #include "main.h"
+#include "game/game.h"
+#include "gfx/gfx.h"
 
 // Function declarations
 static void errorCallback(int err, const char* desc);
@@ -184,25 +184,25 @@ int main(void)
     createWindow();
 
     // Render one frame: the loading screen
-    //game_loading();
-    //game_render();
-    //glfwSwapBuffers(window);
+    game_loading();
+    game_render();
+    glfwSwapBuffers(window);
     // Render to both buffers to avoid flicker
-    //game_render();
-    //glfwSwapBuffers(window);
+    game_render();
+    glfwSwapBuffers(window);
 
     game_load();
 
     // Ignore events that happened during loading
-    //glfwPollEvents();
-    //game_loaded();
+    glfwPollEvents();
+    game_loaded();
 
-    //double last_time = glfwGetTime();
+    double last_time = glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
-	//double cur_time = glfwGetTime();
-	//double frame_time = cur_time - last_time;
-	//last_time = cur_time;
+	double curTime = glfwGetTime();
+	double frameTime = curTime - last_time;
+	last_time = curTime;
 
 	if (isMinimised)
 	{
@@ -212,7 +212,7 @@ int main(void)
 	{
 	    glfwPollEvents();
 	    game_input();
-	    //game_update(frame_time);
+	    game_update(frameTime);
 	    game_render();
 	    glfwSwapBuffers(window);
 	}

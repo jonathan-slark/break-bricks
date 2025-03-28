@@ -10,14 +10,14 @@
 #include <stdlib.h>            // malloc, free
 #include <stdio.h>             // vsnprintf
 
+#include "../main.h"
+#include "../util.h"
 #include "font.h"
 #include "gfx.h"
-#include "main.h"
 #include "quad.h"
 #include "rend.h"
 #include "shader.h"
 #include "tex.h"
-#include "util.h"
 
 // Constants
 static const unsigned FONT_QUAD_COUNT = 200; // Max amount of letter quads

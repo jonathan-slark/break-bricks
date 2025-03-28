@@ -1,10 +1,10 @@
 #include <stdlib.h> // size_t
 
+#include "../util.h"
 #include "gfx.h"
 #include "rend.h"
 #include "shader.h"
 #include "tex.h"
-#include "util.h"
 
 // Constants
 static const GLushort QUAD_INDICES[] = { 0, 1, 2, 0, 2, 3 };
