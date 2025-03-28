@@ -9,7 +9,10 @@
 #include <stdlib.h>      // exit, atexit, EXIT_SUCCESS, EXIT_FAILURE
 
 #include "main.h"
+#include "game/asset.h"
+#include "game/draw.h"
 #include "game/game.h"
+#include "game/input.h"
 #include "gfx/gfx.h"
 
 // Function declarations
@@ -79,11 +82,11 @@ void keyCallback(
 ) {
     if (action == GLFW_PRESS)
     {
-	game_keyDown(key);
+	input_keyDown(key);
     }
     else if (action == GLFW_RELEASE)
     {
-	game_keyUp(key);
+	input_keyUp(key);
     }
 }
 
@@ -184,18 +187,18 @@ int main(void)
     createWindow();
 
     // Render one frame: the loading screen
-    game_loading();
-    game_render();
+    asset_loading();
+    draw_frame();
     glfwSwapBuffers(window);
     // Render to both buffers to avoid flicker
-    game_render();
+    draw_frame();
     glfwSwapBuffers(window);
 
-    game_load();
+    asset_load();
 
     // Ignore events that happened during loading
     glfwPollEvents();
-    game_loaded();
+    asset_loaded();
 
     double last_time = glfwGetTime();
     while (!glfwWindowShouldClose(window))
@@ -211,9 +214,9 @@ int main(void)
 	else
 	{
 	    glfwPollEvents();
-	    game_input();
+	    input_update();
 	    game_update(frameTime);
-	    game_render();
+	    draw_frame();
 	    glfwSwapBuffers(window);
 	}
     }
