@@ -1,13 +1,13 @@
 #pragma once
 
-#include "quad.h"
+#include "sprite.h"
 #include "rend.h"
 
 // Types
 typedef struct
 {
-    Quad quad;
-    Rend rend;
+    Sprite sprite;
+    Rend   rend;
 } Screen;
 
 // Function prototypes

@@ -14,13 +14,13 @@
 #include "../util.h"
 #include "font.h"
 #include "gfx.h"
-#include "quad.h"
+#include "sprite.h"
 #include "rend.h"
 #include "shader.h"
 #include "tex.h"
 
 // Constants
-static const unsigned FONT_QUAD_COUNT = 200; // Max amount of letter quads
+static const unsigned FONT_QUAD_COUNT = 200; // Max amount of letter sprites
 
 // Function declarations
 
@@ -91,21 +91,23 @@ void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...)
             stbtt_aligned_quad quad;
             stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, j, &pos.x, &pos.y, &quad, 0);
 
-            // Convert to our quad structure
+            // Convert to our sprite
             float x1 = quad.x0; float y1 = quad.y0;
             float u1 = quad.s0; float v1 = quad.t0;
             float x2 = quad.x1; float y2 = quad.y1;
             float u2 = quad.s1; float v2 = quad.t1;
-            Quad gfxQuad = (Quad)
+	    // rend_sprite doesn't use .size
+            Sprite sprite =
 	    {
-                {
+                .verts =
+		{
                     { {{ x1, y1 }}, {{ u1, v1 }} },
                     { {{ x2, y1 }}, {{ u2, v1 }} },
                     { {{ x2, y2 }}, {{ u2, v2 }} },
                     { {{ x1, y2 }}, {{ u1, v2 }} }
                 }
             };
-            rend_quad(&f->rend, gfxQuad);
+            rend_sprite(&f->rend, sprite);
         }
     }
 }

@@ -6,6 +6,7 @@
 #include "../gfx/screen.h"
 #include "asset.h"
 #include "game.h"
+#include "paddle.h"
 
 // Function prototypes
 static void loadingLoad(void);
@@ -61,6 +62,8 @@ void asset_load(void)
 
     bgLoad();
     atexit(bgUnload);
+
+    paddle_init();
 }
 
 void asset_loaded(void)

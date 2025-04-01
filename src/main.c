@@ -90,7 +90,7 @@ void keyCallback(
     }
 }
 
-vec2s main_get_mouse_pos(void)
+vec2s main_getMousePos(void)
 {
     double x, y;
     glfwGetCursorPos(window, &x, &y);

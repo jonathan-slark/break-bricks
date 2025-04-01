@@ -16,11 +16,12 @@ Rend rend_create(size_t count)
     Rend r;
     r.vertMax      = count * VERT_COUNT;
     size_t qiCount = COUNT(QUAD_INDICES);
-    size_t iCount  = count * qiCount;
+    size_t viCount  = count * qiCount;
+    size_t viSize   = sizeof(GLushort) * viCount;
 
     // Pre-calculate the entire index buffer
-    r.indices = (GLushort*) malloc(sizeof(GLushort) * iCount);
-    for (size_t i = 0; i < iCount; i++)
+    r.indices = (GLushort*) malloc(viSize);
+    for (size_t i = 0; i < viCount; i++)
     {
         r.indices[i] = i / qiCount * VERT_COUNT + QUAD_INDICES[i % qiCount];
     }
@@ -30,21 +31,17 @@ Rend rend_create(size_t count)
 
     glGenBuffers(1, &r.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, r.vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vert) * r.vertMax, NULL,
-            GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vert) * r.vertMax, NULL, GL_DYNAMIC_DRAW);
 
     glGenBuffers(1, &r.ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * iCount,
-            r.indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, viSize, r.indices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
-            (void*) offsetof(Vert, pos));
+    glVertexAttribPointer(0, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert), (void*) offsetof(Vert, pos));
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert),
-            (void*) offsetof(Vert, texCoord));
+    glVertexAttribPointer(1, IND_COUNT, GL_FLOAT, GL_FALSE, sizeof(Vert), (void*) offsetof(Vert, texCoord));
 
     r.vertCount = 0;
     r.verts = (Vert*) malloc(sizeof(Vert) * r.vertMax);
@@ -97,7 +94,7 @@ void rend_end(Rend* r)
     flush(r);
 }
 
-void rend_quad(Rend* r, Quad q)
+void rend_sprite(Rend* r, Sprite s)
 {
     if (r->vertCount == r->vertMax)
     {
@@ -109,6 +106,6 @@ void rend_quad(Rend* r, Quad q)
 
     for (size_t i = 0; i < VERT_COUNT; i++)
     {
-        r->verts[r->vertCount++] = q.verts[i];
+        r->verts[r->vertCount++] = s.verts[i];
     }
 }
