@@ -6,6 +6,7 @@ Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
 {
     Sprite s;
 
+    s.size = size;
     sprite_setPos(&s, pos, size);
 
     // Normalise tex offset

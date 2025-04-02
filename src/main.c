@@ -84,10 +84,6 @@ void keyCallback(
     {
 	input_keyDown(key);
     }
-    else if (action == GLFW_RELEASE)
-    {
-	input_keyUp(key);
-    }
 }
 
 vec2s main_getMousePos(void)
@@ -110,12 +106,8 @@ void mouseCallback(
 ) {
     if (action == GLFW_PRESS)
     {
-	//game_button_down(button);
+	input_buttonDown(button);
     } 
-    else if (action == GLFW_RELEASE)
-    {
-	//game_button_up(button);
-    }
 }
 
 void resizeCallback([[maybe_unused]] GLFWwindow* window, int width, int height)

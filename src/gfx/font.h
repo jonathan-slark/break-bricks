@@ -23,5 +23,5 @@ typedef struct {
 Font font_load(float height, const char* file);
 void font_unload(Font f);
 void font_begin(Font f);
-void font_printf(Font* f, vec2s pos, vec3s colour, const char* fmt, ...);
+void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...);
 void font_end(Font* f);

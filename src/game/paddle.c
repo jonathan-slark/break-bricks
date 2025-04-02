@@ -2,6 +2,7 @@
 
 #include "../main.h"
 #include "../gfx/sprite.h"
+#include "paddle.h"
 
 // Types
 typedef struct
@@ -37,4 +38,15 @@ void paddle_init()
     {
         paddle.livesSprites[i] = sprite_create(PADDLE_LIVES[i], PADDLE_SIZE, PADDLE_OFFSET, texSize);
     }
+}
+
+void paddle_setX(float x)
+{
+    vec2s newPos = {{ x, paddle.sprite.pos.y }};
+    sprite_setPos(&paddle.sprite, newPos, PADDLE_SIZE);
+}
+
+Sprite paddle_getSprite(void)
+{
+    return paddle.sprite;
 }
