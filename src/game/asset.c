@@ -7,6 +7,7 @@
 #include "../gfx/rend.h"
 #include "../gfx/screen.h"
 #include "asset.h"
+#include "ball.h"
 #include "game.h"
 #include "paddle.h"
 
@@ -108,6 +109,7 @@ void asset_load(void)
     atexit(unloadFonts);
 
     paddle_init();
+    ball_init();
 }
 
 void asset_loaded(void)

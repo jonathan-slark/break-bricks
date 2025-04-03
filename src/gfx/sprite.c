@@ -7,7 +7,7 @@ Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
     Sprite s;
 
     s.size = size;
-    sprite_setPos(&s, pos, size);
+    sprite_setPos(&s, pos);
 
     // Normalise tex offset
     float u1 = texOffset.x / texSize.s;
@@ -23,12 +23,12 @@ Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
     return s;
 }
 
-void sprite_setPos(Sprite* s, vec2s pos, vec2s size)
+void sprite_setPos(Sprite* s, vec2s pos)
 {
     float x1 = pos.x;
     float y1 = pos.y;
-    float x2 = pos.x + size.s - 1;
-    float y2 = pos.y + size.t - 1;
+    float x2 = pos.x + s->size.s - 1;
+    float y2 = pos.y + s->size.t - 1;
 
     s->verts[0].pos = (vec2s) {{ x1, y1 }};
     s->verts[1].pos = (vec2s) {{ x2, y1 }};

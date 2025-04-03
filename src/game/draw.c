@@ -1,10 +1,12 @@
 #include "../gfx/screen.h"
 #include "asset.h"
+#include "ball.h"
 #include "game.h"
 #include "paddle.h"
 #include "text.h"
 
-// Types
+// Function prototypes
+static void draw_game(void);
 
 // Constants
 static const Text TEXT_PAUSED = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
@@ -28,6 +30,7 @@ void draw_game(void)
     Rend* r = asset_getSpriteRend();
     rend_begin(*r);
     rend_sprite(r, paddle_getSprite());
+    rend_sprite(r, ball_getSprite());
     rend_end(r);
 }
 

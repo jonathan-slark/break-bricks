@@ -4,6 +4,7 @@
 
 #include "../main.h"
 #include "../util.h"
+#include "ball.h"
 #include "config.h"
 #include "game.h"
 #include "input.h"
@@ -78,6 +79,7 @@ void input_update(void)
 	    vec2s pos = main_getMousePos();
 	    pos.x     = CLAMP(pos.x, BG_WALL_LEFT, SCR_WIDTH - paddle_getSprite().size.s - BG_WALL_RIGHT);
 	    paddle_setX(pos.x);
+	    ball_onPaddleMove();
 	    // Don't allow cursor to move away from paddle
 	    main_setMousePos(pos);
 	    break;
