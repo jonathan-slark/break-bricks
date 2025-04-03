@@ -9,6 +9,7 @@
 #include "asset.h"
 #include "ball.h"
 #include "game.h"
+#include "level.h"
 #include "paddle.h"
 
 // Function prototypes
@@ -30,7 +31,8 @@ static const char   FONT_FILE[]    = "font/JupiteroidRegular.ttf";
 static const float  FONT_HEIGHTS[] = { 64.0f, 40.0f };
 
 // Variables
-static Screen loading, bg;
+static Screen loading;
+static Screen bg;
 static Rend   spriteRend;
 static Font   fonts[FontSizeCount];
 
@@ -110,6 +112,7 @@ void asset_load(void)
 
     paddle_init();
     ball_init();
+    level_load();
 }
 
 void asset_loaded(void)

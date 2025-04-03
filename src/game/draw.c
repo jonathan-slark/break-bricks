@@ -2,11 +2,12 @@
 #include "asset.h"
 #include "ball.h"
 #include "game.h"
+#include "level.h"
 #include "paddle.h"
 #include "text.h"
 
 // Function prototypes
-static void draw_game(void);
+static void drawGame(void);
 
 // Constants
 static const Text TEXT_PAUSED = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
@@ -23,7 +24,7 @@ static const Text TEXT_MENU   =
 
 // Function declarations
 
-void draw_game(void)
+void drawGame(void)
 {
     screen_rend(asset_getBg());
 
@@ -31,6 +32,7 @@ void draw_game(void)
     rend_begin(*r);
     rend_sprite(r, paddle_getSprite());
     rend_sprite(r, ball_getSprite());
+    level_render(0, r);
     rend_end(r);
 }
 
@@ -46,14 +48,14 @@ void draw_frame(void)
 	    text_rend(asset_getFont(TEXT_MENU.size), TEXT_MENU);
             break;
         case StatePause:
-            draw_game();
+            drawGame();
 	    text_rend(asset_getFont(TEXT_PAUSED.size), TEXT_PAUSED);
             break;
         case StateRun:
-            draw_game();
+            drawGame();
             break;
         case StateWon:
-            draw_game();
+            drawGame();
             //text_render(&TEXT_WON);
             //if (is_hiscore) text_render(&TEXT_NEWHISCORE);
             //text_render(&TEXT_CONTINUE);

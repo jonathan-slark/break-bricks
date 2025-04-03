@@ -2,7 +2,7 @@
 #include "game.h"
 
 // Variables
-State state = StateLoading;
+static State state = StateLoading;
 
 // Function declarations
 
