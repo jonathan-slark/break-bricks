@@ -20,4 +20,4 @@ typedef struct
 } Text;
 
 // Function prototypes
-void text_rend(Font* f, Text t);
+void text_rend(Text t, ...);

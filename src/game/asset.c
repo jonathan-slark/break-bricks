@@ -9,6 +9,7 @@
 #include "asset.h"
 #include "ball.h"
 #include "game.h"
+#include "hiscore.h"
 #include "level.h"
 #include "paddle.h"
 
@@ -109,6 +110,9 @@ void asset_load(void)
 
     loadFonts();
     atexit(unloadFonts);
+
+    hiscore_load();
+    atexit(hiscore_save);
 
     paddle_init();
     ball_init();

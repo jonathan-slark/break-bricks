@@ -44,3 +44,8 @@ Sprite paddle_getSprite(void)
 {
     return sprite;
 }
+
+int paddle_getScore(void)
+{
+    return score;
+}

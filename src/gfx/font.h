@@ -3,6 +3,7 @@
 
 #include <cglm/struct.h>      // vec2s, vec3s
 #include <stb/stb_truetype.h> // stbtt_packedchar
+#include <stdarg.h>           // va_list
 #include <stdlib.h>           // size_t
 
 #include "rend.h"
@@ -24,4 +25,5 @@ Font font_load(float height, const char* file);
 void font_unload(Font f);
 void font_begin(Font f);
 void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...);
+void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args);
 void font_end(Font* f);

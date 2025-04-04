@@ -69,12 +69,21 @@ void font_begin(Font f)
 
 void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...)
 {
+    va_list args;
+    va_start(args, fmt);
+    font_vprintf(f, pos, col, fmt, args);
+    va_end(args);
+}
+
+void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args)
+{
     va_list ap;
-    va_start(ap, fmt);
+    va_copy(ap, args);
     int size = vsnprintf(NULL, 0, fmt, ap);
-    char text[size + 1];
-    vsnprintf(text, sizeof text, fmt, ap);
     va_end(ap);
+
+    char text[size + 1];
+    vsnprintf(text, sizeof text, fmt, args);
 
     float posX = pos.x;
     shader_setCol(gfx_getShader(), col);
