@@ -1,7 +1,7 @@
-#include <stdlib.h>     // atexit, srand
-#include <time.h>       // timespec*
+#include <stdlib.h> // atexit
 
 #include "../main.h"
+#include "../util.h"
 #include "../gfx/font.h"
 #include "../gfx/gfx.h"
 #include "../gfx/rend.h"
@@ -98,10 +98,7 @@ void asset_loading(void)
 
 void asset_load(void)
 {
-    // Decent random seed: https://stackoverflow.com/q/58150771
-    struct timespec ts;
-    timespec_get(&ts, TIME_UTC);
-    srand(ts.tv_nsec);
+    util_randomSeed();
 
     loadBg();
     atexit(unloadBg);

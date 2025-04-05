@@ -1,5 +1,6 @@
 #include "../main.h"
 #include "audio.h"
+#include "ball.h"
 #include "game.h"
 #include "hiscore.h"
 
@@ -66,23 +67,14 @@ void game_click(void)
         state = StateRun;
         break;
     case StateRun:
-#if 0
-        Ball *b = &sprites.ball;
-
-        if (b->is_stuck)
-        {
-            b->vel = BALL_RELEASE[random(0, COUNT(BALL_RELEASE) - 1)];
-            b->vel = glms_vec2_normalize(b->vel);
-
-            b->is_stuck = false;
-        }
-#endif
+	ball_release();
         break;
     }
 }
 
-void game_update([[maybe_unused]] double frameTime)
+void game_update(double frameTime)
 {
+    ball_move(frameTime);
 }
 
 void game_setState(State newState)

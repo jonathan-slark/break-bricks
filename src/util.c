@@ -1,5 +1,7 @@
-#include <stdio.h>  // FILE, fopen, fprintf, stderr, perror, fseek, ftell, malloc, fclose, free
-#include <stdlib.h> // size_t
+#include <math.h>   // roundf
+#include <stdio.h>  // FILE, f*, stderr, perror, malloc, free
+#include <stdlib.h> // size_t, srand
+#include <time.h>   // timespec*
 
 #include "util.h"
 
@@ -58,3 +60,19 @@ void util_unload(char* data)
 {
     free(data);
 }
+
+// Decent random seed: https://stackoverflow.com/q/58150771
+void util_randomSeed(void)
+{
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    srand(ts.tv_nsec);
+}
+
+// Random number between min and max, closed interval
+int util_randomInt(int min, int max)
+{
+    return roundf(min + ((float) rand()) / RAND_MAX * (max - min));
+}
+
+

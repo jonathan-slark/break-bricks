@@ -1,7 +1,8 @@
 #include <cglm/struct.h> // vec2s
 
-#include "../gfx/sprite.h"
 #include "../main.h"
+#include "../util.h"
+#include "../gfx/sprite.h"
 #include "ball.h"
 #include "paddle.h"
 
@@ -9,12 +10,15 @@
 static vec2s getStuckPos(void);
 
 // Constants
-static const vec2s SIZE       = {{ 24, 24 }};
-static const vec2s TEX_OFFSET = {{ 528, 0 }};
+static const vec2s SIZE          = {{ 24, 24 }};
+static const vec2s TEX_OFFSET    = {{ 528, 0 }};
+// Choose a random release vector for the ball
+static const vec2s RELEASE_VEC[] = { {{ -0.5f, -0.5f }}, {{  0.5f, -0.5f }} };
+static const unsigned SPEED      = 750;  // Pixels per second
 
 // Variables
 static bool   isStuck;
-//static vec2s  vel;
+static vec2s  vel;
 static Sprite sprite;
 
 // Function declarations
@@ -42,4 +46,24 @@ void ball_onPaddleMove(void)
     {
 	sprite_setPos(&sprite, getStuckPos());
     }
+}
+
+void ball_release(void)
+{
+    if (isStuck)
+    {
+	vel = RELEASE_VEC[util_randomInt(0, COUNT(RELEASE_VEC) - 1)];
+	vel = glms_vec2_normalize(vel);
+	isStuck = false;
+    }
+}
+
+void ball_move(double frameTime)
+{
+    assert(frameTime < 1.0);
+    assert(frameTime >= 0.0);
+
+    vec2s scaledVel = glms_vec2_scale(vel, SPEED * frameTime);
+    vec2s newPos    = glms_vec2_add(sprite.pos, scaledVel);
+    sprite_setPos(&sprite, newPos);
 }

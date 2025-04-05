@@ -15,3 +15,5 @@ extern const char WRITE_ONLY_BIN[];
 // Function prototypes
 char* util_load(const char* file, const char* mode);
 void  util_unload(char* data);
+void  util_randomSeed(void);
+int   util_randomInt(int min, int max);
