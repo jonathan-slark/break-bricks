@@ -37,7 +37,7 @@ static const Button BUTTONS[] =
     { GLFW_MOUSE_BUTTON_LEFT, game_click }
 };
 
-// Function declarations
+// Function definitions
 
 void input_keyDown(int key)
 {

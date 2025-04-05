@@ -30,7 +30,7 @@ static const Text TEXT_MENU =
     "Click mouse button to continue."
 };
 
-// Function declarations
+// Function definitions
 
 void drawGame(void)
 {

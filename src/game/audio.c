@@ -4,12 +4,13 @@
 #include "../util.h"
 #include "audio.h"
 
-static const float       VOLD         = 0.1; // Volume 0 - 1
-static const char        FILE_BRICK[] = "sfx/brick.wav";
-static const char        FILE_DEATH[] = "sfx/death.wav";
-static const char        FILE_CLEAR[] = "sfx/clear.wav";
-static const char        FILE_WON[]   = "sfx/won.wav";
-static const char        FILE_LOST[]  = "sfx/lost.wav";
+// Constants
+static const float VOL          = 0.1; // Volume 0 - 1
+static const char  FILE_BRICK[] = "sfx/brick.wav";
+static const char  FILE_DEATH[] = "sfx/death.wav";
+static const char  FILE_CLEAR[] = "sfx/clear.wav";
+static const char  FILE_WON[]   = "sfx/won.wav";
+static const char  FILE_LOST[]  = "sfx/lost.wav";
 static const char* const MUSIC[] =
 {
     "music/HoliznaCC0 - 2nd Dimension.mp3", // One track per level
@@ -26,11 +27,11 @@ static ma_sound **sounds;
 static ma_sound **music;
 static ma_sound *playing;
 
-// Function declarations
+// Function definitions
 
 void audio_load(void)
 {
-    aud_init(VOLD);
+    aud_init(VOL);
 
     sounds = (ma_sound **) malloc(SoundCount * sizeof(ma_sound *));
     sounds[SoundBrick] = aud_soundLoad(FILE_BRICK);

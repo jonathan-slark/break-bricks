@@ -1,3 +1,4 @@
+#include <assert.h>      // assert
 #include <cglm/struct.h> // vec2s
 
 #include "../main.h"
@@ -21,7 +22,7 @@ static bool   isStuck;
 static vec2s  vel;
 static Sprite sprite;
 
-// Function declarations
+// Function definitions
 
 vec2s getStuckPos(void)
 {
@@ -63,7 +64,20 @@ void ball_move(double frameTime)
     assert(frameTime < 1.0);
     assert(frameTime >= 0.0);
 
+    if (isStuck) return;
+
     vec2s scaledVel = glms_vec2_scale(vel, SPEED * frameTime);
     vec2s newPos    = glms_vec2_add(sprite.pos, scaledVel);
     sprite_setPos(&sprite, newPos);
+}
+
+void ball_isOob(newPos)
+{
+    assert(bs);
+    assert(pos_new.x > BG_WALL_LEFT - 10.0f);
+    assert(pos_new.x < SCR_WIDTH - BG_WALL_RIGHT - BALL_SIZE.s + 10.0f);
+    assert(pos_new.y > BG_WALL_TOP - 10.0f);
+    assert(pos_new.y < SCR_HEIGHT - BALL_SIZE.s + 10.0f);
+
+    return pos_new.y + bs->size.x > SCR_HEIGHT;
 }

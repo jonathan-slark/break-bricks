@@ -16,7 +16,7 @@ static int     score;
 static int     lives;
 static Sprite* livesSprites;
 
-// Function declarations
+// Function definitions
 
 void paddle_init(void)
 {

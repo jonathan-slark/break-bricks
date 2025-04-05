@@ -38,7 +38,7 @@ static Screen bg;
 static Rend   spriteRend;
 static Font   fonts[FontSizeCount];
 
-// Function declarations
+// Function definitions
 
 void loadLoading(void)
 {

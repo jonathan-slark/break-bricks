@@ -4,7 +4,7 @@
 #include "asset.h"
 #include "text.h"
 
-// Function declarations
+// Function definitions
 
 void text_rend(Text t, ...)
 {

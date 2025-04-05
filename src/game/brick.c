@@ -23,7 +23,7 @@ static const vec2s    BRICK_SOLID_OFFSETS[] = {
     {{ 256, 32 }}, // yellow, id = f
 };
 
-// Function declarations
+// Function definitions
 
 Brick brick_create(char id, int col, int row)
 {

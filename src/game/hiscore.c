@@ -11,7 +11,7 @@ static const char HISCORE_FILE[] = "hiscore.txt";
 static int  hiscore;
 static bool isHiscore;
 
-// Function declarations
+// Function definitions
 
 void hiscore_load(void)
 {

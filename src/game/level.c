@@ -18,7 +18,7 @@ constexpr int ROWS  = 24;
 // Variables
 static Brick levels[COUNT][COLS * ROWS];
 
-// Function declarations
+// Function definitions
 
 void levelRead(int level, const char *data)
 {
