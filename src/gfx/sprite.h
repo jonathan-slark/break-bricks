@@ -30,3 +30,4 @@ typedef struct
 Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize);
 void   sprite_setPos(Sprite* s, vec2s pos);
 void   sprite_addVec(Sprite* s, vec2s v);
+bool   sprite_checkCollision(Sprite a, Sprite b);
