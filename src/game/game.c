@@ -1,5 +1,7 @@
 #include "../main.h"
+#include "audio.h"
 #include "game.h"
+#include "hiscore.h"
 
 // Variables
 static State state = StateLoading;
@@ -31,12 +33,12 @@ void game_quit(void)
         case StateLoading:
             break;
         case StateMenu:
-            //hiscore_save();
+            hiscore_save();
             main_quit();
             break;
         case StateRun:
         case StatePause:
-            //aud_sound_stop(playing);
+	    audio_stopMusic();
             [[fallthrough]];
         case StateWon:
         case StateLost:

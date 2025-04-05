@@ -6,6 +6,7 @@
 #include "../gfx/gfx.h"
 #include "../gfx/rend.h"
 #include "../gfx/screen.h"
+#include "audio.h"
 #include "asset.h"
 #include "ball.h"
 #include "game.h"
@@ -113,6 +114,9 @@ void asset_load(void)
 
     hiscore_load();
     atexit(hiscore_save);
+
+    audio_load();
+    atexit(audio_unload);
 
     paddle_init();
     ball_init();

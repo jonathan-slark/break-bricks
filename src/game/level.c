@@ -70,7 +70,7 @@ void level_load(void)
     for (int level = 1; level <= COUNT; level++)
     {
 	char fmt[] = "%s/%02i.txt";
-	int size = snprintf(NULL, 0, fmt, FOLDER, level);
+	int size = snprintf(nullptr, 0, fmt, FOLDER, level);
 	char file[size + 1];
 	snprintf(file, sizeof file, fmt, FOLDER, level);
 	char *data = util_load(file, READ_ONLY_TEXT);
