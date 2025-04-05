@@ -11,7 +11,7 @@ static const vec2s LIVES_POS[] = { {{ 8, 1053 }}, {{ 8, 1027 }} };
 static const int   LIVES       = 3;
 
 // Variables
-static Sprite  sprite;
+static Sprite  paddle;
 static int     score;
 static int     lives;
 static Sprite* livesSprites;
@@ -25,7 +25,7 @@ void paddle_init(void)
 
     vec2s pos     = {{ main_getMousePos().x, SCR_HEIGHT - SIZE.t }};
     vec2s texSize = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
-    sprite        = sprite_create(pos, SIZE, TEX_OFFSET, texSize);
+    paddle        = sprite_create(pos, SIZE, TEX_OFFSET, texSize);
 
     livesSprites = (Sprite *) malloc((LIVES - 1) * sizeof(Sprite));
     for (int i = 0; i < LIVES - 1; i++)
@@ -36,13 +36,13 @@ void paddle_init(void)
 
 void paddle_setX(float x)
 {
-    vec2s newPos = {{ x, sprite.pos.y }};
-    sprite_setPos(&sprite, newPos);
+    vec2s newPos = {{ x, paddle.pos.y }};
+    sprite_setPos(&paddle, newPos);
 }
 
 Sprite paddle_getSprite(void)
 {
-    return sprite;
+    return paddle;
 }
 
 int paddle_getScore(void)

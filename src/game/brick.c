@@ -1,12 +1,12 @@
 #include <ctype.h> // isdigit
 
 #include "../main.h"
-#include "config.h"
 #include "brick.h"
+#include "wall.h"
 
 // Constants
-static const vec2s    BRICK_SIZE  = {{ 128, 32 }};
-static const vec2s    BRICK_SINGLE_OFFSETS[] = {
+static const vec2s    SIZE = {{ 128, 32 }};
+static const vec2s    NORMAL_OFFSETS[] = {
     {{ 0,   64 }}, // blue,   id = 0
     {{ 128, 64 }}, // green,  id = 1
     {{ 256, 64 }}, // orange, id = 2
@@ -14,7 +14,7 @@ static const vec2s    BRICK_SINGLE_OFFSETS[] = {
     {{ 128, 96 }}, // red,    id = 4
     {{ 256, 96 }}  // yellow, id = 5
 };
-static const vec2s    BRICK_SOLID_OFFSETS[] = {
+static const vec2s    SOLID_OFFSETS[] = {
     {{ 0,   0 }},  // blue,   id = a
     {{ 128, 0 }},  // green,  id = b
     {{ 256, 0 }},  // orange, id = c
@@ -35,9 +35,9 @@ Brick brick_create(char id, int col, int row)
     b.isSolid     = isSolid;
     b.isDestroyed = false;
 
-    vec2s pos    = {{ BG_WALL_LEFT + col * BRICK_SIZE.s, BG_WALL_TOP + row * BRICK_SIZE.t }};
-    vec2s offset = isSolid ? BRICK_SOLID_OFFSETS[id - 'a'] : BRICK_SINGLE_OFFSETS[id - '0'];
-    b.sprite     = sprite_create(pos, BRICK_SIZE, offset, (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }});
+    vec2s pos    = {{ WALL_LEFT + col * SIZE.s, WALL_TOP + row * SIZE.t }};
+    vec2s offset = isSolid ? SOLID_OFFSETS[id - 'a'] : NORMAL_OFFSETS[id - '0'];
+    b.sprite     = sprite_create(pos, SIZE, offset, (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }});
 
     return b;
 }

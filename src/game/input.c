@@ -5,10 +5,10 @@
 #include "../main.h"
 #include "../util.h"
 #include "ball.h"
-#include "config.h"
 #include "game.h"
 #include "input.h"
 #include "paddle.h"
+#include "wall.h"
 
 // Types
 
@@ -77,7 +77,7 @@ void input_update(void)
 	    break;
         case StateRun:
 	    vec2s pos = main_getMousePos();
-	    pos.x     = CLAMP(pos.x, BG_WALL_LEFT, SCR_WIDTH - paddle_getSprite().size.s - BG_WALL_RIGHT);
+	    pos.x     = CLAMP(pos.x, WALL_LEFT, SCR_WIDTH - paddle_getSprite().size.s - WALL_RIGHT);
 	    paddle_setX(pos.x);
 	    ball_onPaddleMove();
 	    // Don't allow cursor to move away from paddle
