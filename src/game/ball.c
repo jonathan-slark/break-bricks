@@ -5,6 +5,7 @@
 #include "../gfx/sprite.h"
 #include "ball.h"
 #include "paddle.h"
+#include "level.h"
 #include "wall.h"
 
 // Function prototypes
@@ -70,14 +71,22 @@ void ball_move(double frameTime)
     if (wall_isCollisionX(ball)) vel.x *= -1.0f;
     if (wall_isCollisionY(ball)) vel.y *= -1.0f;
 
+    // Paddle collision
     Sprite paddle = paddle_getSprite();
     if (sprite_checkCollision(ball, paddle)) {
 	vel.y *= -1.0f;
 
 	// Modify X velocity based on where it hit the paddle
 	float paddleCenter = paddle.pos.x + paddle.size.x / 2.0f;
-	float hitOffset = (ball.pos.x + SIZE.x / 2.0f) - paddleCenter;
+	float hitOffset    = (ball.pos.x + ball.size.x / 2.0f) - paddleCenter;
 	vel.x = hitOffset / (paddle.size.x / 2.0f);
-	vel = glms_vec2_normalize(vel);
+	vel   = glms_vec2_normalize(vel);
+    }
+
+    // Brick collision
+    vec2s normal;
+    if (level_checkCollision(ball, &normal))
+    {
+	vel = glms_vec2_reflect(vel, normal);
     }
 }

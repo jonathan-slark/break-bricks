@@ -17,6 +17,7 @@ constexpr int ROWS  = 24;
 
 // Variables
 static Brick levels[COUNT][COLS * ROWS];
+static int level;
 
 // Function definitions
 
@@ -67,22 +68,25 @@ void levelRead(int level, const char *data)
 
 void level_load(void)
 {
-    for (int level = 1; level <= COUNT; level++)
+    // Files are labeled 1 to COUNT but array is indexed as 0 to COUNT-1
+    for (int i = 1; i <= COUNT; i++)
     {
 	char fmt[] = "%s/%02i.txt";
-	int size = snprintf(nullptr, 0, fmt, FOLDER, level);
+	int size = snprintf(nullptr, 0, fmt, FOLDER, i);
 	char file[size + 1];
-	snprintf(file, sizeof file, fmt, FOLDER, level);
+	snprintf(file, sizeof file, fmt, FOLDER, i);
 	char *data = util_load(file, READ_ONLY_TEXT);
 	if (!data) main_term(EXIT_FAILURE, "Unable to load level:%s\n", file);
 
-	levelRead(level - 1, data);
+	levelRead(i - 1, data);
 
 	util_unload(data);
     }
+
+    level = 0;
 }
 
-void level_render(int level, Rend* r)
+void level_render(Rend* r)
 {
     for (int i = 0; i < COLS * ROWS; i++)
     {
@@ -92,4 +96,22 @@ void level_render(int level, Rend* r)
             rend_sprite(r, b.sprite);
         }
     }
+}
+
+bool level_checkCollision(Sprite ball, vec2s* normal)
+{
+    for (int i = 0; i < COLS * ROWS; i++)
+    {
+        Brick* b = &levels[level][i];
+        if (b->isActive && !b->isDestroyed)
+        {
+	    if (sprite_checkCollisionEx(ball, b->sprite, normal))
+	    {
+		b->isDestroyed = true;
+		return true;
+	    }
+	}
+    }
+    
+    return false;
 }

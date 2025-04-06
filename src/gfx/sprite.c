@@ -51,3 +51,46 @@ bool sprite_checkCollision(Sprite a, Sprite b)
     bool collisionY = a.pos.y + a.size.y >= b.pos.y && b.pos.y + b.size.y >= a.pos.y;
     return collisionX && collisionY;
 }
+
+// Returns true if a and b collide. If so, fills out `normal` with the collision direction.
+bool sprite_checkCollisionEx(Sprite a, Sprite b, vec2s* normal)
+{
+    float ax1 = a.pos.x;
+    float ay1 = a.pos.y;
+    float ax2 = a.pos.x + a.size.x;
+    float ay2 = a.pos.y + a.size.y;
+
+    float bx1 = b.pos.x;
+    float by1 = b.pos.y;
+    float bx2 = b.pos.x + b.size.x;
+    float by2 = b.pos.y + b.size.y;
+
+    if (ax2 < bx1 || ax1 > bx2 || ay2 < by1 || ay1 > by2)
+        return false;
+
+    float overlapLeft   = ax2 - bx1;
+    float overlapRight  = bx2 - ax1;
+    float overlapTop    = ay2 - by1;
+    float overlapBottom = by2 - ay1;
+
+    float minOverlapX = overlapLeft < overlapRight  ? overlapLeft : overlapRight;
+    float minOverlapY = overlapTop  < overlapBottom ? overlapTop  : overlapBottom;
+
+    // Determine collision direction
+    if (minOverlapX < minOverlapY)
+    {
+        if (overlapLeft < overlapRight)
+            *normal = (vec2s) {{ -1.0f, 0.0f }}; // Hit from left
+        else
+            *normal = (vec2s) {{ 1.0f, 0.0f }};  // Hit from right
+    }
+    else
+    {
+        if (overlapTop < overlapBottom)
+            *normal = (vec2s) {{ 0.0f, -1.0f }}; // Hit from top
+        else
+            *normal = (vec2s) {{ 0.0f, 1.0f }};  // Hit from bottom
+    }
+
+    return true;
+}

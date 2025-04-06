@@ -2,4 +2,5 @@
 
 // Function prototypes
 void level_load(void);
-void level_render(int level, Rend* r);
+void level_render(Rend* r);
+bool level_checkCollision(Sprite ball, vec2s* normal);
