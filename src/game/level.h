@@ -7,7 +7,7 @@
 
 // Function prototypes
 void level_load(void);
-void level_render(Rend* r);
+void level_rend(Rend* r);
 bool level_checkCollision(Sprite ball, vec2s* normal);
 bool level_isClear(void);
 bool level_next(void);

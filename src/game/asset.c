@@ -120,11 +120,6 @@ void asset_load(void)
     level_load();
 }
 
-void asset_loaded(void)
-{
-    game_setState(StateMenu);
-}
-
 Screen asset_getLoading(void)
 {
     return loading;

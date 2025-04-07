@@ -3,7 +3,9 @@
 #include "../main.h"
 #include "../util.h"
 #include "../gfx/sprite.h"
+#include "audio.h"
 #include "ball.h"
+#include "game.h"
 #include "paddle.h"
 #include "level.h"
 #include "wall.h"
@@ -34,12 +36,12 @@ vec2s getStuckPos(void)
 void ball_init(void)
 {
     isStuck = true;
-    ball  = sprite_create(getStuckPos(), SIZE, TEX_OFFSET, (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }} );
+    ball    = sprite_create(getStuckPos(), SIZE, TEX_OFFSET, (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }} );
 }
 
-Sprite ball_getSprite(void)
+void ball_rend(Rend* r)
 {
-    return ball;
+    rend_sprite(r, ball);
 }
 
 void ball_onPaddleMove(void)
@@ -60,6 +62,11 @@ void ball_release(void)
     }
 }
 
+bool isOob(void)
+{
+    return ball.pos.y + ball.size.t >= SCR_HEIGHT;
+}
+
 void ball_move(double frameTime)
 {
     if (isStuck) return;
@@ -68,10 +75,26 @@ void ball_move(double frameTime)
     vec2s newPos    = glms_vec2_add(ball.pos, scaledVel);
     sprite_setPos(&ball, newPos);
 
+    // If ball is OOB then lose a life and check for game over
+    if (isOob())
+    {
+	ball_init();
+	if (paddle_lifeLost())
+	{
+	    audio_playSound(SoundDeath);
+	}
+	else
+	{
+	    game_lost();
+	    return;
+	}
+    }
+
+    // Wall bounce
     if (wall_isCollisionX(ball)) vel.x *= -1.0f;
     if (wall_isCollisionY(ball)) vel.y *= -1.0f;
 
-    // Paddle collision
+    // Paddle bounce
     Sprite paddle = paddle_getSprite();
     if (sprite_checkCollision(ball, paddle)) {
 	vel.y *= -1.0f;
@@ -83,7 +106,7 @@ void ball_move(double frameTime)
 	vel   = glms_vec2_normalize(vel);
     }
 
-    // Brick collision
+    // Brick bounce and destruction
     vec2s normal;
     if (level_checkCollision(ball, &normal))
     {

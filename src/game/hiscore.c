@@ -74,3 +74,8 @@ bool hiscore_isHi(void)
 {
     return isHiscore;
 }
+
+void hiscore_resetIsHi(void)
+{
+    isHiscore = false;
+}

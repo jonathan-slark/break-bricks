@@ -5,6 +5,7 @@
 #include "../gfx/rend.h"
 #include "../gfx/sprite.h"
 #include "audio.h"
+#include "paddle.h"
 #include "wall.h"
 
 // Types
@@ -20,6 +21,7 @@ typedef struct
 static void  readLevel(int level, const char *data);
 static Brick createBrick(char id, int col, int row);
 static void  destroyBrick(Brick* b);
+static void  updateScore(int i);
 
 // Constants
 static const char FOLDER[] = "level";
@@ -133,7 +135,7 @@ void level_load(void)
     level = 0;
 }
 
-void level_render(Rend* r)
+void level_rend(Rend* r)
 {
     for (int i = 0; i < COLS * ROWS; i++)
     {
@@ -151,15 +153,22 @@ void destroyBrick(Brick* b)
     audio_playSound(SoundBrick);
 }
 
+void updateScore(int i)
+{
+    int row = i / COLS;
+    paddle_incScore((level + 1) * (ROWS - row));
+}
+
 bool level_checkCollision(Sprite ball, vec2s* normal)
 {
     for (int i = 0; i < COLS * ROWS; i++)
     {
         Brick* b = &levels[level][i];
-        if (b->isActive && !b->isDestroyed)
+        if (b->isActive && !b->isSolid && !b->isDestroyed)
         {
 	    if (sprite_checkCollisionEx(ball, b->sprite, normal))
 	    {
+		updateScore(i);
 		destroyBrick(b);
 		return true;
 	    }

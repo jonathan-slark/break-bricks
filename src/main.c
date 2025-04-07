@@ -190,7 +190,7 @@ int main(void)
 
     // Ignore events that happened during loading
     glfwPollEvents();
-    asset_loaded();
+    game_loaded();
 
     double last_time = glfwGetTime();
     while (!glfwWindowShouldClose(window))

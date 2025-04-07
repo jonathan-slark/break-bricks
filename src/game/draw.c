@@ -38,9 +38,9 @@ void drawGame(void)
 
     Rend* r = asset_getSpriteRend();
     rend_begin(*r);
-    level_render(r);
-    rend_sprite(r, paddle_getSprite());
-    rend_sprite(r, ball_getSprite());
+    level_rend(r);
+    paddle_rend(r);
+    ball_rend(r);
     rend_end(r);
 
     text_rend(TEXT_SCORE, paddle_getScore());

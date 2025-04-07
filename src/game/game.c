@@ -10,6 +10,11 @@ static State state = StateLoading;
 
 // Function definitions
 
+void game_loaded(void)
+{
+    state = StateMenu;
+}
+
 void game_pause(void)
 {
     switch (state)
@@ -40,9 +45,9 @@ void game_quit(void)
 	    main_quit();
 	    break;
 	case StateRun:
+	case StatePause:
 	    audio_stopMusic();
 	    [[fallthrough]];
-	case StatePause:
 	case StateWon:
 	case StateLost:
 	    state = StateMenu;
@@ -55,13 +60,12 @@ void game_click(void)
     switch (state)
     {
 	case StateLoading:
-	    break;
 	case StatePause:
-	    state = StateRun;
 	    break;
 	case StateWon:
 	case StateLost:
 	    state = StateMenu;
+	    hiscore_resetIsHi();
 	    break;
 	case StateMenu:
 	    state = StateRun;
@@ -73,19 +77,11 @@ void game_click(void)
     }
 }
 
-void game_clear(void)
+void game_lost(void)
 {
+    state = StateLost;
     audio_stopMusic();
-    audio_playSound(SoundClear);
-    audio_playMusic(level_get());
-}
-
-void game_won(void)
-{
-    state = StateWon;
-    audio_stopMusic();
-    audio_playSound(SoundWon);
-    hiscore_check();
+    audio_playSound(SoundLost);
 }
 
 void game_update(double frameTime)
@@ -103,23 +99,26 @@ void game_update(double frameTime)
 
 	    if (level_isClear())
 	    {
+		ball_init();
+		audio_stopMusic();
+
 		if (level_next())
 		{
-		    game_clear();
+		    // Level clear
+		    audio_playSound(SoundClear);
+		    audio_playMusic(level_get());
 		}
 		else
 		{
-		    game_won();
+		    // Game won!
+		    state = StateWon;
+		    audio_playSound(SoundWon);
+		    hiscore_check();
 		}
 	    }
 
 	    break;
     }
-}
-
-void game_setState(State newState)
-{
-    state = newState;
 }
 
 State game_getState(void)
