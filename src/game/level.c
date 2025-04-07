@@ -4,16 +4,46 @@
 #include "../util.h"
 #include "../gfx/rend.h"
 #include "../gfx/sprite.h"
-#include "brick.h"
+#include "audio.h"
+#include "wall.h"
+
+// Types
+typedef struct
+{
+    bool   isActive;
+    bool   isSolid;
+    bool   isDestroyed;
+    Sprite sprite;
+} Brick;
 
 // Function prototypes
-static void levelRead(int level, const char *data);
+static void  readLevel(int level, const char *data);
+static Brick createBrick(char id, int col, int row);
+static void  destroyBrick(Brick* b);
 
 // Constants
 static const char FOLDER[] = "level";
 constexpr int COUNT = 7;
 constexpr int COLS  = 12;
 constexpr int ROWS  = 24;
+// Constants
+static const vec2s    SIZE = {{ 128, 32 }};
+static const vec2s    NORMAL_OFFSETS[] = {
+    {{ 0,   64 }}, // blue,   id = 0
+    {{ 128, 64 }}, // green,  id = 1
+    {{ 256, 64 }}, // orange, id = 2
+    {{ 0,   96 }}, // purple, id = 3
+    {{ 128, 96 }}, // red,    id = 4
+    {{ 256, 96 }}  // yellow, id = 5
+};
+static const vec2s    SOLID_OFFSETS[] = {
+    {{ 0,   0 }},  // blue,   id = a
+    {{ 128, 0 }},  // green,  id = b
+    {{ 256, 0 }},  // orange, id = c
+    {{ 0,   32 }}, // purple, id = d
+    {{ 128, 32 }}, // red,    id = e
+    {{ 256, 32 }}, // yellow, id = f
+};
 
 // Variables
 static Brick levels[COUNT][COLS * ROWS];
@@ -21,7 +51,24 @@ static int level;
 
 // Function definitions
 
-void levelRead(int level, const char *data)
+Brick createBrick(char id, int col, int row)
+{
+    Brick b;
+
+    bool isSolid = !isdigit(id);
+
+    b.isActive    = true;
+    b.isSolid     = isSolid;
+    b.isDestroyed = false;
+
+    vec2s pos    = {{ WALL_LEFT + col * SIZE.s, WALL_TOP + row * SIZE.t }};
+    vec2s offset = isSolid ? SOLID_OFFSETS[id - 'a'] : NORMAL_OFFSETS[id - '0'];
+    b.sprite     = sprite_create(pos, SIZE, offset, (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }});
+
+    return b;
+}
+
+void readLevel(int level, const char *data)
 {
     int count = 0;
     int col   = 0;
@@ -45,7 +92,7 @@ void levelRead(int level, const char *data)
         }
         else if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
         {
-            levels[level][count++] = brick_create(c, col, row);
+            levels[level][count++] = createBrick(c, col, row);
             col++;
         }
         else if (c == '\n')
@@ -78,7 +125,7 @@ void level_load(void)
 	char *data = util_load(file, READ_ONLY_TEXT);
 	if (!data) main_term(EXIT_FAILURE, "Unable to load level:%s\n", file);
 
-	levelRead(i - 1, data);
+	readLevel(i - 1, data);
 
 	util_unload(data);
     }
@@ -98,6 +145,12 @@ void level_render(Rend* r)
     }
 }
 
+void destroyBrick(Brick* b)
+{
+    b->isDestroyed = true;
+    audio_playSound(SoundBrick);
+}
+
 bool level_checkCollision(Sprite ball, vec2s* normal)
 {
     for (int i = 0; i < COLS * ROWS; i++)
@@ -107,11 +160,42 @@ bool level_checkCollision(Sprite ball, vec2s* normal)
         {
 	    if (sprite_checkCollisionEx(ball, b->sprite, normal))
 	    {
-		b->isDestroyed = true;
+		destroyBrick(b);
 		return true;
 	    }
 	}
     }
     
     return false;
+}
+
+bool level_isClear(void)
+{
+    for (int i = 0; i < COLS * ROWS; i++)
+    {
+        Brick b = levels[level][i];
+        if (b.isActive && !b.isDestroyed) return false;
+    }
+
+    return true;
+}
+
+// Returns false if game is won
+bool level_next(void)
+{
+    level++;
+    if (level < COUNT)
+    {
+	return true;
+    }
+    else
+    {
+	level = 0;
+	return false;
+    }
+}
+
+int level_get(void)
+{
+    return level;
 }

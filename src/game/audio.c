@@ -21,6 +21,14 @@ static const char* const MUSIC[] =
     "music/HoliznaCC0 - Space Castle.mp3",
     "music/HoliznaCC0 - Where It's Safe.mp3"
 };
+static const char* SOUNDS[SoundCount] =
+{
+    FILE_BRICK,
+    FILE_DEATH,
+    FILE_CLEAR,
+    FILE_WON,
+    FILE_LOST
+};
 
 // Variables
 static ma_sound **sounds;
@@ -72,7 +80,7 @@ void audio_unload(void)
 
 void audio_playMusic(int level)
 {
-    playing = aud_soundPlay(MUSIC[level - 1]);
+    playing = aud_soundPlay(MUSIC[level]);
 }
 
 void audio_stopMusic(void)
@@ -82,4 +90,9 @@ void audio_stopMusic(void)
 	aud_soundStop(playing);
 	playing = nullptr;
     }
+}
+
+void audio_playSound(Sound s)
+{
+    aud_soundPlay(SOUNDS[s]);
 }

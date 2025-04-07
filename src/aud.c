@@ -22,10 +22,6 @@
  *   - Use aud_soundPlay() for immediate sound playback.
  *   - Call aud_term() to properly shut down the audio engine.
  *
- * Modern Considerations:
- *   - Developed with up-to-date methods and modern C standards.
- *   - Optimized for efficient sound decoding and playback in a game environment.
- *
  * Author: Jonathan Slark
  * Date:   04/04/2025
  */

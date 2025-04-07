@@ -3,6 +3,7 @@
 #include "ball.h"
 #include "game.h"
 #include "hiscore.h"
+#include "level.h"
 
 // Variables
 static State state = StateLoading;
@@ -20,9 +21,11 @@ void game_pause(void)
 	    break;
 	case StatePause:
 	    state = StateRun;
+	    audio_continueMusic();
 	    break;
 	case StateRun:
 	    state = StatePause;
+	    audio_stopMusic();
 	    break;
     };
 }
@@ -37,12 +40,11 @@ void game_quit(void)
 	    main_quit();
 	    break;
 	case StateRun:
-	case StatePause:
 	    audio_stopMusic();
 	    [[fallthrough]];
+	case StatePause:
 	case StateWon:
 	case StateLost:
-	    //level_fullreset();
 	    state = StateMenu;
 	    break;
     }
@@ -59,16 +61,31 @@ void game_click(void)
 	    break;
 	case StateWon:
 	case StateLost:
-	    //level_fullreset();
 	    state = StateMenu;
 	    break;
 	case StateMenu:
 	    state = StateRun;
+	    audio_playMusic(level_get());
 	    break;
 	case StateRun:
 	    ball_release();
 	    break;
     }
+}
+
+void game_clear(void)
+{
+    audio_stopMusic();
+    audio_playSound(SoundClear);
+    audio_playMusic(level_get());
+}
+
+void game_won(void)
+{
+    state = StateWon;
+    audio_stopMusic();
+    audio_playSound(SoundWon);
+    hiscore_check();
 }
 
 void game_update(double frameTime)
@@ -83,6 +100,19 @@ void game_update(double frameTime)
 	    break;
 	case StateRun:
 	    ball_move(frameTime);
+
+	    if (level_isClear())
+	    {
+		if (level_next())
+		{
+		    game_clear();
+		}
+		else
+		{
+		    game_won();
+		}
+	    }
+
 	    break;
     }
 }
