@@ -25,7 +25,7 @@ void game_pause(void)
 	    break;
 	case StateRun:
 	    state = StatePause;
-	    audio_stopMusic();
+	    audio_pauseMusic();
 	    break;
     };
 }

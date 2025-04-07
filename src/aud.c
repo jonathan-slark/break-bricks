@@ -18,8 +18,8 @@
  *
  * Usage:
  *   - Call aud_init(vol) to initialize the audio engine.
- *   - Use aud_soundLoad() to preload sounds for optimized playback.
- *   - Use aud_soundPlay() for immediate sound playback.
+ *   - Use aud_loadSound() to preload sounds for optimized playback.
+ *   - Use aud_playSound() for immediate sound playback.
  *   - Call aud_term() to properly shut down the audio engine.
  *
  * Author: Jonathan Slark
@@ -61,7 +61,7 @@ void aud_term(void)
 
 // Preload sound
 // https://github.com/mackron/miniaudio/issues/249
-ma_sound* aud_soundLoad(const char* file) 
+ma_sound* aud_loadSound(const char* file, bool isLooping)
 {
     ma_sound* sound = (ma_sound*) malloc(sizeof(ma_sound));
 
@@ -74,29 +74,37 @@ ma_sound* aud_soundLoad(const char* file)
 	main_term(EXIT_FAILURE, "Unable to load sound %s.\n", file);
     }
 
+    ma_sound_set_looping(sound, isLooping);
+
     return sound;
 }
 
-void aud_soundUnload(ma_sound *sound) 
+void aud_unloadSound(ma_sound *sound)
 {
     ma_sound_uninit(sound);
     free(sound);
 }
 
 // Will use cached sound data and not actually load sound again
-ma_sound* aud_soundPlay(const char* file) 
+ma_sound* aud_playSound(const char* file, bool isLooping)
 {
-    ma_sound* sound = aud_soundLoad(file);
+    ma_sound* sound = aud_loadSound(file, isLooping);
     ma_sound_start(sound);
     return sound;
 }
 
-void aud_soundStart(ma_sound* sound)
+void aud_pauseSound(ma_sound* sound)
+{
+    ma_sound_stop(sound);
+}
+
+void aud_continueSound(ma_sound* sound)
 {
     ma_sound_start(sound);
 }
 
-void aud_soundStop(ma_sound* sound)
+void aud_stopSound(ma_sound* sound)
 {
     ma_sound_stop(sound);
+    ma_sound_seek_to_pcm_frame(sound, 0);
 }

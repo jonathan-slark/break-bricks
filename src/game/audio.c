@@ -11,6 +11,14 @@ static const char  FILE_DEATH[] = "sfx/death.wav";
 static const char  FILE_CLEAR[] = "sfx/clear.wav";
 static const char  FILE_WON[]   = "sfx/won.wav";
 static const char  FILE_LOST[]  = "sfx/lost.wav";
+static const char* SOUNDS[SoundCount] =
+{
+    FILE_BRICK,
+    FILE_DEATH,
+    FILE_CLEAR,
+    FILE_WON,
+    FILE_LOST
+};
 static const char* const MUSIC[] =
 {
     "music/HoliznaCC0 - 2nd Dimension.mp3", // One track per level
@@ -20,14 +28,6 @@ static const char* const MUSIC[] =
     "music/HoliznaCC0 - Scroller.mp3",
     "music/HoliznaCC0 - Space Castle.mp3",
     "music/HoliznaCC0 - Where It's Safe.mp3"
-};
-static const char* SOUNDS[SoundCount] =
-{
-    FILE_BRICK,
-    FILE_DEATH,
-    FILE_CLEAR,
-    FILE_WON,
-    FILE_LOST
 };
 
 // Variables
@@ -42,16 +42,15 @@ void audio_load(void)
     aud_init(VOL);
 
     sounds = (ma_sound **) malloc(SoundCount * sizeof(ma_sound *));
-    sounds[SoundBrick] = aud_soundLoad(FILE_BRICK);
-    sounds[SoundDeath] = aud_soundLoad(FILE_DEATH);
-    sounds[SoundClear] = aud_soundLoad(FILE_CLEAR);
-    sounds[SoundWon]   = aud_soundLoad(FILE_WON);
-    sounds[SoundLost]  = aud_soundLoad(FILE_LOST);
+    for (Sound s = 0; s < SoundCount; s++)
+    {
+	sounds[s] = aud_loadSound(SOUNDS[s], false);
+    }
 
     music = (ma_sound **) malloc(COUNT(MUSIC) * sizeof(ma_sound *));
     for (size_t i = 0; i < COUNT(MUSIC); i++)
     {
-        music[i] = aud_soundLoad(MUSIC[i]);
+        music[i] = aud_loadSound(MUSIC[i], true);
     }
 }
 
@@ -61,7 +60,7 @@ void audio_unload(void)
     {
 	for (size_t i = 0; i < COUNT(MUSIC); i++)
 	{
-	    if (music[i]) aud_soundUnload(music[i]);
+	    if (music[i]) aud_unloadSound(music[i]);
 	}
 	free(music);
     }
@@ -70,7 +69,7 @@ void audio_unload(void)
     {
         for (Sound i = 0; i < SoundCount; i++)
         {
-            if (sounds[i]) aud_soundUnload(sounds[i]);
+            if (sounds[i]) aud_unloadSound(sounds[i]);
         }
         free(sounds);
     }
@@ -80,19 +79,35 @@ void audio_unload(void)
 
 void audio_playMusic(int level)
 {
-    playing = aud_soundPlay(MUSIC[level]);
+    playing = aud_playSound(MUSIC[level], true);
+}
+
+void audio_pauseMusic(void)
+{
+    if (playing)
+    {
+	aud_pauseSound(playing);
+    }
 }
 
 void audio_stopMusic(void)
 {
     if (playing)
     {
-	aud_soundStop(playing);
+	aud_stopSound(playing);
 	playing = nullptr;
+    }
+}
+
+void audio_continueMusic(void)
+{
+    if (playing)
+    {
+	aud_continueSound(playing);
     }
 }
 
 void audio_playSound(Sound s)
 {
-    aud_soundPlay(SOUNDS[s]);
+    aud_playSound(SOUNDS[s], false);
 }
