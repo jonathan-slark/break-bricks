@@ -5,8 +5,7 @@
 #include <glad.h>        // GL*
 
 // Types
-typedef struct
-{
+typedef struct {
     GLuint name;
     GLenum unit;
     vec2s  size;

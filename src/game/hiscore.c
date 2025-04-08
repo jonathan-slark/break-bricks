@@ -16,21 +16,18 @@ static bool isHiscore;
 void hiscore_load(void)
 {
     FILE *fp = fopen(HISCORE_FILE, READ_ONLY_TEXT);
-    if (!fp)
-    {
+    if (!fp) {
         fprintf(stderr, "Could not open file %s\n", HISCORE_FILE);
         perror("fopen() error");
 	return;
     }
 
-    if (fscanf(fp, "%i", &hiscore) != 1)
-    {
+    if (fscanf(fp, "%i", &hiscore) != 1) {
         fprintf(stderr, "Could not read hiscore from file %s\n", HISCORE_FILE);
 	return;
     }
 
-    if (fclose(fp) == EOF)
-    {
+    if (fclose(fp) == EOF) {
         fprintf(stderr, "Error on closing file %s\n", HISCORE_FILE);
         perror("fclose() error");
     }
@@ -39,15 +36,13 @@ void hiscore_load(void)
 void hiscore_save(void)
 {
     FILE *fp = fopen(HISCORE_FILE, WRITE_ONLY_TEXT);
-    if (!fp)
-    {
+    if (!fp) {
         fprintf(stderr, "Could not open file %s.\n", HISCORE_FILE);
         perror("fopen() failed");
 	return;
     }
 
-    if (fprintf(fp, "%i\n", hiscore) < 0)
-    {
+    if (fprintf(fp, "%i\n", hiscore) < 0) {
         perror("fprintf failed");
 	return;
     }
@@ -58,8 +53,7 @@ void hiscore_save(void)
 void hiscore_check(void)
 {
     int score = paddle_getScore();
-    if (score > hiscore)
-    {
+    if (score > hiscore) {
         hiscore = score;
         isHiscore = true;
     }

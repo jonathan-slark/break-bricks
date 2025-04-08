@@ -42,33 +42,27 @@ void audio_load(void)
     aud_init(VOL);
 
     sounds = (ma_sound **) malloc(SoundCount * sizeof(ma_sound *));
-    for (Sound s = 0; s < SoundCount; s++)
-    {
+    for (Sound s = 0; s < SoundCount; s++) {
 	sounds[s] = aud_loadSound(SOUNDS[s], false);
     }
 
     music = (ma_sound **) malloc(COUNT(MUSIC) * sizeof(ma_sound *));
-    for (size_t i = 0; i < COUNT(MUSIC); i++)
-    {
+    for (size_t i = 0; i < COUNT(MUSIC); i++) {
         music[i] = aud_loadSound(MUSIC[i], true);
     }
 }
 
 void audio_unload(void)
 {
-    if (music)
-    {
-	for (size_t i = 0; i < COUNT(MUSIC); i++)
-	{
+    if (music) {
+	for (size_t i = 0; i < COUNT(MUSIC); i++) {
 	    if (music[i]) aud_unloadSound(music[i]);
 	}
 	free(music);
     }
 
-    if (sounds)
-    {
-        for (Sound i = 0; i < SoundCount; i++)
-        {
+    if (sounds) {
+        for (Sound i = 0; i < SoundCount; i++) {
             if (sounds[i]) aud_unloadSound(sounds[i]);
         }
         free(sounds);
@@ -84,16 +78,14 @@ void audio_playMusic(int level)
 
 void audio_pauseMusic(void)
 {
-    if (playing)
-    {
+    if (playing) {
 	aud_pauseSound(playing);
     }
 }
 
 void audio_stopMusic(void)
 {
-    if (playing)
-    {
+    if (playing) {
 	aud_stopSound(playing);
 	playing = nullptr;
     }
@@ -101,8 +93,7 @@ void audio_stopMusic(void)
 
 void audio_continueMusic(void)
 {
-    if (playing)
-    {
+    if (playing) {
 	aud_continueSound(playing);
     }
 }

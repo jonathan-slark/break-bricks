@@ -49,8 +49,7 @@ void drawGame(void)
 
 void draw_frame(void)
 {
-    switch (game_getState())
-    {
+    switch (game_getState()) {
         case StateLoading:
             screen_rend(asset_getLoading());
             break;

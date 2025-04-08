@@ -28,7 +28,6 @@ static const char FOLDER[] = "level";
 constexpr int COUNT = 7;
 constexpr int COLS  = 12;
 constexpr int ROWS  = 24;
-// Constants
 static const vec2s    SIZE = {{ 128, 32 }};
 static const vec2s    NORMAL_OFFSETS[] = {
     {{ 0,   64 }}, // blue,   id = 0
@@ -77,40 +76,28 @@ void readLevel(int level, const char *data)
     int row   = 0;
 
     char c = '\0';
-    while ((c = *data++) != '\0')
-    {
-        if (c == '#')
-        {
-            while ((c = *data++) != '\n')
-            {
+    while ((c = *data++) != '\0') {
+        if (c == '#') {
+            while ((c = *data++) != '\n') {
                 // Comment
             }
-        }
-        else if (c == 'x')
-        {
+        } else if (c == 'x') {
             // No brick
             levels[level][count++].isActive = false;
             col++;
-        }
-        else if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
-        {
+        } else if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
             levels[level][count++] = createBrick(c, col, row);
             col++;
-        }
-        else if (c == '\n')
-        {
+        } else if (c == '\n') {
             // Ignore blank line
             if (col > 0) row++;
             col = 0;
-        }
-        else if (c != ' ' && c != '\t')
-        {
+        } else if (c != ' ' && c != '\t') {
             main_term(EXIT_FAILURE, "Syntax error in level file.\n");
         }
     }
 
-    if (count != COLS * ROWS)
-    {
+    if (count != COLS * ROWS) {
         main_term(EXIT_FAILURE, "Incorrect number of bricks in level file.\n");
     }
 }
@@ -118,8 +105,7 @@ void readLevel(int level, const char *data)
 void level_load(void)
 {
     // Files are labeled 1 to COUNT but array is indexed as 0 to COUNT-1
-    for (int i = 1; i <= COUNT; i++)
-    {
+    for (int i = 1; i <= COUNT; i++) {
 	char fmt[] = "%s/%02i.txt";
 	int size = snprintf(nullptr, 0, fmt, FOLDER, i);
 	char file[size + 1];
@@ -137,11 +123,9 @@ void level_load(void)
 
 void level_rend(Rend* r)
 {
-    for (int i = 0; i < COLS * ROWS; i++)
-    {
+    for (int i = 0; i < COLS * ROWS; i++) {
         Brick b = levels[level][i];
-        if (b.isActive && !b.isDestroyed)
-        {
+        if (b.isActive && !b.isDestroyed) {
             rend_sprite(r, b.sprite);
         }
     }
@@ -161,13 +145,10 @@ void updateScore(int i)
 
 bool level_checkCollision(Sprite ball, vec2s* normal)
 {
-    for (int i = 0; i < COLS * ROWS; i++)
-    {
+    for (int i = 0; i < COLS * ROWS; i++) {
         Brick* b = &levels[level][i];
-        if (b->isActive && !b->isSolid && !b->isDestroyed)
-        {
-	    if (sprite_checkCollisionEx(ball, b->sprite, normal))
-	    {
+        if (b->isActive && !b->isSolid && !b->isDestroyed) {
+	    if (sprite_checkCollisionEx(ball, b->sprite, normal)) {
 		updateScore(i);
 		destroyBrick(b);
 		return true;
@@ -180,8 +161,7 @@ bool level_checkCollision(Sprite ball, vec2s* normal)
 
 bool level_isClear(void)
 {
-    for (int i = 0; i < COLS * ROWS; i++)
-    {
+    for (int i = 0; i < COLS * ROWS; i++) {
         Brick b = levels[level][i];
         if (b.isActive && !b.isDestroyed) return false;
     }
@@ -193,12 +173,9 @@ bool level_isClear(void)
 bool level_next(void)
 {
     level++;
-    if (level < COUNT)
-    {
+    if (level < COUNT) {
 	return true;
-    }
-    else
-    {
+    } else {
 	level = 0;
 	return false;
     }

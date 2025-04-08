@@ -28,14 +28,13 @@ static const char SHADER_FRAG[] = "shader/frag.glsl";
 // Variables
 static Shader shader;
 
-// Function declarations
+// Function definitions
 
 #ifndef NDEBUG
 
 bool isMember(const unsigned array[], size_t size, unsigned value)
 {
-    for (size_t i = 0; i < size; i++)
-    {
+    for (size_t i = 0; i < size; i++) {
         if (array[i] == value) return true;
     }
 
@@ -63,8 +62,7 @@ void gfx_init(void)
 #ifndef NDEBUG
     int flags;
     glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-    {
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
         glDebugMessageCallbackARB(debugOutput, NULL);
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);

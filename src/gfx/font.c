@@ -22,14 +22,13 @@
 // Constants
 static const unsigned FONT_QUAD_COUNT = 200; // Max amount of letter sprites
 
-// Function declarations
+// Function definitions
 
 Font font_load(float height, const char* file)
 {
     unsigned char* data = (unsigned char*) util_load(file, READ_ONLY_BIN);
     if (!data) main_term(EXIT_FAILURE, "Unable to load font: \n%s\n", file);
-    if (stbtt_GetNumberOfFonts(data) < 0)
-    {
+    if (stbtt_GetNumberOfFonts(data) < 0) {
         main_term(EXIT_FAILURE, "Loaded font does not contain valid data:\n%s\n", file);
     }
 
@@ -37,8 +36,7 @@ Font font_load(float height, const char* file)
 
     Font f;
     stbtt_pack_context ctx;
-    if (!stbtt_PackBegin(&ctx, bitmap, SCR_WIDTH, SCR_HEIGHT, 0, 1, NULL))
-    {
+    if (!stbtt_PackBegin(&ctx, bitmap, SCR_WIDTH, SCR_HEIGHT, 0, 1, NULL)) {
         main_term(EXIT_FAILURE, "stbtt_PackBegin failed.\n");
     }
     stbtt_PackFontRange(&ctx, data, 0, height, ASCII_FIRST, ASCII_COUNT, f.chars);
@@ -87,15 +85,11 @@ void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args)
 
     float posX = pos.x;
     shader_setCol(gfx_getShader(), col);
-    for (unsigned i = 0; i < sizeof text - 1; i++)
-    {
-        if (text[i] == '\n')
-	{
+    for (unsigned i = 0; i < sizeof text - 1; i++) {
+        if (text[i] == '\n') {
             pos.y += f->size;
             pos.x = posX;
-        } 
-	else
-	{
+        } else {
             int j = text[i] - ASCII_FIRST;
             stbtt_aligned_quad quad;
             stbtt_GetPackedQuad(&f->chars[0], SCR_WIDTH, SCR_HEIGHT, j, &pos.x, &pos.y, &quad, 0);
@@ -106,10 +100,8 @@ void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args)
             float x2 = quad.x1; float y2 = quad.y1;
             float u2 = quad.s1; float v2 = quad.t1;
 	    // rend_sprite doesn't use .size
-            Sprite sprite =
-	    {
-                .verts =
-		{
+            Sprite sprite = {
+                .verts = {
                     { {{ x1, y1 }}, {{ u1, v1 }} },
                     { {{ x2, y1 }}, {{ u2, v1 }} },
                     { {{ x2, y2 }}, {{ u2, v2 }} },

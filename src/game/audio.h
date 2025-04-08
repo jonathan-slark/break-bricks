@@ -1,8 +1,7 @@
 #pragma once
 
 // Types
-typedef enum
-{
+typedef enum {
     SoundBrick,
     SoundDeath,
     SoundClear,

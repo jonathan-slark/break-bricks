@@ -8,7 +8,10 @@
 #include "../main.h"
 #include "tex.h"
 
+// Variables
 int unit = 0;
+
+// Function definitions
 
 Tex tex_create(GLint internalFormat, GLsizei width, GLsizei height, GLenum format, const void* data)
 {
@@ -24,8 +27,7 @@ Tex tex_create(GLint internalFormat, GLsizei width, GLsizei height, GLenum forma
 
     glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
-    return (Tex)
-    {
+    return (Tex) {
         .name = name,
         .unit = unit++,
         .size = (vec2s) {{ (float) width, (float) height }}

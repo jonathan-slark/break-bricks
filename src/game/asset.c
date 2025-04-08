@@ -13,6 +13,7 @@
 #include "hiscore.h"
 #include "level.h"
 #include "paddle.h"
+#include "wall.h"
 
 // Function prototypes
 static void loadLoading(void);
@@ -72,16 +73,14 @@ void unloadSpriteRend(void)
 
 void loadFonts(void)
 {
-    for (size_t i = 0; i < FontSizeCount; i++)
-    {
+    for (size_t i = 0; i < FontSizeCount; i++) {
         fonts[i] = font_load(FONT_HEIGHTS[i], FONT_FILE);
     }
 }
 
 void unloadFonts(void)
 {
-    for (size_t i = 0; i < FontSizeCount; i++)
-    {
+    for (size_t i = 0; i < FontSizeCount; i++) {
         font_unload(fonts[i]);
     }
 }
@@ -118,6 +117,7 @@ void asset_load(void)
     paddle_init();
     ball_init();
     level_load();
+    wall_init();
 }
 
 Screen asset_getLoading(void)

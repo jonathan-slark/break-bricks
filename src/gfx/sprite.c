@@ -2,6 +2,8 @@
 
 #include "sprite.h"
 
+// Function definitions
+
 Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
 {
     Sprite s;
@@ -38,8 +40,7 @@ void sprite_setPos(Sprite* s, vec2s pos)
 
 void sprite_addVec(Sprite* s, vec2s v)
 {
-    for (size_t i = 0; i < VERT_COUNT; i++)
-    {
+    for (size_t i = 0; i < VERT_COUNT; i++) {
         s->verts[i].pos = glms_vec2_add(s->verts[i].pos, v);
     }
 }

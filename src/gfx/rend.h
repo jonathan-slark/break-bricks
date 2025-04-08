@@ -8,8 +8,7 @@
 #include "tex.h"
 
 // Types
-typedef struct
-{
+typedef struct {
     // Vertex buffer data
     GLuint    vao;
     GLuint    vbo;

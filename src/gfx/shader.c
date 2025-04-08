@@ -16,14 +16,13 @@ static const GLchar UNIFORM_TEX[]     = "tex";
 static const GLchar UNIFORM_COL[]     = "col";
 static const GLchar UNIFORM_IS_FONT[] = "isFont";
 
-// Function declarations
+// Function definitions
 
 void showLog(GLuint object, PFNGLGETSHADERIVPROC proc_param, PFNGLGETSHADERINFOLOGPROC proc_log)
 {
     GLint len;
     proc_param(object, GL_INFO_LOG_LENGTH, &len);
-    if (len)
-    {
+    if (len) {
         GLchar* log = (GLchar*) malloc(len * sizeof(GLchar));
         proc_log(object, len, &len, log);
         fprintf(stderr, (char*) log);
@@ -39,8 +38,7 @@ GLint shader_compile(GLenum type, const GLchar* src)
 
     GLint isCompiled;
     glGetShaderiv(s, GL_COMPILE_STATUS, &isCompiled);
-    if (!isCompiled)
-    {
+    if (!isCompiled) {
         showLog(s, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(s);
         main_term(EXIT_FAILURE, "Could not load shader.\n");
@@ -66,15 +64,13 @@ Shader shader_load(const char* vert, const char* frag)
 
     GLint isLinked;
     glGetProgramiv(prog, GL_LINK_STATUS, &isLinked);
-    if (!isLinked)
-    {
+    if (!isLinked) {
         showLog(prog, glGetProgramiv, glGetProgramInfoLog);
         glDeleteProgram(prog);
         main_term(EXIT_FAILURE, "Could not link shaders.\n");
     }
 
-    return (Shader)
-    {
+    return (Shader) {
         .prog       = prog,
         .loc_proj   = glGetUniformLocation(prog, UNIFORM_PROJ),
         .loc_tex    = glGetUniformLocation(prog, UNIFORM_TEX),

@@ -5,8 +5,7 @@
 #include <glad.h>        // GL*
 
 // Types
-typedef struct
-{
+typedef struct {
     GLuint    prog;
     GLint     loc_proj;
     GLint     loc_tex;

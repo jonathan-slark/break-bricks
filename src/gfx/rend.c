@@ -9,7 +9,7 @@
 // Constants
 static const GLushort QUAD_INDICES[] = { 0, 1, 2, 0, 2, 3 };
 
-// Function declarations
+// Function definitions
 
 Rend rend_create(size_t count)
 {
@@ -21,8 +21,7 @@ Rend rend_create(size_t count)
 
     // Pre-calculate the entire index buffer
     r.indices = (GLushort*) malloc(viSize);
-    for (size_t i = 0; i < viCount; i++)
-    {
+    for (size_t i = 0; i < viCount; i++) {
         r.indices[i] = i / qiCount * VERT_COUNT + QUAD_INDICES[i % qiCount];
     }
 
@@ -96,16 +95,14 @@ void rend_end(Rend* r)
 
 void rend_sprite(Rend* r, Sprite s)
 {
-    if (r->vertCount == r->vertMax)
-    {
+    if (r->vertCount == r->vertMax) {
 #ifndef NDEBUG
         fprintf(stderr, "%s\n", "Warning: flushed full vertex cache.");
 #endif // !NDEBUG
         flush(r);
     }
 
-    for (size_t i = 0; i < VERT_COUNT; i++)
-    {
+    for (size_t i = 0; i < VERT_COUNT; i++) {
         r->verts[r->vertCount++] = s.verts[i];
     }
 }

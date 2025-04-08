@@ -15,7 +15,7 @@
 #include "game/input.h"
 #include "gfx/gfx.h"
 
-// Function declarations
+// Function prototypes
 static void errorCallback(int err, const char* desc);
 static void init(void);
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -37,7 +37,7 @@ static const unsigned OPENGL_MINOR   = 3;
 static GLFWwindow* window;
 static bool isMinimised = false;
 
-// Function implementations
+// Function definitions
 
 void errorCallback(int err, const char* desc)
 {
@@ -57,8 +57,7 @@ void main_term(int status, const char* fmt, ...)
 
     glfwTerminate();
 
-    if (fmt)
-    {
+    if (fmt) {
 	va_list ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -80,8 +79,7 @@ void keyCallback(
     int action,
     [[maybe_unused]] int mods
 ) {
-    if (action == GLFW_PRESS)
-    {
+    if (action == GLFW_PRESS) {
 	input_keyDown(key);
     }
 }
@@ -104,20 +102,16 @@ void mouseCallback(
     int action,
     [[maybe_unused]] int mods
 ) {
-    if (action == GLFW_PRESS)
-    {
+    if (action == GLFW_PRESS) {
 	input_buttonDown(button);
     } 
 }
 
 void resizeCallback([[maybe_unused]] GLFWwindow* window, int width, int height)
 {
-    if (!width || !height)
-    {
+    if (!width || !height) {
 	isMinimised = true;
-    }
-    else
-    {
+    } else {
 	isMinimised = false;
 	//gfx_resize(width, height);
     }
@@ -143,26 +137,21 @@ void createWindow(void)
     glfwWindowHint(GLFW_BLUE_BITS, SCR_BLUE_BITS);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, nullptr)))
-    {
+    if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, nullptr))) {
 	main_term(EXIT_FAILURE, nullptr);
     }
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    if (glfwRawMouseMotionSupported())
-    {
+    if (glfwRawMouseMotionSupported()) {
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    }
-    else
-    {
+    } else {
 	main_term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
     }
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
-    if (!ver)
-    {
+    if (!ver) {
         main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
     }
 
@@ -199,12 +188,9 @@ int main(void)
 	double frameTime = curTime - last_time;
 	last_time = curTime;
 
-	if (isMinimised)
-	{
+	if (isMinimised) {
 	    glfwWaitEvents();
-	}
-	else
-	{
+	} else {
 	    glfwPollEvents();
 	    input_update();
 	    game_update(frameTime);

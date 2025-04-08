@@ -9,14 +9,12 @@ constexpr size_t VERT_COUNT = 4;  // Number of vertices per sprite
 
 // Types
 
-typedef struct
-{
+typedef struct {
     vec2s pos;
     vec2s texCoord;
 } Vert;
 
-typedef struct
-{
+typedef struct {
     // First vetex is also the position of the sprite
     union
     {

@@ -4,8 +4,7 @@
 #include "rend.h"
 
 // Types
-typedef struct
-{
+typedef struct {
     Sprite sprite;
     Rend   rend;
 } Screen;

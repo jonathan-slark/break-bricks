@@ -2,11 +2,13 @@
  * See aud.c for details.
  */
 
+#pragma once
+
 #include <miniaudio.h>
 
+// Function prototypes
 void      aud_init(float vol);
 void      aud_term(void);
-
 ma_sound* aud_loadSound(const char* file, bool isLooping);
 void      aud_unloadSound(ma_sound* sound);
 ma_sound* aud_playSound(const char* file, bool isLooping);

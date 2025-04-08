@@ -39,7 +39,7 @@ static const ma_uint32 SAMPLE_RATE = 48000;
 // Variables
 ma_engine engine;
 
-// Function implementations
+// Function definitions
 
 void aud_init(float vol)
 {
@@ -47,8 +47,7 @@ void aud_init(float vol)
     ec = ma_engine_config_init();
     ec.channels   = CHANNELS;
     ec.sampleRate = SAMPLE_RATE;
-    if (ma_engine_init(&ec, &engine) != MA_SUCCESS) 
-    {
+    if (ma_engine_init(&ec, &engine) != MA_SUCCESS) {
 	main_term(EXIT_FAILURE, "Failed to initialise audio engine.\n");
     }
     ma_engine_set_volume(&engine, vol);
@@ -69,8 +68,7 @@ ma_sound* aud_loadSound(const char* file, bool isLooping)
     // https://miniaud.io/docs/manual/index.html#OptimizationTips
     if (ma_sound_init_from_file(&engine, file,
 		MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION,
-		NULL, NULL, sound) != MA_SUCCESS) 
-    {
+		NULL, NULL, sound) != MA_SUCCESS) {
 	main_term(EXIT_FAILURE, "Unable to load sound %s.\n", file);
     }
 

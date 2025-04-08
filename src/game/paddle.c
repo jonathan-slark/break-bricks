@@ -35,8 +35,7 @@ void paddle_init(void)
     paddle        = sprite_create(pos, SIZE, TEX_OFFSET, texSize);
 
     livesSprites = (Sprite *) malloc((LIVES - 1) * sizeof(Sprite));
-    for (int i = 0; i < LIVES - 1; i++)
-    {
+    for (int i = 0; i < LIVES - 1; i++) {
         livesSprites[i] = sprite_create(LIVES_POS[i], SIZE, TEX_OFFSET, texSize);
     }
 }
@@ -55,8 +54,7 @@ Sprite paddle_getSprite(void)
 void paddle_rend(Rend* r)
 {
     rend_sprite(r, paddle);
-    for (int i = 0; i < lives - 1; i++)
-    {
+    for (int i = 0; i < lives - 1; i++) {
 	rend_sprite(r, livesSprites[i]);
     }
 }
@@ -74,15 +72,12 @@ void paddle_incScore(int s)
 // Return false if game over
 bool paddle_lifeLost(void)
 {
-    if (--lives == 0)
-    {
+    if (--lives == 0) {
 	// Game over
 	hiscore_check();
 	resetStats();
 	return false;
-    }
-    else
-    {
+    } else {
 	return true;
     }
 }

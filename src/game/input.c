@@ -12,28 +12,22 @@
 
 // Types
 
-typedef struct
-{
+typedef struct {
     int key;
     void (*func)(void);
 } Key;
 
-typedef struct
-{
+typedef struct {
     int button;
     void (*func)(void);
 } Button;
 
 // Constants
-
-static const Key KEYS[] =
-{
+static const Key KEYS[] = {
     { GLFW_KEY_SPACE,  game_pause },
     { GLFW_KEY_ESCAPE, game_quit }
 };
-
-static const Button BUTTONS[] =
-{
+static const Button BUTTONS[] = {
     { GLFW_MOUSE_BUTTON_LEFT, game_click }
 };
 
@@ -41,10 +35,8 @@ static const Button BUTTONS[] =
 
 void input_keyDown(int key)
 {
-    for (size_t i = 0; i < COUNT(KEYS); i++)
-    {
-        if (KEYS[i].key == key)
-        {
+    for (size_t i = 0; i < COUNT(KEYS); i++) {
+        if (KEYS[i].key == key) {
             (*KEYS[i].func)();
         }
     }
@@ -52,10 +44,8 @@ void input_keyDown(int key)
 
 void input_buttonDown(int button)
 {
-    for (size_t i = 0; i < COUNT(BUTTONS); i++)
-    {
-        if (BUTTONS[i].button == button)
-        {
+    for (size_t i = 0; i < COUNT(BUTTONS); i++) {
+        if (BUTTONS[i].button == button) {
             (*BUTTONS[i].func)();
         }
     }
@@ -63,8 +53,7 @@ void input_buttonDown(int button)
 
 void input_update(void)
 {
-    switch (game_getState())
-    {
+    switch (game_getState()) {
         case StateLoading:
 	    [[fallthrough]];
         case StateMenu:

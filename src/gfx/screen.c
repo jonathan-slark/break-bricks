@@ -5,6 +5,8 @@
 #include "screen.h"
 #include "sprite.h"
 
+// Function definitions
+
 Screen screen_load(const char *file)
 {
     Screen s;

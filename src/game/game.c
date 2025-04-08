@@ -17,8 +17,7 @@ void game_loaded(void)
 
 void game_pause(void)
 {
-    switch (state)
-    {
+    switch (state) {
 	case StateLoading:
 	case StateMenu:
 	case StateWon:
@@ -37,8 +36,7 @@ void game_pause(void)
 
 void game_quit(void)
 {
-    switch (state)
-    {
+    switch (state) {
 	case StateLoading:
 	    break;
 	case StateMenu:
@@ -57,8 +55,7 @@ void game_quit(void)
 
 void game_click(void)
 {
-    switch (state)
-    {
+    switch (state) {
 	case StateLoading:
 	case StatePause:
 	    break;
@@ -86,8 +83,7 @@ void game_lost(void)
 
 void game_update(double frameTime)
 {
-    switch (state)
-    {
+    switch (state) {
 	case StateLoading:
 	case StateMenu:
 	case StatePause:
@@ -97,19 +93,15 @@ void game_update(double frameTime)
 	case StateRun:
 	    ball_move(frameTime);
 
-	    if (level_isClear())
-	    {
+	    if (level_isClear()) {
 		ball_init();
 		audio_stopMusic();
 
-		if (level_next())
-		{
+		if (level_next()) {
 		    // Level clear
 		    audio_playSound(SoundClear);
 		    audio_playMusic(level_get());
-		}
-		else
-		{
+		} else {
 		    // Game won!
 		    state = StateWon;
 		    audio_playSound(SoundWon);
