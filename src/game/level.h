@@ -6,9 +6,11 @@
 #include "../gfx/sprite.h"
 
 // Function prototypes
-void level_load(void);
-void level_rend(Rend* r);
-bool level_checkCollision(Sprite ball, vec2s* normal);
-bool level_isClear(void);
-bool level_next(void);
-int  level_get(void);
+void    level_load(void);
+void    level_rend(Rend* r);
+bool    level_isClear(void);
+bool    level_next(void);
+int     level_get(void);
+int     level_getBrickCount(void);
+Sprite* level_getBrickSprite(int brick);
+void    level_destroyBrick(int brick);

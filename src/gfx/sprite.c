@@ -1,4 +1,5 @@
 #include <cglm/struct.h> // vec2s, glms_vec2_add
+#include <math.h>        // INFINITY, fmaxf, fminf
 
 #include "sprite.h"
 
@@ -94,4 +95,78 @@ bool sprite_checkCollisionEx(Sprite a, Sprite b, vec2s* normal)
     }
 
     return true;
+}
+
+// Swept AABB collision detection function. 'moving' is the ball, 'movement'
+// is its full movement vector for the frame, 'target' is the static object
+// (paddle, brick, or wall), and 'normal' will be set to the collision normal.
+// Returns a collision time in [0.0, 1.0]. If 1.0 is returned, no collision
+// occurred.
+float sprite_sweptAABB(Sprite moving, vec2s movement, Sprite target, vec2s* normal)
+{
+    float xInvEntry, yInvEntry; float xInvExit, yInvExit;
+    if (movement.x > 0.0f) {
+        xInvEntry = target.pos.x - (moving.pos.x + moving.size.s);
+        xInvExit  = (target.pos.x + target.size.s) - moving.pos.x;
+    } else {
+        xInvEntry = (target.pos.x + target.size.s) - moving.pos.x;
+        xInvExit  = target.pos.x - (moving.pos.x + moving.size.s);
+    }
+
+    if (movement.y > 0.0f) {
+        yInvEntry = target.pos.y - (moving.pos.y + moving.size.t);
+        yInvExit  = (target.pos.y + target.size.t) - moving.pos.y;
+    } else {
+        yInvEntry = (target.pos.y + target.size.t) - moving.pos.y;
+        yInvExit  = target.pos.y - (moving.pos.y + moving.size.t);
+    }
+
+    float xEntry, yEntry;
+    float xExit,  yExit;
+
+    if (movement.x == 0.0f) {
+        xEntry = -INFINITY;
+        xExit  = INFINITY;
+    } else {
+        xEntry = xInvEntry / movement.x;
+        xExit  = xInvExit / movement.x;
+    }
+
+    if (movement.y == 0.0f) {
+        yEntry = -INFINITY;
+        yExit  = INFINITY;
+    } else {
+        yEntry = yInvEntry / movement.y;
+        yExit  = yInvExit / movement.y;
+    }
+
+    float entryTime = fmaxf(xEntry, yEntry);
+    float exitTime  = fminf(xExit, yExit);
+
+    // No collision if there is no overlap during the movement
+    if (entryTime > exitTime || (xEntry < 0.0f && yEntry < 0.0f) || entryTime > 1.0f) {
+        normal->x = 0.0f;
+        normal->y = 0.0f;
+        return 1.0f;
+    } else {
+        // Determine the collision normal based on which axis had the later entry
+        if (xEntry > yEntry) {
+            if (xInvEntry < 0.0f) {
+                normal->x = 1.0f;
+                normal->y = 0.0f;
+            } else {
+                normal->x = -1.0f;
+                normal->y = 0.0f;
+            }
+        } else {
+            if (yInvEntry < 0.0f) {
+                normal->x = 0.0f;
+                normal->y = 1.0f;
+            } else {
+                normal->x = 0.0f;
+                normal->y = -1.0f;
+            }
+        }
+        return entryTime;
+    }
 }

@@ -20,7 +20,6 @@ typedef struct
 // Function prototypes
 static void  readLevel(int level, const char *data);
 static Brick createBrick(char id, int col, int row);
-static void  destroyBrick(Brick* b);
 static void  updateScore(int i);
 
 // Constants
@@ -131,34 +130,6 @@ void level_rend(Rend* r)
     }
 }
 
-void destroyBrick(Brick* b)
-{
-    b->isDestroyed = true;
-    audio_playSound(SoundBrick);
-}
-
-void updateScore(int i)
-{
-    int row = i / COLS;
-    paddle_incScore((level + 1) * (ROWS - row));
-}
-
-bool level_checkCollision(Sprite ball, vec2s* normal)
-{
-    for (int i = 0; i < COLS * ROWS; i++) {
-        Brick* b = &levels[level][i];
-        if (b->isActive && !b->isSolid && !b->isDestroyed) {
-	    if (sprite_checkCollisionEx(ball, b->sprite, normal)) {
-		updateScore(i);
-		destroyBrick(b);
-		return true;
-	    }
-	}
-    }
-    
-    return false;
-}
-
 bool level_isClear(void)
 {
     for (int i = 0; i < COLS * ROWS; i++) {
@@ -184,4 +155,33 @@ bool level_next(void)
 int level_get(void)
 {
     return level;
+}
+
+int level_getBrickCount(void)
+{
+    return COLS * ROWS;
+}
+
+// Return a pointer to a sprite, nullptr means no brick
+Sprite* level_getBrickSprite(int brick)
+{
+    Brick* b = &levels[level][brick];
+    if (b->isActive && !b->isDestroyed) {
+	return &b->sprite;
+    } else {
+	return nullptr;
+    }
+}
+
+void updateScore(int i)
+{
+    int row = i / COLS;
+    paddle_incScore((level + 1) * (ROWS - row));
+}
+
+void level_destroyBrick(int brick)
+{
+    levels[level][brick].isDestroyed = true;
+    updateScore(brick);
+    audio_playSound(SoundBrick);
 }

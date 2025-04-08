@@ -11,7 +11,7 @@ const float WALL_RIGHT = 192.0f;
 
 Sprite walls[WallCount];
 
-// Create dummy sprites
+// Create dummy sprites for collisions
 void wall_init(void)
 {
     vec2s unused = {{ 0, 0 }}; // texOffset and texSize are unused

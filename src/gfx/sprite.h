@@ -30,3 +30,4 @@ void   sprite_setPos(Sprite* s, vec2s pos);
 void   sprite_addVec(Sprite* s, vec2s v);
 bool   sprite_checkCollision(Sprite a, Sprite b);
 bool   sprite_checkCollisionEx(Sprite a, Sprite b, vec2s* normal);
+float  sprite_sweptAABB(Sprite moving, vec2s movement, Sprite target, vec2s* normal);

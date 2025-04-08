@@ -65,83 +65,6 @@ bool isOob(void)
     return ball.pos.y + ball.size.t >= SCR_HEIGHT;
 }
 
-#include <math.h>
-#include <float.h> // for INFINITY
-
-// Swept AABB collision detection function. 'moving' is the ball, 'movement'
-// is its full movement vector for the frame, 'target' is the static object
-// (paddle, brick, or wall), and 'normal' will be set to the collision normal.
-// Returns a collision time in [0.0, 1.0]. If 1.0 is returned, no collision
-// occurred.
-float sweptAABB(Sprite moving, vec2s movement, Sprite target, vec2s* normal)
-{
-    float xInvEntry, yInvEntry; float xInvExit, yInvExit;
-    if (movement.x > 0.0f) {
-	xInvEntry = target.pos.x - (moving.pos.x + moving.size.s);
-	xInvExit  = (target.pos.x + target.size.s) - moving.pos.x;
-    } else {
-	xInvEntry = (target.pos.x + target.size.s) - moving.pos.x;
-	xInvExit  = target.pos.x - (moving.pos.x + moving.size.s);
-    }
-
-    if (movement.y > 0.0f) {
-	yInvEntry = target.pos.y - (moving.pos.y + moving.size.t);
-	yInvExit  = (target.pos.y + target.size.t) - moving.pos.y;
-    } else {
-	yInvEntry = (target.pos.y + target.size.t) - moving.pos.y;
-	yInvExit  = target.pos.y - (moving.pos.y + moving.size.t);
-    }
-
-    float xEntry, yEntry;
-    float xExit,  yExit;
-
-    if (movement.x == 0.0f) {
-	xEntry = -INFINITY;
-	xExit  = INFINITY;
-    } else {
-	xEntry = xInvEntry / movement.x;
-	xExit  = xInvExit / movement.x;
-    }
-
-    if (movement.y == 0.0f) {
-	yEntry = -INFINITY;
-	yExit  = INFINITY;
-    } else {
-	yEntry = yInvEntry / movement.y;
-	yExit  = yInvExit / movement.y;
-    }
-
-    float entryTime = fmaxf(xEntry, yEntry);
-    float exitTime  = fminf(xExit, yExit);
-
-    // No collision if there is no overlap during the movement
-    if (entryTime > exitTime || (xEntry < 0.0f && yEntry < 0.0f) || entryTime > 1.0f) {
-	normal->x = 0.0f;
-	normal->y = 0.0f;
-	return 1.0f;
-    } else {
-	// Determine the collision normal based on which axis had the later entry
-	if (xEntry > yEntry) {
-	    if (xInvEntry < 0.0f) {
-		normal->x = 1.0f;
-		normal->y = 0.0f;
-	    } else {
-		normal->x = -1.0f;
-		normal->y = 0.0f;
-	    }
-	} else {
-	    if (yInvEntry < 0.0f) {
-		normal->x = 0.0f;
-		normal->y = 1.0f;
-	    } else {
-		normal->x = 0.0f;
-		normal->y = -1.0f;
-	    }
-	}
-	return entryTime;
-    }
-}
-
 void ball_move(double frameTime)
 {
     if (isStuck) return;
@@ -158,31 +81,73 @@ void ball_move(double frameTime)
 	float earliestCollisionTime = 1.0f;
 	vec2s collisionNormal = {{0, 0}};
 
-	// Check collision with the paddle
+	// Check collision with the paddle.
 	vec2s tempNormal;
-	float t = sweptAABB(ball, movement, paddle_getSprite(), &tempNormal);
+	bool paddleHit = false;
+	float t = sprite_sweptAABB(ball, movement, paddle_getSprite(), &tempNormal);
 	if (t < earliestCollisionTime) {
 	    earliestCollisionTime = t;
 	    collisionNormal = tempNormal;
+	    paddleHit = true;
 	}
-	// Walls
+	// Walls.
 	for (Wall i = 0; i < WallCount; i++)
 	{
-	    t = sweptAABB(ball, movement, wall_getSprite(i), &tempNormal);
-	    if (t < earliestCollisionTime) { earliestCollisionTime = t; collisionNormal = tempNormal; }
+	    t = sprite_sweptAABB(ball, movement, wall_getSprite(i), &tempNormal);
+	    if (t < earliestCollisionTime) {
+		earliestCollisionTime = t;
+		collisionNormal = tempNormal;
+		paddleHit = false;
+	    }
+	}
+	// Bricks.
+	int brickHit = -1;
+	for (int i = 0; i < level_getBrickCount(); i++) {
+	    Sprite* brick = level_getBrickSprite(i);
+	    if (brick) {
+		t = sprite_sweptAABB(ball, movement, *brick, &tempNormal);
+		if (t < earliestCollisionTime) {
+		    earliestCollisionTime = t;
+		    collisionNormal = tempNormal;
+		    brickHit = i;
+		    paddleHit = false;
+		}
+	    }
 	}
 
 	// Move the ball up to the collision point.
 	vec2s movePart = glms_vec2_scale(movement, earliestCollisionTime);
 	sprite_setPos(&ball, glms_vec2_add(ball.pos, movePart));
 
-	// If no collision occurred during this movement, we're done.
-	if (earliestCollisionTime == 1.0f) {
-	    break;
+	// If ball is OOB then lose a life and check for game over.
+	if (isOob())
+	{
+	    ball_init();
+	    if (paddle_lifeLost()) {
+		audio_playSound(SoundDeath);
+	    } else {
+		game_lost();
+		return;
+	    }
 	}
+
+	// If no collision occurred during this movement, we're done.
+	if (earliestCollisionTime == 1.0f) break;
 
 	// Reflect the ball's velocity off the collider.
 	vel = glms_vec2_reflect(vel, collisionNormal);
+
+	// Modify X velocity based on where it hit the paddle, unless it bounced off the side.
+	if (paddleHit && vel.y < 0.0f) {
+	    Sprite paddle = paddle_getSprite();
+	    float paddleCenter = paddle.pos.x + paddle.size.x / 2.0f;
+	    float hitOffset    = (ball.pos.x + ball.size.x / 2.0f) - paddleCenter;
+	    vel.x = hitOffset / (paddle.size.x / 2.0f);
+	    vel   = glms_vec2_normalize(vel);
+	}
+
+	// If collision was with a brick then destroy it.
+	if (brickHit > -1) level_destroyBrick(brickHit);
 
 	// Deduct the used portion of the frame time.
 	remainingTime *= (1.0f - earliestCollisionTime);
