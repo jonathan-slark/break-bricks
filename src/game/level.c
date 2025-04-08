@@ -134,7 +134,7 @@ bool level_isClear(void)
 {
     for (int i = 0; i < COLS * ROWS; i++) {
         Brick b = levels[level][i];
-        if (b.isActive && !b.isDestroyed) return false;
+        if (b.isActive && !b.isSolid && !b.isDestroyed) return false;
     }
 
     return true;
@@ -181,7 +181,10 @@ void updateScore(int i)
 
 void level_destroyBrick(int brick)
 {
-    levels[level][brick].isDestroyed = true;
-    updateScore(brick);
-    audio_playSound(SoundBrick);
+    Brick* b = &levels[level][brick];
+    if (!b->isSolid) {
+	b->isDestroyed = true;
+	updateScore(brick);
+	audio_playSound(SoundBrick);
+    }
 }
