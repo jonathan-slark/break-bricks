@@ -13,6 +13,8 @@ typedef enum {
 // Function prototypes
 void  game_loaded(void);
 void  game_pause(void);
+void  game_continue(void);
+void  game_togglePause(void);
 void  game_quit(void);
 void  game_click(void);
 void  game_update(double frameTime);

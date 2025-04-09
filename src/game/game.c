@@ -3,12 +3,11 @@
 #include "ball.h"
 #include "game.h"
 #include "hiscore.h"
+#include "input.h"
 #include "level.h"
 #include "paddle.h"
 
 // Function prototypes
-static void pause(void);
-static void unpause(void);
 static void resetGame(void);
 static void startGame(void);
 static void gameWon(void);
@@ -24,19 +23,24 @@ void game_loaded(void)
     state = StateMenu;
 }
 
-void pause(void)
-{
-    state = StatePause;
-    audio_pauseMusic();
-}
-
-void unpause(void)
-{
-    state = StateRun;
-    audio_continueMusic();
-}
-
 void game_pause(void)
+{
+    if (state == StateRun) {
+	state = StatePause;
+	audio_pauseMusic();
+    }
+}
+
+void game_continue(void)
+{
+    if (state == StatePause) {
+	state = StateRun;
+	audio_continueMusic();
+	input_onContinue();
+    }
+}
+
+void game_togglePause(void)
 {
     switch (state) {
 	case StateLoading:
@@ -45,10 +49,10 @@ void game_pause(void)
 	case StateLost:
 	    break;
 	case StatePause:
-	    unpause();
+	    game_continue();
 	    break;
 	case StateRun:
-	    pause();
+	    game_pause();
 	    break;
     };
 }

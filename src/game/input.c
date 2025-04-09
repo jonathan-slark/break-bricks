@@ -24,7 +24,7 @@ typedef struct {
 
 // Constants
 static const Key KEYS[] = {
-    { GLFW_KEY_SPACE,  game_pause },
+    { GLFW_KEY_SPACE,  game_togglePause },
     { GLFW_KEY_ESCAPE, game_quit }
 };
 static const Button BUTTONS[] = {
@@ -73,4 +73,10 @@ void input_update(void)
 	    main_setMousePos(pos);
 	    break;
     }
+}
+
+// Move mouse cursor back to where the paddle is
+void input_onContinue(void)
+{
+    main_setMousePos(paddle_getSprite().pos);
 }

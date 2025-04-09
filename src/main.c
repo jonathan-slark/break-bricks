@@ -102,18 +102,17 @@ void mouseCallback(
     int action,
     [[maybe_unused]] int mods
 ) {
-    if (action == GLFW_PRESS) {
-	input_buttonDown(button);
-    } 
+    if (action == GLFW_PRESS) input_buttonDown(button);
 }
 
 void resizeCallback([[maybe_unused]] GLFWwindow* window, int width, int height)
 {
     if (!width || !height) {
 	isMinimised = true;
+	game_pause();
     } else {
 	isMinimised = false;
-	//gfx_resize(width, height);
+	gfx_resize(width, height);
     }
 }
 
@@ -137,23 +136,22 @@ void createWindow(void)
     glfwWindowHint(GLFW_BLUE_BITS, SCR_BLUE_BITS);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
+    // First try full screen
     if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, mon, nullptr))) {
-	main_term(EXIT_FAILURE, nullptr);
+	// Fall back on windowed
+	if (!(window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, TITLE, nullptr, nullptr))) {
+	    // Else fail
+	    main_term(EXIT_FAILURE, "Failed to create window.\n");
+	}
     }
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    if (glfwRawMouseMotionSupported()) {
-	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    } else {
-	main_term(EXIT_FAILURE, "Raw mouse motion not supported.\n");
-    }
+    if (glfwRawMouseMotionSupported()) glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
-    if (!ver) {
-        main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
-    }
+    if (!ver) main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
 
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, mouseCallback);
