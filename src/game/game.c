@@ -4,6 +4,15 @@
 #include "game.h"
 #include "hiscore.h"
 #include "level.h"
+#include "paddle.h"
+
+// Function prototypes
+static void pause(void);
+static void unpause(void);
+static void resetGame(void);
+static void startGame(void);
+static void gameWon(void);
+static void levelClear(void);
 
 // Variables
 static State state = StateLoading;
@@ -15,6 +24,18 @@ void game_loaded(void)
     state = StateMenu;
 }
 
+void pause(void)
+{
+    state = StatePause;
+    audio_pauseMusic();
+}
+
+void unpause(void)
+{
+    state = StateRun;
+    audio_continueMusic();
+}
+
 void game_pause(void)
 {
     switch (state) {
@@ -24,14 +45,20 @@ void game_pause(void)
 	case StateLost:
 	    break;
 	case StatePause:
-	    state = StateRun;
-	    audio_continueMusic();
+	    unpause();
 	    break;
 	case StateRun:
-	    state = StatePause;
-	    audio_pauseMusic();
+	    pause();
 	    break;
     };
+}
+
+void resetGame(void)
+{
+    state = StateMenu;
+    paddle_resetStats();
+    hiscore_resetIsHi();
+    level_reset();
 }
 
 void game_quit(void)
@@ -48,9 +75,16 @@ void game_quit(void)
 	    [[fallthrough]];
 	case StateWon:
 	case StateLost:
-	    state = StateMenu;
+	    resetGame();
 	    break;
     }
+}
+
+void startGame(void)
+{
+    state = StateRun;
+    audio_playMusic(level_get());
+    ball_init();
 }
 
 void game_click(void)
@@ -61,12 +95,10 @@ void game_click(void)
 	    break;
 	case StateWon:
 	case StateLost:
-	    state = StateMenu;
-	    hiscore_resetIsHi();
+	    resetGame();
 	    break;
 	case StateMenu:
-	    state = StateRun;
-	    audio_playMusic(level_get());
+	    startGame();
 	    break;
 	case StateRun:
 	    ball_release();
@@ -79,6 +111,22 @@ void game_lost(void)
     state = StateLost;
     audio_stopMusic();
     audio_playSound(SoundLost);
+    hiscore_check();
+}
+
+void gameWon(void)
+{
+    state = StateWon;
+    audio_stopMusic();
+    audio_playSound(SoundWon);
+    hiscore_check();
+}
+
+void levelClear(void)
+{
+    audio_stopMusic();
+    audio_playSound(SoundClear);
+    audio_playMusic(level_get());
 }
 
 void game_update(double frameTime)
@@ -94,19 +142,7 @@ void game_update(double frameTime)
 	    ball_move(frameTime);
 
 	    if (level_isClear()) {
-		ball_init();
-		audio_stopMusic();
-
-		if (level_next()) {
-		    // Level clear
-		    audio_playSound(SoundClear);
-		    audio_playMusic(level_get());
-		} else {
-		    // Game won!
-		    state = StateWon;
-		    audio_playSound(SoundWon);
-		    hiscore_check();
-		}
+		if (level_next()) levelClear(); else gameWon();
 	    }
 
 	    break;

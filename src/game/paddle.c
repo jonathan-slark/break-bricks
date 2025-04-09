@@ -3,7 +3,6 @@
 #include "../main.h"
 #include "../gfx/rend.h"
 #include "../gfx/sprite.h"
-#include "hiscore.h"
 #include "paddle.h"
 
 // Constants
@@ -20,7 +19,7 @@ static Sprite* livesSprites;
 
 // Function definitions
 
-void resetStats(void)
+void paddle_resetStats(void)
 {
     score = 0;
     lives = LIVES;
@@ -28,7 +27,7 @@ void resetStats(void)
 
 void paddle_init(void)
 {
-    resetStats();
+    paddle_resetStats();
 
     vec2s pos     = {{ main_getMousePos().x, SCR_HEIGHT - SIZE.t }};
     vec2s texSize = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
@@ -72,12 +71,5 @@ void paddle_incScore(int s)
 // Return false if game over
 bool paddle_lifeLost(void)
 {
-    if (--lives == 0) {
-	// Game over
-	hiscore_check();
-	resetStats();
-	return false;
-    } else {
-	return true;
-    }
+    return --lives != 0;
 }

@@ -140,14 +140,26 @@ bool level_isClear(void)
     return true;
 }
 
+// Reset all levels
+void level_reset(void)
+{
+    for (int j = 0; j < COUNT; j++) {
+	for (int i = 0; i < COLS * ROWS; i++) {
+	    Brick* b = &levels[j][i];
+	    if (b->isActive && !b->isSolid && b->isDestroyed) b->isDestroyed = false;
+	}
+    }
+
+    level = 0;
+}
+
 // Returns false if game is won
 bool level_next(void)
 {
-    level++;
-    if (level < COUNT) {
+    if (level < COUNT - 1) {
+	level++;
 	return true;
     } else {
-	level = 0;
 	return false;
     }
 }

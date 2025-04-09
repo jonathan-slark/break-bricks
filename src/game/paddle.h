@@ -4,6 +4,7 @@
 #include "../gfx/sprite.h"
 
 // Function prototypes
+void   paddle_resetStats(void);
 void   paddle_init(void);
 void   paddle_setX(float x);
 Sprite paddle_getSprite(void);

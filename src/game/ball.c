@@ -120,8 +120,7 @@ void ball_move(double frameTime)
 	sprite_setPos(&ball, glms_vec2_add(ball.pos, movePart));
 
 	// If ball is OOB then lose a life and check for game over.
-	if (isOob())
-	{
+	if (isOob()) {
 	    ball_init();
 	    if (paddle_lifeLost()) {
 		audio_playSound(SoundDeath);

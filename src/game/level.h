@@ -9,6 +9,7 @@
 void    level_load(void);
 void    level_rend(Rend* r);
 bool    level_isClear(void);
+void    level_reset(void);
 bool    level_next(void);
 int     level_get(void);
 int     level_getBrickCount(void);

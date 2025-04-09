@@ -46,7 +46,7 @@ void sprite_addVec(Sprite* s, vec2s v)
     }
 }
 
-// Baisc AABB (axis-aligned bounding box) collision check
+// Basic AABB (axis-aligned bounding box) collision check
 bool sprite_checkCollision(Sprite a, Sprite b)
 {
     bool collisionX = a.pos.x + a.size.x >= b.pos.x && b.pos.x + b.size.x >= a.pos.x;
