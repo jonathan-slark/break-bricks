@@ -9,12 +9,9 @@ uniform bool isFont;
 
 void main()
 {
-    if (isFont)
-    {
+    if (isFont) {
 	outCol = vec4(texture(tex, fragCoords).r) * vec4(col, 1.0);
-    }
-    else
-    {
+    } else {
 	outCol = texture(tex, fragCoords);
     }
 }

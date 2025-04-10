@@ -87,7 +87,7 @@ void game_quit(void)
 void startGame(void)
 {
     state = StateRun;
-    audio_playMusic(level_get());
+    audio_playMusic(level_getCurrent());
     ball_init();
 }
 
@@ -130,7 +130,7 @@ void levelClear(void)
 {
     audio_stopMusic();
     audio_playSound(SoundClear);
-    audio_playMusic(level_get());
+    audio_playMusic(level_getCurrent());
 }
 
 void game_update(double frameTime)

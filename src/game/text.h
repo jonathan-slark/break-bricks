@@ -21,3 +21,4 @@ typedef struct
 
 // Function prototypes
 void text_rend(Text t, ...);
+void text_flush();

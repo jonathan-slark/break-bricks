@@ -164,9 +164,14 @@ bool level_next(void)
     }
 }
 
-int level_get(void)
+int level_getCurrent(void)
 {
     return level;
+}
+
+int level_getCount(void)
+{
+    return COUNT;
 }
 
 int level_getBrickCount(void)

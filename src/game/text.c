@@ -6,16 +6,30 @@
 
 // Function definitions
 
+static Font* currentFont = NULL;
+
 void text_rend(Text t, ...)
 {
     Font* f = asset_getFont(t.size);
 
+    if (currentFont != f) {
+        if (currentFont) font_end(currentFont);
+        font_begin(*f);
+        currentFont = f;
+    }
+
     va_list args;
     va_start(args, t);
 
-    font_begin(*f);
     font_vprintf(f, t.pos, t.col, t.fmt, args);
-    font_end(f);
 
     va_end(args);
+}
+
+void text_flush()
+{
+    if (currentFont) {
+        font_end(currentFont);
+        currentFont = NULL;
+    }
 }

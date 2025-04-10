@@ -12,8 +12,9 @@ static void drawGame(void);
 
 // Constants
 static const Text TEXT_PAUSED     = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
-static const Text TEXT_SCORE      = { FontLarge,  {{ 192,  56  }}, {{ 1.0f, 1.0f, 1.0f }}, "%i" };
-static const Text TEXT_HISCORE    = { FontLarge,  {{ 1573, 56  }}, {{ 1.0f, 1.0f, 1.0f }}, "%i" };
+static const Text TEXT_SCORE      = { FontLarge,  {{ 180,  50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Score: %i" };
+static const Text TEXT_HISCORE    = { FontLarge,  {{ 1440, 50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Hiscore: %i" };
+static const Text TEXT_LEVEL      = { FontLarge,  {{ 840, 50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Level: %i of %i" };
 static const Text TEXT_LOST       = { FontLarge,  {{ 840, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
 static const Text TEXT_NEWHISCORE = { FontLarge,  {{ 820, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
 static const Text TEXT_WON        = { FontLarge,  {{ 855, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
@@ -44,6 +45,7 @@ void drawGame(void)
     rend_end(r);
 
     text_rend(TEXT_SCORE, paddle_getScore());
+    text_rend(TEXT_LEVEL, level_getCurrent() + 1, level_getCount());
     text_rend(TEXT_HISCORE, hiscore_getHi());
 }
 
@@ -56,25 +58,30 @@ void draw_frame(void)
         case StateMenu:
             screen_rend(asset_getLoading());
 	    text_rend(TEXT_MENU);
+	    text_flush();
             break;
         case StatePause:
             drawGame();
 	    text_rend(TEXT_PAUSED);
+	    text_flush();
             break;
         case StateRun:
             drawGame();
+	    text_flush();
             break;
         case StateWon:
             drawGame();
             text_rend(TEXT_WON);
             if (hiscore_isHi()) text_rend(TEXT_NEWHISCORE);
             text_rend(TEXT_CONTINUE);
+	    text_flush();
             break;
         case StateLost:
 	    drawGame();
             text_rend(TEXT_LOST);
             if (hiscore_isHi()) text_rend(TEXT_NEWHISCORE);
             text_rend(TEXT_CONTINUE);
+	    text_flush();
             break;
     }
 }
