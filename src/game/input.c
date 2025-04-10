@@ -8,6 +8,7 @@
 #include "game.h"
 #include "input.h"
 #include "paddle.h"
+#include "parallax.h"
 #include "wall.h"
 
 // Types
@@ -69,6 +70,7 @@ void input_update(void)
 	    pos.x     = CLAMP(pos.x, WALL_LEFT, SCR_WIDTH - paddle_getSprite().size.s - WALL_RIGHT);
 	    paddle_setX(pos.x);
 	    ball_onPaddleMove();
+	    parallax_onPaddleMove();
 	    // Don't allow cursor to move away from paddle
 	    main_setMousePos(pos);
 	    break;

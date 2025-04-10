@@ -10,8 +10,8 @@
 Screen screen_load(const char *file)
 {
     Screen s;
-    vec2s pos  = (vec2s) {{ 0, 0 }};
-    vec2s size = (vec2s) {{ SCR_WIDTH, SCR_HEIGHT }};
+    vec2s pos  = {{ 0, 0 }};
+    vec2s size = {{ SCR_WIDTH, SCR_HEIGHT }};
     s.rend     = rend_load(1, file);
     s.sprite   = sprite_create(pos, size, pos, size);
     return s;

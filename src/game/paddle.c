@@ -8,7 +8,7 @@
 // Constants
 static const vec2s SIZE        = {{ 144, 24 }};
 static const vec2s TEX_OFFSET  = {{ 384, 0 }};
-static const vec2s LIVES_POS[] = { {{ 8, 1053 }}, {{ 8, 1027 }} };
+static const vec2s LIVES_POS[] = { {{ 18, 1053 }}, {{ 18, 1027 }} };
 static const int   LIVES       = 3;
 
 // Variables

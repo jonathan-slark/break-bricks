@@ -5,7 +5,7 @@
 
 // Function definitions
 
-Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
+Sprite sprite_create(vec2s pos, vec2s size, vec2s texOff, vec2s texSize)
 {
     Sprite s;
 
@@ -13,10 +13,10 @@ Sprite sprite_create(vec2s pos, vec2s size, vec2s texOffset, vec2s texSize)
     sprite_setPos(&s, pos);
 
     // Normalise tex offset
-    float u1 = texOffset.x / texSize.s;
-    float v1 = texOffset.y / texSize.t;
-    float u2 = (texOffset.x + size.s - 1) / texSize.s;
-    float v2 = (texOffset.y + size.y - 1) / texSize.t;
+    float u1 = texOff.x / texSize.s;
+    float v1 = texOff.y / texSize.t;
+    float u2 = (texOff.x + size.s - 1) / texSize.s;
+    float v2 = (texOff.y + size.y - 1) / texSize.t;
 
     s.verts[0].texCoord = (vec2s) {{ u1, v1 }};
     s.verts[1].texCoord = (vec2s) {{ u2, v1 }};
@@ -39,10 +39,17 @@ void sprite_setPos(Sprite* s, vec2s pos)
     s->verts[3].pos = (vec2s) {{ x1, y2 }};
 }
 
-void sprite_addVec(Sprite* s, vec2s v)
+void sprite_posAdd(Sprite* s, vec2s v)
 {
     for (size_t i = 0; i < VERT_COUNT; i++) {
         s->verts[i].pos = glms_vec2_add(s->verts[i].pos, v);
+    }
+}
+
+void sprite_texOffAdd(Sprite* s, vec2s v)
+{
+    for (size_t i = 0; i < VERT_COUNT; i++) {
+        s->verts[i].texCoord = glms_vec2_add(s->verts[i].texCoord, v);
     }
 }
 

@@ -1,3 +1,6 @@
+#include <cglm/struct.h> // vec3s
+
+#include "../gfx/gfx.h"
 #include "../gfx/screen.h"
 #include "asset.h"
 #include "ball.h"
@@ -5,12 +8,14 @@
 #include "hiscore.h"
 #include "level.h"
 #include "paddle.h"
+#include "parallax.h"
 #include "text.h"
 
 // Function prototypes
 static void drawGame(void);
 
 // Constants
+static const vec3s BLACK = {{ 0.0f, 0.0f, 0.0f }};
 static const Text TEXT_PAUSED     = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
 static const Text TEXT_SCORE      = { FontLarge,  {{ 180,  50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Score: %i" };
 static const Text TEXT_HISCORE    = { FontLarge,  {{ 1440, 50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Hiscore: %i" };
@@ -35,6 +40,8 @@ static const Text TEXT_MENU =
 
 void drawGame(void)
 {
+    gfx_clear(BLACK);
+    parallax_rend();
     screen_rend(asset_getBg());
 
     Rend* r = asset_getSpriteRend();

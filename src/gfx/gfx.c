@@ -91,6 +91,12 @@ void gfx_resize(int width, int height)
     shader_setProj(shader, proj);
 }
 
+void gfx_clear(vec3s col)
+{
+    glClearColor(col.r, col.g, col.b, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
 Shader gfx_getShader(void)
 {
     return shader;

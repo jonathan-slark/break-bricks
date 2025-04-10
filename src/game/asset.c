@@ -13,6 +13,7 @@
 #include "hiscore.h"
 #include "level.h"
 #include "paddle.h"
+#include "parallax.h"
 #include "wall.h"
 
 // Function prototypes
@@ -115,9 +116,14 @@ void asset_load(void)
     atexit(audio_unload);
 
     paddle_init();
+    // Requires paddle_init
     ball_init();
     level_load();
     wall_init();
+
+    // Requires paddle_init
+    parallax_load();
+    atexit(parallax_unload);
 }
 
 Screen asset_getLoading(void)
