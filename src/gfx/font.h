@@ -23,7 +23,7 @@ typedef struct {
 // Function prototypes
 Font font_load(float height, const char* file);
 void font_unload(Font f);
-void font_begin(Font f);
-void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...);
-void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args);
+void font_begin(Font f, vec3s col);
+void font_printf(Font* f, vec2s pos, const char* fmt, ...);
+void font_vprintf(Font* f, vec2s pos, const char* fmt, va_list args);
 void font_end(Font* f);

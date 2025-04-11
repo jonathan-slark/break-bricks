@@ -58,22 +58,23 @@ void font_unload(Font f)
     rend_unload(f.rend);
 }
 
-void font_begin(Font f) 
+void font_begin(Font f, vec3s col)
 {
     Shader s = gfx_getShader();
     shader_setTex(s, f.rend.tex.unit);
     shader_setIsFont(s, true);
+    shader_setCol(s, col);
 }
 
-void font_printf(Font* f, vec2s pos, vec3s col, const char* fmt, ...)
+void font_printf(Font* f, vec2s pos, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    font_vprintf(f, pos, col, fmt, args);
+    font_vprintf(f, pos, fmt, args);
     va_end(args);
 }
 
-void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args)
+void font_vprintf(Font* f, vec2s pos, const char* fmt, va_list args)
 {
     va_list ap;
     va_copy(ap, args);
@@ -84,7 +85,6 @@ void font_vprintf(Font* f, vec2s pos, vec3s col, const char* fmt, va_list args)
     vsnprintf(text, sizeof text, fmt, args);
 
     float posX = pos.x;
-    shader_setCol(gfx_getShader(), col);
     for (unsigned i = 0; i < sizeof text - 1; i++) {
         if (text[i] == '\n') {
             pos.y += f->size;

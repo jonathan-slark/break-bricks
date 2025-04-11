@@ -17,13 +17,16 @@ static void drawGame(void);
 // Constants
 static const vec3s BLACK = {{ 0.0f, 0.0f, 0.0f }};
 static const Text TEXT_PAUSED     = { FontLarge,  {{ 880,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Paused." };
-static const Text TEXT_SCORE      = { FontLarge,  {{ 180,  50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Score: %i" };
-static const Text TEXT_HISCORE    = { FontLarge,  {{ 1440, 50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Hiscore: %i" };
-static const Text TEXT_LEVEL      = { FontLarge,  {{ 840, 50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Level: %i of %i" };
-static const Text TEXT_LOST       = { FontLarge,  {{ 840, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
-static const Text TEXT_NEWHISCORE = { FontLarge,  {{ 820, 664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
-static const Text TEXT_WON        = { FontLarge,  {{ 855, 600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
-static const Text TEXT_CONTINUE   = { FontMedium, {{ 745, 860 }}, {{ 1.0f, 1.0f, 1.0f }},
+static const Text TEXT_SCORE      = { FontLarge,  {{ 182,  50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Score: %i" };
+static const Text TEXT_SCORE2     = { FontLarge,  {{ 185,  53  }}, {{ 0.0f, 0.0f, 0.0f }}, "Score: %i" };
+static const Text TEXT_LEVEL      = { FontLarge,  {{ 827,  50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Level: %i of %i" };
+static const Text TEXT_LEVEL2     = { FontLarge,  {{ 830,  53  }}, {{ 0.0f, 0.0f, 0.0f }}, "Level: %i of %i" };
+static const Text TEXT_HISCORE    = { FontLarge,  {{ 1437, 50  }}, {{ 1.0f, 1.0f, 1.0f }}, "Hiscore: %i" };
+static const Text TEXT_HISCORE2   = { FontLarge,  {{ 1440, 53  }}, {{ 0.0f, 0.0f, 0.0f }}, "Hiscore: %i" };
+static const Text TEXT_LOST       = { FontLarge,  {{ 840,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "Game over." };
+static const Text TEXT_NEWHISCORE = { FontLarge,  {{ 820,  664 }}, {{ 1.0f, 1.0f, 1.0f }}, "New hiscore!" };
+static const Text TEXT_WON        = { FontLarge,  {{ 855,  600 }}, {{ 1.0f, 1.0f, 1.0f }}, "You won!" };
+static const Text TEXT_CONTINUE   = { FontMedium, {{ 745,  860 }}, {{ 1.0f, 1.0f, 1.0f }},
     "Click mouse button to continue." };
 static const Text TEXT_MENU =
 {
@@ -51,9 +54,20 @@ void drawGame(void)
     ball_rend(r);
     rend_end(r);
 
-    text_rend(TEXT_SCORE, paddle_getScore());
-    text_rend(TEXT_LEVEL, level_getCurrent() + 1, level_getCount());
-    text_rend(TEXT_HISCORE, hiscore_getHi());
+    int score      = paddle_getScore();
+    int level      = level_getCurrent() + 1;
+    int levelCount = level_getCount();
+    int hiscore    = hiscore_getHi();
+    // Drop shadow
+    text_rend(TEXT_SCORE2, score);
+    text_rend(TEXT_LEVEL2, level, levelCount);
+    text_rend(TEXT_HISCORE2, hiscore);
+    // Need to flush to change colour
+    text_flush();
+    // Normal text
+    text_rend(TEXT_SCORE, score);
+    text_rend(TEXT_LEVEL, level, levelCount);
+    text_rend(TEXT_HISCORE, hiscore);
 }
 
 void draw_frame(void)

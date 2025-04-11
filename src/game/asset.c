@@ -116,13 +116,11 @@ void asset_load(void)
     atexit(audio_unload);
 
     paddle_init();
-    // Requires paddle_init
-    ball_init();
+    ball_init();     // Requires paddle_init
     level_load();
     wall_init();
 
-    // Requires paddle_init
-    parallax_load();
+    parallax_load(); // Requires paddle_init
     atexit(parallax_unload);
 }
 

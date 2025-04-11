@@ -14,14 +14,14 @@ void text_rend(Text t, ...)
 
     if (currentFont != f) {
         if (currentFont) font_end(currentFont);
-        font_begin(*f);
+        font_begin(*f, t.col);
         currentFont = f;
     }
 
     va_list args;
     va_start(args, t);
 
-    font_vprintf(f, t.pos, t.col, t.fmt, args);
+    font_vprintf(f, t.pos, t.fmt, args);
 
     va_end(args);
 }

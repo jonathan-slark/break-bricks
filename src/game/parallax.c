@@ -4,10 +4,12 @@
 #include "../gfx/sprite.h"
 #include "paddle.h"
 #include "parallax.h"
+#include "wall.h"
 
 // Constants
-static const char* FILES[] =  { "gfx/stars1.png", "gfx/stars2.png" };
+static const char* FILES[]  = { "gfx/stars1.png", "gfx/stars2.png" };
 static const float RATIOS[] = { 0.000015f, 0.00002f };
+static const vec2s TEX_OFF  = {{ 500, 500 }}; // Initial offset into texture
 constexpr size_t COUNT = COUNT(FILES);
 
 // Variables
@@ -20,10 +22,9 @@ void parallax_load(void)
     for (size_t i = 0; i < COUNT; i++) {
 	rends[i]   = rend_load(1, FILES[i]);
 
-	vec2s pos    = {{ 0, 0 }};
-	vec2s texPos = {{ 500, 500 }};
-	vec2s size   = {{ SCR_WIDTH, SCR_HEIGHT }};
-	sprites[i] = sprite_create(pos, size, texPos, rends[i].tex.size);
+	vec2s pos  = {{ WALL_LEFT, WALL_TOP }};
+	vec2s size = {{ SCR_WIDTH - WALL_LEFT - WALL_RIGHT, SCR_HEIGHT - WALL_TOP }};
+	sprites[i] = sprite_create(pos, size, TEX_OFF, rends[i].tex.size);
     }
 
     paddlePrevX = paddle_getSprite().pos.x;
@@ -41,7 +42,7 @@ void parallax_onPaddleMove(void)
     paddlePrevX = ps.pos.x;
 
     for (size_t i = 0; i < COUNT; i++) {
-	sprite_texOffAdd(&sprites[i], (vec2s) {{ paddleDeltaX * RATIOS[i], 0.0f }});
+	sprite_texOffAdd(&sprites[i], (vec2s) {{ -paddleDeltaX * RATIOS[i], 0.0f }});
     }
 }
 
