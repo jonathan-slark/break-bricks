@@ -7,6 +7,9 @@
 #include "ball.h"
 #include "game.h"
 #include "input.h"
+#ifndef NDEBUG
+#include "level.h"
+#endif
 #include "paddle.h"
 #include "parallax.h"
 #include "wall.h"
@@ -25,6 +28,9 @@ typedef struct {
 
 // Constants
 static const Key KEYS[] = {
+#ifndef NDEBUG
+    { GLFW_KEY_N, (void (*)(void)) level_next },
+#endif
     { GLFW_KEY_SPACE,  game_togglePause },
     { GLFW_KEY_ESCAPE, game_quit }
 };
