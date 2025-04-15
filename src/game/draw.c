@@ -45,7 +45,8 @@ void drawGame(void)
 {
     gfx_clear(BLACK);
     parallax_rend();
-    screen_rend(asset_getBg());
+    int level = level_getCurrent();
+    screen_rend(asset_getBg(level));
 
     Rend* r = asset_getSpriteRend();
     rend_begin(*r);
@@ -54,19 +55,18 @@ void drawGame(void)
     ball_rend(r);
     rend_end(r);
 
-    int score      = paddle_getScore();
-    int level      = level_getCurrent() + 1;
-    int levelCount = level_getCount();
-    int hiscore    = hiscore_getHi();
+    int score   = paddle_getScore();
+    int hiscore = hiscore_getHi();
+    level++; // Internally we start at 0
     // Drop shadow
     text_rend(TEXT_SCORE2, score);
-    text_rend(TEXT_LEVEL2, level, levelCount);
+    text_rend(TEXT_LEVEL2, level, COUNT);
     text_rend(TEXT_HISCORE2, hiscore);
     // Need to flush to change colour
     text_flush();
     // Normal text
     text_rend(TEXT_SCORE, score);
-    text_rend(TEXT_LEVEL, level, levelCount);
+    text_rend(TEXT_LEVEL, level, COUNT);
     text_rend(TEXT_HISCORE, hiscore);
 }
 

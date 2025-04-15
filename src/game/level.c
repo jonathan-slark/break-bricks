@@ -5,12 +5,12 @@
 #include "../gfx/rend.h"
 #include "../gfx/sprite.h"
 #include "audio.h"
+#include "level.h"
 #include "paddle.h"
 #include "wall.h"
 
 // Types
-typedef struct
-{
+typedef struct {
     bool   isActive;
     bool   isSolid;
     bool   isDestroyed;
@@ -24,7 +24,6 @@ static void  updateScore(int i);
 
 // Constants
 static const char FOLDER[] = "level";
-constexpr int COUNT = 7;
 constexpr int COLS  = 12;
 constexpr int ROWS  = 24;
 static const vec2s    SIZE = {{ 128, 32 }};

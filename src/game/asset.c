@@ -27,8 +27,16 @@ static void loadFonts(void);
 static void unloadFonts(void);
 
 // Constants
+static const char* FILE_BGS[COUNT] = {
+    "gfx/background1.png",
+    "gfx/background2.png",
+    "gfx/background3.png",
+    "gfx/background4.png",
+    "gfx/background5.png",
+    "gfx/background6.png",
+    "gfx/background7.png"
+};
 static const char   FILE_LOADING[] = "gfx/loading.png";
-static const char   FILE_BG[]      = "gfx/background.png";
 static const char   SPRITE_SHEET[] = "gfx/spritesheet.png";
 static const size_t SPRITE_COUNT   = 200;
 static const char   FONT_FILE[]    = "font/JupiteroidRegular.ttf";
@@ -36,7 +44,7 @@ static const float  FONT_HEIGHTS[] = { 64.0f, 40.0f };
 
 // Variables
 static Screen loading;
-static Screen bg;
+static Screen bgs[COUNT];
 static Rend   spriteRend;
 static Font   fonts[FontSizeCount];
 
@@ -54,12 +62,16 @@ void unloadLoading(void)
 
 void loadBg(void)
 {
-    bg = screen_load(FILE_BG);
+    for (int i = 0; i < COUNT; i++) {
+	bgs[i] = screen_load(FILE_BGS[i]);
+    }
 }
 
 void unloadBg(void)
 {
-    screen_unload(bg);
+    for (int i = 0; i < COUNT; i++) {
+	screen_unload(bgs[i]);
+    }
 }
 
 void loadSpriteRend(void)
@@ -129,9 +141,9 @@ Screen asset_getLoading(void)
     return loading;
 }
 
-Screen asset_getBg(void)
+Screen asset_getBg(int level)
 {
-    return bg;
+    return bgs[level];
 }
 
 Rend* asset_getSpriteRend(void)

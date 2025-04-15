@@ -5,6 +5,9 @@
 #include "../gfx/rend.h"
 #include "../gfx/sprite.h"
 
+// Constants
+constexpr int COUNT = 7;
+
 // Function prototypes
 void    level_load(void);
 void    level_rend(Rend* r);

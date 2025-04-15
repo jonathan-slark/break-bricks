@@ -8,6 +8,6 @@
 void   asset_loading(void);
 void   asset_load(void);
 Screen asset_getLoading(void);
-Screen asset_getBg(void);
+Screen asset_getBg(int level);
 Rend*  asset_getSpriteRend(void);
 Font*  asset_getFont(FontSize size);
