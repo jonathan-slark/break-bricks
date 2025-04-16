@@ -5,6 +5,9 @@
 #include "shader.h"
 
 // Function prototypes
+#ifndef NDEBUG
+void   gfx_screenshot(void);
+#endif
 void   gfx_init(void);
 void   gfx_term(void);
 void   gfx_resize(int width, int height);

@@ -1,8 +1,15 @@
 #undef  GLAD_GL_IMPLEMENTATION
 #define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
+#ifndef NDEBUG
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif
 
 #include <cglm/struct.h> // mat4s, glms_ortho, vec3s
 #include <glad.h>        // gl*, GL*
+#ifndef NDEBUG
+#include <stb/stb_image_write.h>
+#include <stdlib.h>      // malloc, free
+#endif
 
 #include "../main.h"
 #include "gfx.h"
@@ -21,6 +28,8 @@ static const unsigned LOG_IGNORE[] =
 {
     131185, // Buffer info
 };
+static const char SCREENSHOT[] = "screenshot.png";
+static const int NUM_CHANNELS  = 3;
 #endif // !NDEBUG
 static const char SHADER_VERT[] = "shader/vert.glsl";
 static const char SHADER_FRAG[] = "shader/frag.glsl";
@@ -53,6 +62,28 @@ void GLAPIENTRY debugOutput(
     if (isMember(LOG_IGNORE, sizeof(LOG_IGNORE), id)) return;
 
     fprintf(stderr, "%u: %s\n", id, (const char*) message);
+}
+
+void gfx_screenshot(void)
+{
+    size_t dataSize = NUM_CHANNELS * SCR_WIDTH * SCR_HEIGHT;
+    GLubyte* data = malloc(dataSize);
+
+    if (data) {
+	glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+	stbi_flip_vertically_on_write(true);
+	stbi_write_png(
+		SCREENSHOT,
+		SCR_WIDTH,
+		SCR_HEIGHT,
+		NUM_CHANNELS,
+		data,
+		SCR_WIDTH * NUM_CHANNELS
+		);
+
+	free(data);
+    }
 }
 
 #endif // !NDEBUG
