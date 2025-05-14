@@ -21,18 +21,17 @@ static const char* SOUNDS[SoundCount] =
 };
 static const char* const MUSIC[] =
 {
-    "music/HoliznaCC0 - 2nd Dimension.mp3", // One track per level
-    "music/HoliznaCC0 - Astroids.mp3",
-    "music/HoliznaCC0 - In The End.mp3",
-    "music/HoliznaCC0 - Pixel Party.mp3",
-    "music/HoliznaCC0 - Scroller.mp3",
-    "music/HoliznaCC0 - Space Castle.mp3",
-    "music/HoliznaCC0 - Where It's Safe.mp3"
+    "music/HoliznaCC0_-_2nd_Dimension.mp3", // One track per level
+    "music/HoliznaCC0_-_Astroids.mp3",
+    "music/HoliznaCC0_-_In_The_End.mp3",
+    "music/HoliznaCC0_-_Pixel_Party.mp3",
+    "music/HoliznaCC0_-_Scroller.mp3",
+    "music/HoliznaCC0_-_Space_Castle.mp3",
+    "music/HoliznaCC0_-_Where_Its_Safe.mp3"
 };
 
 // Variables
 static ma_sound **sounds;
-static ma_sound **music;
 static ma_sound *playing;
 
 // Function definitions
@@ -45,22 +44,10 @@ void audio_load(void)
     for (Sound s = 0; s < SoundCount; s++) {
 	sounds[s] = aud_loadSound(SOUNDS[s], false);
     }
-
-    music = (ma_sound **) malloc(COUNT(MUSIC) * sizeof(ma_sound *));
-    for (size_t i = 0; i < COUNT(MUSIC); i++) {
-        music[i] = aud_loadSound(MUSIC[i], true);
-    }
 }
 
 void audio_unload(void)
 {
-    if (music) {
-	for (size_t i = 0; i < COUNT(MUSIC); i++) {
-	    if (music[i]) aud_unloadSound(music[i]);
-	}
-	free(music);
-    }
-
     if (sounds) {
         for (Sound i = 0; i < SoundCount; i++) {
             if (sounds[i]) aud_unloadSound(sounds[i]);

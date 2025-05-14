@@ -7,6 +7,7 @@
 #ifndef NDEBUG
 #include "../gfx/gfx.h"
 #endif
+#include "audio.h"
 #include "ball.h"
 #include "game.h"
 #include "input.h"
@@ -29,10 +30,13 @@ typedef struct {
     void (*func)(void);
 } Button;
 
+// Function declarations
+static void nextLevel(void);
+
 // Constants
 static const Key KEYS[] = {
 #ifndef NDEBUG
-    { GLFW_KEY_N, (void (*)(void)) level_next },
+    { GLFW_KEY_N, (void (*)(void)) nextLevel },
     { GLFW_KEY_S, gfx_screenshot },
 #endif
     { GLFW_KEY_SPACE,  game_togglePause },
@@ -43,6 +47,15 @@ static const Button BUTTONS[] = {
 };
 
 // Function definitions
+
+#ifndef NDEBUG
+void nextLevel(void) 
+{
+    level_next();
+    audio_stopMusic();
+    audio_playMusic(level_getCurrent());
+}
+#endif
 
 void input_keyDown(int key)
 {

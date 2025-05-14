@@ -3,5 +3,6 @@
 *.d
 *.exe
 *.o
+*.zip
 hiscore.txt
 screenshot*.png
