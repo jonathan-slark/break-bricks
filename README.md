@@ -1,51 +1,57 @@
-# Break Bricks
+# 🎮 Break Bricks
 
-## 🧱 Overview
+> A modern, space-themed reimagining of the arcade classic — built in C and OpenGL from the ground up.
 
-**Break Bricks** is a modern reinterpretation of the classic brick-breaking arcade game. It features high-resolution graphics, smooth controls, and a custom OpenGL renderer, making it a sleek and enjoyable retro-style experience.
+## 🌟 Project Overview
 
-## ▶️ Running the Game
+**Break Bricks** is a desktop breakout-style game that blends old-school mechanics with modern design. Developed entirely in C23 using OpenGL 3.3, it features responsive controls, smooth frame pacing, and custom visual/audio presentation across a series of handcrafted levels.
 
-1. Extract the ZIP archive.
-2. Run `break-bricks.exe`.
+This project was a personal milestone — my second OpenGL game and first fully completed engine-based project. It showcases my ability to design, build, and polish a desktop game from scratch.
 
-*Note: The game runs in a 1920x1080 borderless window. Black borders may appear if your desktop resolution is higher.*
+---
 
-## ⚙️ Technical Details
+## 🧩 Features
 
-- **Resolution**: 1920x1080, borderless window mode.
-- **Frame Rate**: Syncs with the desktop refresh rate for smooth ball movement on all monitors.
-- **Controls**: Precision mouse input for paddle movement.
-- **Language**: Written in modern C (C23) with minimal dependencies.
-- **Graphics**: OpenGL 3.3 batched renderer, spritesheets, and TTF font rendering.
-- **Audio**: Each level features its own background music and NASA imagery.
-- **Build System**: [MSYS2](https://www.msys2.org/) + GCC toolchain.
+- **Resolution**: 1920×1080, borderless window mode (with letterboxing as needed)
+- **Framerate**: Adaptive to your desktop refresh rate (perfect for high-Hz displays)
+- **Controls**: Smooth, precise mouse input
+- **Rendering**: Custom OpenGL 3.3 batched sprite renderer with TTF font support
+- **Audio**: Level-based music system using Miniaudio
+- **Levels**: Each level features a unique NASA space background and ambient soundtrack
 
-## 🎯 Project Goals
+---
 
-Inspired by the [Breakout guide](https://learnopengl.com/In-Practice/2D-Game/Breakout) on LearnOpenGL, this project began as a deeper dive into OpenGL after the "Hello Triangle" example. The aim was to build a full-featured, modern desktop game while avoiding the complexity of Vulkan.
+## 🛠️ Technical Summary
+
+- **Language**: C23 (via GCC/MSYS2)
+- **Libraries**: GLFW, GLAD, stb, Miniaudio
+- **Renderer**: Modular, batched OpenGL renderer built from scratch
+- **Collision**: Custom implementation using [swept AABB collision](https://gamedev.net/tutorials/programming/general-and-gameplay-programming/swept-aabb-collision-detection-and-response-r3084/)
+- **Architecture**: Modular subsystems (logging, rendering, audio, input, game logic)
+
+---
+
+## 📸 Screenshots
+
+*Include 2–4 curated images or a gameplay GIF here.*
+
+---
 
 ## 📝 Development Notes
 
-This project turned out to be far more complex than expected. I wanted to go beyond the original arcade simplicity, which led to unexpected challenges:
+After completing the LearnOpenGL "Hello Triangle", I set out to build a complete game using the [Breakout guide](https://learnopengl.com/In-Practice/2D-Game/Breakout) as a springboard. Rather than follow it rigidly, I challenged myself to:
 
-- The original game used rudimentary logic with minimal collision resolution.
-- I initially implemented custom collision logic, which had inconsistencies.
-- AI-assisted research introduced me to [swept AABB collision](https://gamedev.net/tutorials/programming/general-and-gameplay-programming/swept-aabb-collision-detection-and-response-r3084/), which proved much more robust.
+- Build my own renderer
+- Replace geometry-heavy collision logic with something more robust
+- Implement a clean subsystem structure that could scale
 
-### Renderer Journey
+Along the way, I rewrote major systems like rendering, audio, and collision multiple times — chasing both performance and reliability. While it was tempting to keep refining, I made a conscious decision to finish this version and polish it as a complete release.
 
-- The LearnOpenGL guide uses a simple renderer for teaching, but I pushed for a modern batched renderer to support sprite batching and particles.
-- This took significant effort and research. At one point, I rewrote it from scratch — only to end up with a black screen and no clear cause.
+---
 
-### Lessons Learned
+## 🗃️ Asset Credits
 
-- Over-engineering for a simple game can eat up your momentum.
-- Rewriting subsystems (logging, audio, rendering) helped me learn but stalled the project.
-- Sometimes it’s better to release a working version than chase perfection.
-- For future projects, I’ll explore engines like Raylib to stay focused on game design, not infrastructure.
-
-## 📜 Credits & Licenses
+All third-party assets used under permissive licenses (CC0, MIT, zlib, or Public Domain):
 
 ### Libraries
 
@@ -54,21 +60,33 @@ This project turned out to be far more complex than expected. I wanted to go bey
 - [miniaudio](https://miniaud.io/) – MIT No Attribution
 - [stb](https://github.com/nothings/stb) – Public Domain
 
-### Assets
+### Audio & Visuals
 
-- [Space Skybox by Westbeam](https://opengameart.org/content/space-skyboxes-1) – CC0
-- [Free SFX by Kronbits](https://kronbits.itch.io/freesfx) – CC0
-- [Astroids by HoliznaCC0](https://freemusicarchive.org/music/holiznacc0/tiny-plastic-video-games-for-long-anxious-space-travel/astroids/) – CC0
+- [HoliznaCC0 Music](https://freemusicarchive.org/music/holiznacc0)
+- [Kronbits SFX](https://kronbits.itch.io/freesfx)
+- [Westbeam Skybox](https://opengameart.org/content/space-skyboxes-1)
+- [NASA Images](https://commons.wikimedia.org) – Public Domain
 - [Jupiteroid Font](https://ggbot.itch.io/jupiteroid-font) – CC0
-- [Stars by Bonsaiheldin](https://opengameart.org/content/stars-parallax-backgrounds) – CC0
 
-### NASA Imagery
+---
 
-All NASA and ESA images are public domain or under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+## 🔧 Build Info
 
-## 🔧 Build Dependencies (MSYS2)
+To build the game, install [MSYS2](https://www.msys2.org/) and ensure these packages are installed:
 
-- `mingw-w64-ucrt-x86_64-cglm`
 - `mingw-w64-ucrt-x86_64-gcc`
 - `mingw-w64-ucrt-x86_64-glfw`
+- `mingw-w64-ucrt-x86_64-cglm`
 - `mingw-w64-ucrt-x86_64-stb`
+
+Alternatively, use the prebuilt `break-bricks.exe` included in the release.
+
+---
+
+## 🧠 Reflections
+
+This project sharpened my understanding of real-time rendering, subsystem architecture, and input handling — all while teaching me when to simplify, when to refactor, and when to ship.
+
+It’s a complete, working desktop game that I’m proud to include in my portfolio, and it lays the foundation for future, more ambitious projects.
+
+---
