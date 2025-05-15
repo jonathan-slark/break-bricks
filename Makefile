@@ -18,6 +18,7 @@ OBJ      := $(SRC:.c=.o)
 DEP      := $(SRC:.c=.d)
 
 ZIP      := break-bricks.zip
+ZIP_SRC  := break-bricks_src.zip
 IMAGE    := $(wildcard gfx/*.png)
 FONT     := $(wildcard font/*.ttf)
 LEVEL    := $(wildcard level/*.txt)
@@ -31,6 +32,10 @@ all: $(BIN)
 zip: $(BIN)
 	@rm -f $(ZIP)
 	zip $(ZIP) $(ZIP_FILE)
+
+src:
+	@rm -f $(ZIP_SRC)
+	zip $(ZIP_SRC) $(SRC)
 
 $(BIN): $(OBJ)
 	$(CC) -o $@ $(OBJ) $(LDFLAGS)
@@ -46,4 +51,4 @@ clean:
 run:	all
 	@./$(BIN)
 
-.PHONY:	all clean run .zip
+.PHONY:	all clean run zip src

@@ -18,6 +18,7 @@
 // Function prototypes
 static void errorCallback(int err, const char* desc);
 static void init(void);
+static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 static void mouseCallback(GLFWwindow* window, int button, int action, int mods);
 static void resizeCallback(GLFWwindow* window, int width, int height);
@@ -34,8 +35,9 @@ static const unsigned OPENGL_MAJOR   = 3;
 static const unsigned OPENGL_MINOR   = 3;
 
 // Variables
-static GLFWwindow* window;
-static bool isMinimised = false;
+static GLFWwindow* window      = nullptr;
+static bool        isMinimised = false;
+static double      mouseDx     = 0.0;
 
 // Function definitions
 
@@ -84,6 +86,13 @@ void keyCallback(
     }
 }
 
+double main_getMouseDx(void)
+{
+    double dx = mouseDx;
+    mouseDx = 0.0;
+    return dx;
+}
+
 vec2s main_getMousePos(void)
 {
     double x, y;
@@ -94,6 +103,27 @@ vec2s main_getMousePos(void)
 void main_setMousePos(vec2s pos)
 {
     glfwSetCursorPos(window, pos.x, pos.y);
+}
+
+void cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    static double lastX = 0.0;
+    static bool   first = true;
+
+    if (isMinimised || game_getState() != StateRun) {
+	mouseDx = 0.0;
+	lastX = 0.0;
+	first = true;
+	return;
+    }
+
+    if (first) {
+        lastX = xpos;
+        first = false;
+    }
+
+    mouseDx += xpos - lastX;
+    lastX   = xpos;
 }
 
 void mouseCallback(
@@ -147,11 +177,12 @@ void createWindow(void)
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    if (glfwRawMouseMotionSupported()) glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-
     glfwMakeContextCurrent(window);
     int ver = gladLoadGL(glfwGetProcAddress);
     if (!ver) main_term(EXIT_FAILURE, "Failed to load OpenGL.\n");
+
+    if (glfwRawMouseMotionSupported()) glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    glfwSetCursorPosCallback(window, cursorPosCallback);
 
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, mouseCallback);

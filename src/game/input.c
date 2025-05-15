@@ -60,42 +60,44 @@ void nextLevel(void)
 void input_keyDown(int key)
 {
     for (size_t i = 0; i < COUNT(KEYS); i++) {
-        if (KEYS[i].key == key) {
-            (*KEYS[i].func)();
-        }
+	if (KEYS[i].key == key) {
+	    (*KEYS[i].func)();
+	}
     }
 }
 
 void input_buttonDown(int button)
 {
     for (size_t i = 0; i < COUNT(BUTTONS); i++) {
-        if (BUTTONS[i].button == button) {
-            (*BUTTONS[i].func)();
-        }
+	if (BUTTONS[i].button == button) {
+	    (*BUTTONS[i].func)();
+	}
     }
 }
 
 void input_update(void)
 {
     switch (game_getState()) {
-        case StateLoading:
+	case StateLoading:
 	    [[fallthrough]];
-        case StateMenu:
+	case StateMenu:
 	    [[fallthrough]];
-        case StatePause:
+	case StatePause:
 	    [[fallthrough]];
-        case StateWon:
+	case StateWon:
 	    [[fallthrough]];
-        case StateLost:
+	case StateLost:
 	    break;
-        case StateRun:
-	    vec2s pos = main_getMousePos();
-	    pos.x     = CLAMP(pos.x, WALL_LEFT, SCR_WIDTH - paddle_getSprite().size.s - WALL_RIGHT);
-	    paddle_setX(pos.x);
-	    ball_onPaddleMove();
-	    parallax_onPaddleMove();
-	    // Don't allow cursor to move away from paddle
-	    main_setMousePos(pos);
+	case StateRun:
+	    double mouseDx = main_getMouseDx();
+	    if (mouseDx != 0.0) {
+		float newX = paddle_getSprite().pos.x + (float) mouseDx;
+		newX = CLAMP(newX, WALL_LEFT, SCR_WIDTH - paddle_getSprite().size.s - WALL_RIGHT);
+		paddle_setX(newX);
+
+		ball_onPaddleMove();
+		parallax_onPaddleMove();
+	    }
 	    break;
     }
 }
