@@ -84,25 +84,39 @@ void aud_unloadSound(ma_sound *sound)
 }
 
 // Will use cached sound data and not actually load sound again
-ma_sound* aud_playSound(const char* file, bool isLooping)
+void aud_playSound(const char* file)
 {
-    ma_sound* sound = aud_loadSound(file, isLooping);
-    ma_sound_start(sound);
-    return sound;
+    ma_engine_play_sound(&engine, file, nullptr);
 }
 
-void aud_pauseSound(ma_sound* sound)
+// Stream music
+ma_sound* aud_playMusic(const char* file, bool isLooping)
 {
-    ma_sound_stop(sound);
+    ma_sound* music = (ma_sound*) malloc(sizeof(ma_sound));
+    if (ma_sound_init_from_file(&engine, file,
+                MA_SOUND_FLAG_NO_PITCH | MA_SOUND_FLAG_NO_SPATIALIZATION,
+                NULL, NULL, music) != MA_SUCCESS) {
+        main_term(EXIT_FAILURE, "Unable to play music %s.\n", file);
+    }
+
+    ma_sound_set_looping(music, isLooping);
+    ma_sound_start(music);
+
+    return music;
 }
 
-void aud_continueSound(ma_sound* sound)
+void aud_pauseMusic(ma_sound* music)
 {
-    ma_sound_start(sound);
+    ma_sound_stop(music);
 }
 
-void aud_stopSound(ma_sound* sound)
+void aud_continueMusic(ma_sound* music)
 {
-    ma_sound_stop(sound);
-    ma_sound_seek_to_pcm_frame(sound, 0);
+    ma_sound_start(music);
+}
+
+void aud_stopMusic(ma_sound* music)
+{
+    ma_sound_stop(music);
+    aud_unloadSound(music);
 }

@@ -31,8 +31,8 @@ static const char* const MUSIC[] =
 };
 
 // Variables
-static ma_sound **sounds;
-static ma_sound *playing;
+static ma_sound **sounds = nullptr;
+static ma_sound *playing = nullptr;
 
 // Function definitions
 
@@ -54,38 +54,40 @@ void audio_unload(void)
         }
         free(sounds);
     }
+    audio_stopMusic();
 
     aud_term();
 }
 
 void audio_playMusic(int level)
 {
-    playing = aud_playSound(MUSIC[level], true);
+    if (playing != nullptr) aud_stopMusic(playing);
+    playing = aud_playMusic(MUSIC[level], true);
 }
 
 void audio_pauseMusic(void)
 {
-    if (playing) {
-	aud_pauseSound(playing);
+    if (playing != nullptr) {
+	aud_pauseMusic(playing);
     }
 }
 
 void audio_stopMusic(void)
 {
-    if (playing) {
-	aud_stopSound(playing);
+    if (playing != nullptr) {
+	aud_stopMusic(playing);
 	playing = nullptr;
     }
 }
 
 void audio_continueMusic(void)
 {
-    if (playing) {
-	aud_continueSound(playing);
+    if (playing != nullptr) {
+	aud_continueMusic(playing);
     }
 }
 
 void audio_playSound(Sound s)
 {
-    aud_playSound(SOUNDS[s], false);
+    aud_playSound(SOUNDS[s]);
 }
