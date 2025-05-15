@@ -33,7 +33,7 @@ This project was a personal milestone — my second OpenGL game and first fully 
 
 ## 📸 Gameplay
 
-![Gameplay GIF](https://github.com/jonathan-slark/break-bricks/gameplay.gif)
+![Gameplay GIF](https://github.com/jonathan-slark/break-bricks/media/gameplay.gif)
 
 ---
 
