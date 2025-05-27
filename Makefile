@@ -25,7 +25,8 @@ LEVEL    := $(wildcard level/*.txt)
 MUSIC    := $(wildcard music/*.mp3) 
 AUDIO    := $(wildcard sfx/*.wav)
 SHADER   := $(wildcard shader/*.glsl)
-ZIP_FILE := $(BIN) $(IMAGE) $(FONT) $(LEVEL) $(MUSIC) $(AUDIO) $(SHADER)
+DOC      := README.md LICENSE.md DEVLOG.md
+ZIP_FILE := $(BIN) $(IMAGE) $(FONT) $(LEVEL) $(MUSIC) $(AUDIO) $(SHADER) $(DOC)
 
 all: $(BIN)
 
